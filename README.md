@@ -4,6 +4,25 @@ Small multi-tenant SSO/access app: a company registers, people sign in with Goog
 
 Built as a working portfolio slice for identity/access work (multi-tenant SaaS, OIDC, Postgres RLS). Stack is FastAPI + React + Postgres — not .NET — so it can be shipped as a complete product. CI, Docker, and Render cover the DevOps side of that story.
 
+**Live demo:** https://tenant-access-dashboard.onrender.com (free tier — first load can take ~30 s while the service wakes up)
+
+## Screenshots
+
+| Landing / sign-in | Admin overview |
+| --- | --- |
+| ![Landing page with Google sign-in and company registration](docs/screenshots/landing.png) | ![Admin overview with stat cards and recent sign-ins](docs/screenshots/overview.png) |
+
+| People directory (admin) | Norwegian UI |
+| --- | --- |
+| ![People table with search, role filter and activity status](docs/screenshots/people.png) | ![Same dashboard with the language toggle set to Norwegian](docs/screenshots/norwegian.png) |
+
+## Try it in 30 seconds
+
+1. Open the live demo and pick **Register company**. Use your own email domain (`gmail.com` works for a personal account).
+2. Click **Continue with Google** and sign in with an account on that domain. The first person from a domain becomes **admin**.
+3. You land on the **Overview**: how many people, admins, members, and who signed in recently. **People** is the full directory with search and role filter.
+4. Register a second company on a different domain and sign in with an account from it. That admin sees only their own tenant — the first one is invisible to them, enforced by Postgres row-level security, not just the UI.
+
 ## What it demonstrates
 
 - **Multi-tenant isolation:** `tenant_id` on rows plus Postgres **row-level security** (`FORCE RLS`). CI runs as a non-superuser so RLS cannot be bypassed.
