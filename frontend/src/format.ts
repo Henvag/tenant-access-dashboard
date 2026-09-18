@@ -1,44 +1,47 @@
-const AUTH_ERRORS: Record<string, string> = {
-  no_tenant:
-    "No company is registered for your email domain yet. Register it first, then sign in.",
-  invalid_domain: "That email domain is not valid.",
-  domain_mismatch: "Your Google account domain does not match this Workspace.",
-  missing_claims: "Google did not return a verified email. Try again.",
-  unverified_email: "Your Google email is not verified.",
-  identity_conflict: "This email is already linked to a different Google account.",
-  oidc_failed: "Google sign-in failed. Try again.",
+import { Lang, LOCALES, TKey, translate } from "./i18n";
+
+const AUTH_ERROR_KEYS: Record<string, TKey> = {
+  no_tenant: "auth.no_tenant",
+  invalid_domain: "auth.invalid_domain",
+  domain_mismatch: "auth.domain_mismatch",
+  missing_claims: "auth.missing_claims",
+  unverified_email: "auth.unverified_email",
+  identity_conflict: "auth.identity_conflict",
+  oidc_failed: "auth.oidc_failed",
 };
 
-export function messageForAuthError(code: string | null): string | null {
+export function messageForAuthError(code: string | null, lang: Lang): string | null {
   if (!code) return null;
-  return AUTH_ERRORS[code] ?? `Sign-in error: ${code}`;
+  const key = AUTH_ERROR_KEYS[code];
+  return key ? translate(lang, key) : translate(lang, "auth.generic", { code });
 }
 
-export function formatTimestamp(value: string | null): string {
-  if (!value) return "Never";
+export function formatTimestamp(value: string | null, lang: Lang): string {
+  if (!value) return translate(lang, "time.never");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown";
-  return date.toLocaleString(undefined, {
+  if (Number.isNaN(date.getTime())) return translate(lang, "time.unknown");
+  return date.toLocaleString(LOCALES[lang], {
     dateStyle: "medium",
     timeStyle: "short",
   });
 }
 
-export function relativeTime(value: string | null, now: number = Date.now()): string {
-  if (!value) return "Never";
+export function relativeTime(value: string | null, lang: Lang, now: number = Date.now()): string {
+  if (!value) return translate(lang, "time.never");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown";
+  if (Number.isNaN(date.getTime())) return translate(lang, "time.unknown");
 
+  const locale = LOCALES[lang];
   const diffSeconds = Math.round((date.getTime() - now) / 1000);
   const abs = Math.abs(diffSeconds);
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
-  if (abs < 45) return "Just now";
+  if (abs < 45) return translate(lang, "time.justNow");
   if (abs < 3600) return rtf.format(Math.round(diffSeconds / 60), "minute");
   if (abs < 86400) return rtf.format(Math.round(diffSeconds / 3600), "hour");
   if (abs < 86400 * 7) return rtf.format(Math.round(diffSeconds / 86400), "day");
   if (abs < 86400 * 30) return rtf.format(Math.round(diffSeconds / (86400 * 7)), "week");
-  return date.toLocaleDateString(undefined, { dateStyle: "medium" });
+  return date.toLocaleDateString(locale, { dateStyle: "medium" });
 }
 
 export function isWithinDays(value: string | null, days: number, now: number = Date.now()): boolean {

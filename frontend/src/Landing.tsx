@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { loginUrl } from "./api";
+import { useLang } from "./i18n";
 import { IconGlobe, IconGoogle, IconLock, IconShield } from "./Icons";
+import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
 
 type Tab = "signin" | "register";
@@ -11,24 +13,25 @@ type Props = {
 };
 
 export default function Landing({ initialError, initialTab }: Props) {
+  const { t } = useLang();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [error, setError] = useState<string | null>(initialError);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [noticeDomain, setNoticeDomain] = useState<string | null>(null);
 
   return (
     <main className="landing">
+      <div className="landing-lang">
+        <LanguageToggle />
+      </div>
+
       <section className="landing-intro">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true" />
-          <span className="brand-name">Tenant Access</span>
+          <span className="brand-name">{t("brand")}</span>
         </div>
 
-        <h1>See who has access to your company, in one place.</h1>
-        <p className="landing-lede">
-          Register your company, let employees sign in with Google, and give admins a clear
-          view of everyone in the tenant. Each company's data is isolated at the database
-          level.
-        </p>
+        <h1>{t("landing.title")}</h1>
+        <p className="landing-lede">{t("landing.lede")}</p>
 
         <ul className="feature-list">
           <li>
@@ -36,8 +39,8 @@ export default function Landing({ initialError, initialTab }: Props) {
               <IconGoogle width={16} height={16} />
             </span>
             <div>
-              <strong>Google sign-in</strong>
-              <span>OpenID Connect. No passwords to manage.</span>
+              <strong>{t("feature.google.title")}</strong>
+              <span>{t("feature.google.body")}</span>
             </div>
           </li>
           <li>
@@ -45,8 +48,8 @@ export default function Landing({ initialError, initialTab }: Props) {
               <IconShield />
             </span>
             <div>
-              <strong>Isolated per tenant</strong>
-              <span>Postgres row-level security keeps companies apart.</span>
+              <strong>{t("feature.isolated.title")}</strong>
+              <span>{t("feature.isolated.body")}</span>
             </div>
           </li>
           <li>
@@ -54,15 +57,15 @@ export default function Landing({ initialError, initialTab }: Props) {
               <IconLock />
             </span>
             <div>
-              <strong>Admin and member roles</strong>
-              <span>The first person from a domain becomes admin.</span>
+              <strong>{t("feature.roles.title")}</strong>
+              <span>{t("feature.roles.body")}</span>
             </div>
           </li>
         </ul>
       </section>
 
       <section className="landing-card">
-        <div className="tabs" role="tablist" aria-label="Get started">
+        <div className="tabs" role="tablist" aria-label={t("tabs.label")}>
           <button
             type="button"
             role="tab"
@@ -70,7 +73,7 @@ export default function Landing({ initialError, initialTab }: Props) {
             className={tab === "signin" ? "tab active" : "tab"}
             onClick={() => setTab("signin")}
           >
-            Sign in
+            {t("tabs.signin")}
           </button>
           <button
             type="button"
@@ -79,7 +82,7 @@ export default function Landing({ initialError, initialTab }: Props) {
             className={tab === "register" ? "tab active" : "tab"}
             onClick={() => setTab("register")}
           >
-            Register company
+            {t("tabs.register")}
           </button>
         </div>
 
@@ -88,39 +91,37 @@ export default function Landing({ initialError, initialTab }: Props) {
             {error}
           </p>
         ) : null}
-        {notice ? (
+        {noticeDomain ? (
           <p className="banner ok" role="status">
-            {notice}
+            {t("notice.registered", { domain: noticeDomain })}
           </p>
         ) : null}
 
         {tab === "signin" ? (
           <div className="tab-panel">
-            <h2>Welcome back</h2>
-            <p className="hint">
-              Use the Google account on your company's registered email domain.
-            </p>
+            <h2>{t("signin.title")}</h2>
+            <p className="hint">{t("signin.hint")}</p>
             <a className="btn btn-google btn-block" href={loginUrl()}>
               <IconGoogle />
-              Continue with Google
+              {t("signin.google")}
             </a>
             <p className="fineprint">
               <IconGlobe width={14} height={14} />
-              New company?{" "}
+              {t("signin.new")}{" "}
               <button type="button" className="link" onClick={() => setTab("register")}>
-                Register it first
+                {t("signin.registerFirst")}
               </button>
               .
             </p>
           </div>
         ) : (
           <div className="tab-panel">
-            <h2>Register your company</h2>
-            <p className="hint">Takes ten seconds. Then sign in with Google to become admin.</p>
+            <h2>{t("register.title")}</h2>
+            <p className="hint">{t("register.hint")}</p>
             <SignupForm
               onCreated={(domain) => {
                 setError(null);
-                setNotice(`${domain} is registered. Sign in with a @${domain} Google account.`);
+                setNoticeDomain(domain);
                 setTab("signin");
               }}
             />

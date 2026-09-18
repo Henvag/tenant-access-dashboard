@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react";
 import { createTenant } from "./api";
+import { useLang } from "./i18n";
 
 type Props = {
   onCreated: (domain: string) => void;
 };
 
 export default function SignupForm({ onCreated }: Props) {
+  const { t } = useLang();
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export default function SignupForm({ onCreated }: Props) {
       const tenant = await createTenant(name, domain);
       onCreated(tenant.workspace_domain);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create company");
+      setError(err instanceof Error ? err.message : t("form.error"));
     } finally {
       setPending(false);
     }
@@ -28,17 +30,17 @@ export default function SignupForm({ onCreated }: Props) {
   return (
     <form className="form" onSubmit={onSubmit}>
       <label className="field">
-        <span>Company name</span>
+        <span>{t("form.company")}</span>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoComplete="organization"
-          placeholder="Acme Inc"
+          placeholder={t("form.companyPlaceholder")}
           required
         />
       </label>
       <label className="field">
-        <span>Email domain</span>
+        <span>{t("form.domain")}</span>
         <input
           value={domain}
           onChange={(event) => setDomain(event.target.value)}
@@ -48,8 +50,7 @@ export default function SignupForm({ onCreated }: Props) {
           required
         />
         <small>
-          People sign in with Google using this domain. Use <code>gmail.com</code> for a
-          personal demo.
+          {t("form.domainHelpBefore")} <code>gmail.com</code> {t("form.domainHelpAfter")}
         </small>
       </label>
       {error ? (
@@ -58,7 +59,7 @@ export default function SignupForm({ onCreated }: Props) {
         </p>
       ) : null}
       <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
-        {pending ? "Creating…" : "Register company"}
+        {pending ? t("form.pending") : t("form.submit")}
       </button>
     </form>
   );
