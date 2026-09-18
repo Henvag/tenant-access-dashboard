@@ -6,7 +6,14 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.auth.rls import set_tenant_rls
-from app.models import IdentityProvider, Tenant, User, UserRole
+from app.models import (
+    AuditEvent,
+    AuditEventType,
+    IdentityProvider,
+    Tenant,
+    User,
+    UserRole,
+)
 
 
 pytestmark = pytest.mark.asyncio
@@ -81,6 +88,53 @@ async def test_insert_without_tenant_context_is_rejected(
         )
         with pytest.raises(DBAPIError):
             await session.commit()
+
+
+async def test_rls_hides_other_tenant_audit_events(
+    app_session_factory: async_sessionmaker[AsyncSession],
+):
+    suffix = uuid4().hex[:8]
+    async with app_session_factory() as session:
+        acme = Tenant(name="Acme", workspace_domain=f"acme-audit-{suffix}.com")
+        beta = Tenant(name="Beta", workspace_domain=f"beta-audit-{suffix}.com")
+        session.add_all([acme, beta])
+        await session.commit()
+        await session.refresh(acme)
+        await session.refresh(beta)
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, acme.id)
+        session.add(
+            AuditEvent(
+                tenant_id=acme.id,
+                email=f"ada@{acme.workspace_domain}",
+                event_type=AuditEventType.login,
+                idp=IdentityProvider.google,
+            )
+        )
+        await session.commit()
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, beta.id)
+        session.add(
+            AuditEvent(
+                tenant_id=beta.id,
+                email=f"bob@{beta.workspace_domain}",
+                event_type=AuditEventType.login,
+                idp=IdentityProvider.microsoft,
+            )
+        )
+        await session.commit()
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, acme.id)
+        emails = set(await session.scalars(select(AuditEvent.email)))
+        assert emails == {f"ada@{acme.workspace_domain}"}
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, beta.id)
+        emails = set(await session.scalars(select(AuditEvent.email)))
+        assert emails == {f"bob@{beta.workspace_domain}"}
 
 
 async def test_app_role_is_not_superuser(app_engine):

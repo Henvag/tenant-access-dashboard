@@ -293,6 +293,24 @@ input:focus {
 }
 
 /* ---------- Language toggle ---------- */
+.idp-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
 .lang-toggle {
   display: inline-flex;
   padding: 3px;

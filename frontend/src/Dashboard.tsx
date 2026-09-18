@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { listUsers, logoutUrl, Me, TenantUser } from "./api";
+import { AuditEvent, listAuditEvents, listUsers, logoutUrl, Me, TenantUser } from "./api";
+import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
 import { formatTimestamp, isWithinDays } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
   IconGrid,
+  IconList,
   IconLogout,
   IconRefresh,
   IconSearch,
@@ -16,7 +18,7 @@ import LanguageToggle from "./LanguageToggle";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 
-type View = "overview" | "people";
+type View = "overview" | "people" | "audit";
 type RoleFilter = "all" | "admin" | "user";
 
 type Props = {
@@ -28,7 +30,9 @@ export default function Dashboard({ me }: Props) {
   const isAdmin = me.role === "admin";
   const [view, setView] = useState<View>("overview");
   const [users, setUsers] = useState<TenantUser[] | null>(null);
+  const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
+  const [loadingAudit, setLoadingAudit] = useState(isAdmin);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
@@ -36,14 +40,19 @@ export default function Dashboard({ me }: Props) {
   async function refresh() {
     if (!isAdmin) return;
     setLoadingUsers(true);
+    setLoadingAudit(true);
     setError(null);
     try {
-      setUsers(await listUsers());
+      const [nextUsers, nextEvents] = await Promise.all([listUsers(), listAuditEvents(50)]);
+      setUsers(nextUsers);
+      setEvents(nextEvents);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error.loadPeople"));
       setUsers((current) => current ?? []);
+      setEvents((current) => current ?? []);
     } finally {
       setLoadingUsers(false);
+      setLoadingAudit(false);
     }
   }
 
@@ -61,12 +70,7 @@ export default function Dashboard({ me }: Props) {
     };
   }, [users]);
 
-  const recent = useMemo(() => {
-    return [...(users ?? [])]
-      .filter((u) => u.last_login_at)
-      .sort((a, b) => (b.last_login_at ?? "").localeCompare(a.last_login_at ?? ""))
-      .slice(0, 5);
-  }, [users]);
+  const recentEvents = useMemo(() => (events ?? []).slice(0, 5), [events]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -80,8 +84,13 @@ export default function Dashboard({ me }: Props) {
     });
   }, [users, query, roleFilter]);
 
-  const pending = loadingUsers && !users;
+  const pendingPeople = loadingUsers && !users;
+  const pendingAudit = loadingAudit && !events;
   const isFiltering = query.trim() !== "" || roleFilter !== "all";
+  const loading = loadingUsers || loadingAudit;
+
+  const title =
+    view === "overview" ? t("nav.overview") : view === "people" ? t("nav.people") : t("nav.audit");
 
   return (
     <div className="app">
@@ -107,15 +116,26 @@ export default function Dashboard({ me }: Props) {
             {t("nav.overview")}
           </button>
           {isAdmin ? (
-            <button
-              type="button"
-              className={view === "people" ? "nav-item active" : "nav-item"}
-              onClick={() => setView("people")}
-            >
-              <IconUsers />
-              {t("nav.people")}
-              {users ? <span className="nav-count">{users.length}</span> : null}
-            </button>
+            <>
+              <button
+                type="button"
+                className={view === "people" ? "nav-item active" : "nav-item"}
+                onClick={() => setView("people")}
+              >
+                <IconUsers />
+                {t("nav.people")}
+                {users ? <span className="nav-count">{users.length}</span> : null}
+              </button>
+              <button
+                type="button"
+                className={view === "audit" ? "nav-item active" : "nav-item"}
+                onClick={() => setView("audit")}
+              >
+                <IconList />
+                {t("nav.audit")}
+                {events ? <span className="nav-count">{events.length}</span> : null}
+              </button>
+            </>
           ) : null}
         </nav>
 
@@ -141,7 +161,7 @@ export default function Dashboard({ me }: Props) {
         <header className="content-head">
           <div>
             <p className="crumb">{me.tenant_name}</p>
-            <h1>{view === "overview" ? t("nav.overview") : t("nav.people")}</h1>
+            <h1>{title}</h1>
           </div>
           {isAdmin ? (
             <div className="head-actions">
@@ -160,10 +180,10 @@ export default function Dashboard({ me }: Props) {
                 type="button"
                 className="btn btn-ghost"
                 onClick={() => void refresh()}
-                disabled={loadingUsers}
+                disabled={loading}
                 title={t("refresh")}
               >
-                <IconRefresh className={loadingUsers ? "spin" : undefined} />
+                <IconRefresh className={loading ? "spin" : undefined} />
                 <span className="sr-only">{t("refresh")}</span>
               </button>
             </div>
@@ -200,26 +220,26 @@ export default function Dashboard({ me }: Props) {
             <section className="stats">
               <StatCard
                 label={t("stats.people")}
-                value={pending ? "—" : stats.total}
+                value={pendingPeople ? "—" : stats.total}
                 hint={t("stats.peopleHint")}
                 icon={<IconUsers />}
                 tone="accent"
               />
               <StatCard
                 label={t("stats.admins")}
-                value={pending ? "—" : stats.admins}
+                value={pendingPeople ? "—" : stats.admins}
                 hint={t("stats.adminsHint")}
                 icon={<IconShield />}
               />
               <StatCard
                 label={t("stats.members")}
-                value={pending ? "—" : stats.members}
+                value={pendingPeople ? "—" : stats.members}
                 hint={t("stats.membersHint")}
                 icon={<IconGrid />}
               />
               <StatCard
                 label={t("stats.active")}
-                value={pending ? "—" : stats.activeWeek}
+                value={pendingPeople ? "—" : stats.activeWeek}
                 hint={t("stats.activeHint")}
                 icon={<IconActivity />}
                 tone="warm"
@@ -232,16 +252,15 @@ export default function Dashboard({ me }: Props) {
                   <h2>{t("recent.title")}</h2>
                   <p className="hint">{t("recent.hint", { domain: me.workspace_domain })}</p>
                 </div>
-                <button type="button" className="link" onClick={() => setView("people")}>
+                <button type="button" className="link" onClick={() => setView("audit")}>
                   {t("recent.viewAll")}
                 </button>
               </div>
-              {pending ? (
+              {pendingAudit ? (
                 <TableSkeleton rows={3} />
               ) : (
-                <UserTable
-                  users={recent}
-                  currentUserId={me.id}
+                <AuditTable
+                  events={recentEvents}
                   compact
                   emptyTitle={t("recent.emptyTitle")}
                   emptyBody={t("recent.emptyBody")}
@@ -249,7 +268,7 @@ export default function Dashboard({ me }: Props) {
               )}
             </section>
           </>
-        ) : (
+        ) : view === "people" ? (
           <section className="card">
             <div className="card-head">
               <div>
@@ -277,7 +296,7 @@ export default function Dashboard({ me }: Props) {
                 ))}
               </div>
             </div>
-            {pending ? (
+            {pendingPeople ? (
               <TableSkeleton rows={5} />
             ) : (
               <UserTable
@@ -285,6 +304,24 @@ export default function Dashboard({ me }: Props) {
                 currentUserId={me.id}
                 emptyTitle={isFiltering ? t("people.noMatches") : t("people.emptyTitle")}
                 emptyBody={isFiltering ? t("people.noMatchesBody") : t("people.emptyBody")}
+              />
+            )}
+          </section>
+        ) : (
+          <section className="card">
+            <div className="card-head">
+              <div>
+                <h2>{t("audit.title")}</h2>
+                <p className="hint">{t("audit.hint", { count: events?.length ?? 0 })}</p>
+              </div>
+            </div>
+            {pendingAudit ? (
+              <TableSkeleton rows={5} />
+            ) : (
+              <AuditTable
+                events={events ?? []}
+                emptyTitle={t("audit.emptyTitle")}
+                emptyBody={t("audit.emptyBody")}
               />
             )}
           </section>

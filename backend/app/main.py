@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
 from app.api.tenants import router as tenants_router
 from app.api.users import router as users_router
@@ -36,6 +37,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(tenants_router)
 app.include_router(users_router)
+app.include_router(audit_router)
 
 
 @app.get("/health")

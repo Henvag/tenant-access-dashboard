@@ -62,12 +62,26 @@ function formatDetail(detail: ApiErrorBody["detail"]): string {
   return detail.map((item) => item.msg).filter(Boolean).join(", ");
 }
 
+export type AuditEvent = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  event_type: "login";
+  idp: "google" | "microsoft";
+  ip_address: string | null;
+  created_at: string;
+};
+
 export function getMe(): Promise<Me> {
   return request<Me>("/auth/me");
 }
 
 export function listUsers(): Promise<TenantUser[]> {
   return request<TenantUser[]>("/users");
+}
+
+export function listAuditEvents(limit = 50): Promise<AuditEvent[]> {
+  return request<AuditEvent[]>(`/audit?limit=${limit}`);
 }
 
 export function createTenant(name: string, workspace_domain: string): Promise<Tenant> {

@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.auth.audit import record_login
 from app.auth.identity import (
     LoginError,
     email_from_oidc_claims,
@@ -114,6 +115,7 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)):
             display_name=userinfo.get("name"),
             hosted_domain=hosted_domain,
         )
+        await record_login(db, user=user, idp=idp, request=request)
         await db.commit()
     except LoginError as exc:
         await db.rollback()

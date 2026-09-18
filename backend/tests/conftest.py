@@ -74,6 +74,12 @@ async def _prepare_database() -> None:
                 )
             )
             await connection.execute(text(f"GRANT USAGE ON TYPE user_role TO {APP_ROLE}"))
+            await connection.execute(
+                text(f"GRANT USAGE ON TYPE identity_provider TO {APP_ROLE}")
+            )
+            await connection.execute(
+                text(f"GRANT USAGE ON TYPE audit_event_type TO {APP_ROLE}")
+            )
     finally:
         await admin_engine.dispose()
 

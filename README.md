@@ -25,7 +25,7 @@ Small, finished, deployed. Built to show how I approach multi-tenant SaaS, ident
 
 1. Open the demo, pick **Register company**, and enter your email domain (`gmail.com` or `outlook.com` for a personal demo).
 2. **Continue with Google** or **Continue with Microsoft** with an account on that domain. The first person from a domain becomes **admin**.
-3. You land on **Overview** (people, admins, members, recent sign-ins). **People** is the full directory with search and role filter.
+3. You land on **Overview** (stats + recent audit activity). **People** is the directory; **Audit** lists every successful sign-in with IdP and time.
 4. Register a second company on a different domain and sign in from there. That admin sees **only** their tenant — the first one does not exist for them, and that is enforced by the database, not the UI.
 
 ---
@@ -67,7 +67,7 @@ Google or Entra ID (OIDC) ──id_token──▶ FastAPI ──▶ email domain
 1. Company registers with a **workspace domain** (`acme.com`).
 2. User picks *Continue with Google* or *Continue with Microsoft*. Authlib runs the OpenID Connect code flow — no hand-rolled OAuth. The chosen provider is stored in the session for the shared `/auth/callback`.
 3. The email domain (or Google Workspace `hd` when present) is looked up in `tenants`. No tenant → clear error. Google `hd`/email mismatch → rejected.
-4. User is upserted **inside** that tenant's RLS context, tagged with `idp` + `oidc_sub`. First user on a domain gets `admin`; everyone after gets `user`. Signing in later with the other IdP on the same email links to the same user row.
+4. User is upserted **inside** that tenant's RLS context, tagged with `idp` + `oidc_sub`. First user on a domain gets `admin`; everyone after gets `user`. Signing in later with the other IdP on the same email links to the same user row. A **sign-in audit event** is written in the same transaction (IdP, time, IP).
 5. A signed, HTTP-only session cookie carries `user_id` + `tenant_id`. Every later request re-applies the RLS context from it.
 
 Roles are deliberately just `admin` / `user`. Admins see the directory; users see their own profile.
@@ -89,11 +89,12 @@ Production is a single container: the Dockerfile builds the React app, copies it
 ```
 backend/
   app/
-    api/         auth (OIDC login/callback/me/logout), tenants (signup), users (admin list)
+    api/         auth (OIDC login/callback/me/logout), tenants, users, audit
     auth/        identity.py  domain→tenant resolution + user upsert
-                 oidc.py      Authlib client
+                 oidc.py      Authlib clients (Google + Microsoft)
                  rls.py       set_config('app.tenant_id') per transaction
-    models/      Tenant, User (SQLAlchemy)
+                 audit.py     append sign-in audit events
+    models/      Tenant, User, AuditEvent (SQLAlchemy)
     schemas/     Pydantic request/response models
     config.py    env-driven settings; derives redirect URI from RENDER_EXTERNAL_URL in prod
   alembic/       migrations, including the RLS policy
@@ -173,6 +174,7 @@ $env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/
 The suite creates a dedicated test database and a non-superuser `app_test` role, runs migrations, then asserts:
 
 - tenant A cannot read tenant B's users (and vice versa)
+- tenant A cannot read tenant B's audit events
 - with no tenant context, reads return nothing and inserts are rejected
 - domain normalization and `hd`/email mismatch handling
 
@@ -199,8 +201,7 @@ The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing
 
 Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
 
-- Sign-in **audit log** per tenant, reusing the RLS pattern
 - **Terraform** + a second hosting model (Fly.io or a Kubernetes target)
 - Structured logging / request IDs and a deeper `/health`
 
-Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID).
+Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail.

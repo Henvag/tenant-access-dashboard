@@ -43,6 +43,7 @@ const en = {
   "nav.label": "Main",
   "nav.overview": "Overview",
   "nav.people": "People",
+  "nav.audit": "Audit",
   "sidebar.tenant": "Tenant",
   "role.admin": "Admin",
   "role.member": "Member",
@@ -61,11 +62,11 @@ const en = {
   "stats.active": "Active this week",
   "stats.activeHint": "Signed in within 7 days",
 
-  "recent.title": "Recent sign-ins",
-  "recent.hint": "Latest activity for @{domain}",
-  "recent.viewAll": "View all people →",
+  "recent.title": "Recent activity",
+  "recent.hint": "Latest sign-ins for @{domain}",
+  "recent.viewAll": "View audit log →",
   "recent.emptyTitle": "No sign-ins yet",
-  "recent.emptyBody": "You'll see people here as soon as they sign in with Google.",
+  "recent.emptyBody": "Sign-ins appear here as people authenticate with Google or Microsoft.",
 
   "people.title": "Everyone in {tenant}",
   "people.count": "{shown} of {total} shown · isolated to your tenant",
@@ -76,7 +77,19 @@ const en = {
   "people.noMatches": "No matches",
   "people.noMatchesBody": "Try a different search or clear the role filter.",
   "people.emptyTitle": "No people yet",
-  "people.emptyBody": "Everyone who signs in with a matching Google account will appear here.",
+  "people.emptyBody": "Everyone who signs in with a matching account will appear here.",
+
+  "audit.title": "Sign-in audit",
+  "audit.hint": "{count} events · isolated to your tenant",
+  "audit.event": "Event",
+  "audit.idp": "Identity provider",
+  "audit.ip": "IP",
+  "audit.when": "When",
+  "audit.login": "Sign-in",
+  "audit.emptyTitle": "No audit events yet",
+  "audit.emptyBody": "Successful sign-ins are recorded here with IdP and time.",
+  "idp.google": "Google",
+  "idp.microsoft": "Microsoft",
 
   "table.person": "Person",
   "table.role": "Role",
@@ -96,15 +109,16 @@ const en = {
   "member.body":
     "Member of {tenant}. Only admins can see the full list of people. Last sign-in: {time}.",
   "error.loadPeople": "Could not load people",
+  "error.loadAudit": "Could not load audit log",
 
   "auth.no_tenant":
     "No company is registered for your email domain yet. Register it first, then sign in.",
   "auth.invalid_domain": "That email domain is not valid.",
   "auth.domain_mismatch": "Your Google account domain does not match this Workspace.",
-  "auth.missing_claims": "Google did not return a verified email. Try again.",
-  "auth.unverified_email": "Your Google email is not verified.",
-  "auth.identity_conflict": "This email is already linked to a different Google account.",
-  "auth.oidc_failed": "Google sign-in failed. Try again.",
+  "auth.missing_claims": "Sign-in did not return a verified email. Try again.",
+  "auth.unverified_email": "Your email is not verified.",
+  "auth.identity_conflict": "This email is already linked to a different identity.",
+  "auth.oidc_failed": "Sign-in failed. Try again.",
   "auth.generic": "Sign-in error: {code}",
 } as const;
 
@@ -149,6 +163,7 @@ const no: Record<TKey, string> = {
   "nav.label": "Hovedmeny",
   "nav.overview": "Oversikt",
   "nav.people": "Personer",
+  "nav.audit": "Revisjonslogg",
   "sidebar.tenant": "Tenant",
   "role.admin": "Administrator",
   "role.member": "Medlem",
@@ -167,11 +182,11 @@ const no: Record<TKey, string> = {
   "stats.active": "Aktive denne uken",
   "stats.activeHint": "Logget inn siste 7 dager",
 
-  "recent.title": "Siste innlogginger",
-  "recent.hint": "Siste aktivitet for @{domain}",
-  "recent.viewAll": "Se alle personer →",
+  "recent.title": "Siste aktivitet",
+  "recent.hint": "Siste innlogginger for @{domain}",
+  "recent.viewAll": "Se revisjonslogg →",
   "recent.emptyTitle": "Ingen innlogginger enda",
-  "recent.emptyBody": "Personer vises her så snart de logger inn med Google.",
+  "recent.emptyBody": "Innlogginger vises her når noen autentiserer seg med Google eller Microsoft.",
 
   "people.title": "Alle i {tenant}",
   "people.count": "{shown} av {total} vises · isolert til din tenant",
@@ -182,7 +197,19 @@ const no: Record<TKey, string> = {
   "people.noMatches": "Ingen treff",
   "people.noMatchesBody": "Prøv et annet søk eller fjern rollefilteret.",
   "people.emptyTitle": "Ingen personer enda",
-  "people.emptyBody": "Alle som logger inn med en matchende Google-konto vises her.",
+  "people.emptyBody": "Alle som logger inn med en matchende konto vises her.",
+
+  "audit.title": "Innloggingsrevisjon",
+  "audit.hint": "{count} hendelser · isolert til din tenant",
+  "audit.event": "Hendelse",
+  "audit.idp": "Identitetsleverandør",
+  "audit.ip": "IP",
+  "audit.when": "Når",
+  "audit.login": "Innlogging",
+  "audit.emptyTitle": "Ingen revisjonshendelser enda",
+  "audit.emptyBody": "Vellykkede innlogginger lagres her med IdP og tidspunkt.",
+  "idp.google": "Google",
+  "idp.microsoft": "Microsoft",
 
   "table.person": "Person",
   "table.role": "Rolle",
@@ -202,15 +229,16 @@ const no: Record<TKey, string> = {
   "member.body":
     "Medlem av {tenant}. Bare administratorer kan se hele personlisten. Sist innlogget: {time}.",
   "error.loadPeople": "Kunne ikke laste personer",
+  "error.loadAudit": "Kunne ikke laste revisjonsloggen",
 
   "auth.no_tenant":
     "Ingen selskap er registrert for e-postdomenet ditt enda. Registrer det først, og logg deretter inn.",
   "auth.invalid_domain": "E-postdomenet er ikke gyldig.",
   "auth.domain_mismatch": "Domenet på Google-kontoen stemmer ikke med denne Workspace-tenanten.",
-  "auth.missing_claims": "Google returnerte ikke en verifisert e-post. Prøv igjen.",
-  "auth.unverified_email": "Google-e-posten din er ikke verifisert.",
-  "auth.identity_conflict": "Denne e-posten er allerede knyttet til en annen Google-konto.",
-  "auth.oidc_failed": "Google-innlogging feilet. Prøv igjen.",
+  "auth.missing_claims": "Innlogging returnerte ikke en verifisert e-post. Prøv igjen.",
+  "auth.unverified_email": "E-posten din er ikke verifisert.",
+  "auth.identity_conflict": "Denne e-posten er allerede knyttet til en annen identitet.",
+  "auth.oidc_failed": "Innlogging feilet. Prøv igjen.",
   "auth.generic": "Innloggingsfeil: {code}",
 };
 

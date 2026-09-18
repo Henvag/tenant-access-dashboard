@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import settings
-from app.models import Tenant, User  # noqa: F401 — register metadata
+from app.models import AuditEvent, Tenant, User  # noqa: F401 — register metadata
 from app.models.base import Base
 
 config = context.config
