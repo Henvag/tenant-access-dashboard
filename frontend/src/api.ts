@@ -77,8 +77,8 @@ export function createTenant(name: string, workspace_domain: string): Promise<Te
   });
 }
 
-export function loginUrl(): string {
-  return `${API_BASE}/auth/login`;
+export function loginUrl(provider: "google" | "microsoft" = "google"): string {
+  return `${API_BASE}/auth/login?provider=${provider}`;
 }
 
 export function logoutUrl(): string {

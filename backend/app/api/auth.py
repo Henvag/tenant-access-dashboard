@@ -6,13 +6,29 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.auth.identity import LoginError, upsert_user_from_oidc, write_login_session
+from app.auth.identity import (
+    LoginError,
+    email_from_oidc_claims,
+    upsert_user_from_oidc,
+    write_login_session,
+)
+from app.auth.oidc import PROVIDERS
 from app.config import settings
 from app.db import get_db
 from app.models import User
+from app.models.user import IdentityProvider
 from app.schemas.user import MeOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _microsoft_claims_options() -> dict:
+    # /common and /consumers mint tokens whose iss is the real tenant GUID.
+    return {
+        "iss": {"essential": True},
+        "aud": {"essential": True, "value": settings.entra_client_id},
+        "exp": {"essential": True},
+    }
 
 
 def _frontend_redirect(*, error: str | None = None) -> RedirectResponse:
@@ -23,41 +39,80 @@ def _frontend_redirect(*, error: str | None = None) -> RedirectResponse:
     return RedirectResponse(location, status_code=status.HTTP_302_FOUND)
 
 
-@router.get("/login")
-async def login(request: Request):
-    """Start Google Workspace OIDC. Tenant is resolved from email domain after callback."""
-    if not settings.google_client_id or not settings.google_client_secret:
+def _provider_configured(provider: str) -> bool:
+    if provider == "google":
+        return bool(settings.google_client_id and settings.google_client_secret)
+    if provider == "microsoft":
+        return bool(settings.entra_client_id and settings.entra_client_secret)
+    return False
+
+
+def _oauth_client(request: Request, provider: str):
+    oauth = request.app.state.oauth
+    client = getattr(oauth, provider, None)
+    if client is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Google OIDC is not configured",
+            detail=f"{provider} OIDC is not configured",
         )
-    return await request.app.state.oauth.google.authorize_redirect(
-        request, settings.resolved_redirect_uri
-    )
+    return client
+
+
+@router.get("/login")
+async def login(request: Request, provider: str = "google"):
+    """Start OIDC. Tenant is resolved from email domain after callback."""
+    provider = provider.strip().lower()
+    if provider not in PROVIDERS or not _provider_configured(provider):
+        return _frontend_redirect(error="oidc_failed")
+
+    request.session["oidc_provider"] = provider
+    client = _oauth_client(request, provider)
+    return await client.authorize_redirect(request, settings.resolved_redirect_uri)
 
 
 @router.get("/callback")
 async def callback(request: Request, db: AsyncSession = Depends(get_db)):
+    provider = (request.session.pop("oidc_provider", None) or "google").lower()
+    if provider not in PROVIDERS or not _provider_configured(provider):
+        return _frontend_redirect(error="oidc_failed")
+
+    client = _oauth_client(request, provider)
     try:
-        token = await request.app.state.oauth.google.authorize_access_token(request)
+        if provider == "microsoft":
+            token = await client.authorize_access_token(
+                request,
+                claims_options=_microsoft_claims_options(),
+            )
+        else:
+            token = await client.authorize_access_token(request)
     except Exception:
         return _frontend_redirect(error="oidc_failed")
 
     userinfo = token.get("userinfo") or {}
-    email = (userinfo.get("email") or "").strip().lower()
-    google_sub = userinfo.get("sub")
-    if not email or not google_sub:
+    if not userinfo and provider == "microsoft":
+        try:
+            userinfo = await client.userinfo(token=token)
+        except Exception:
+            userinfo = {}
+
+    email = email_from_oidc_claims(userinfo)
+    oidc_sub = userinfo.get("sub")
+    if not email or not oidc_sub:
         return _frontend_redirect(error="missing_claims")
-    if userinfo.get("email_verified") is False:
+    if provider == "google" and userinfo.get("email_verified") is False:
         return _frontend_redirect(error="unverified_email")
+
+    idp = IdentityProvider.microsoft if provider == "microsoft" else IdentityProvider.google
+    hosted_domain = userinfo.get("hd") if provider == "google" else None
 
     try:
         user = await upsert_user_from_oidc(
             db,
             email=email,
-            google_sub=str(google_sub),
+            idp=idp,
+            oidc_sub=str(oidc_sub),
             display_name=userinfo.get("name"),
-            hosted_domain=userinfo.get("hd"),
+            hosted_domain=hosted_domain,
         )
         await db.commit()
     except LoginError as exc:

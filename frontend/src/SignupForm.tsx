@@ -50,7 +50,8 @@ export default function SignupForm({ onCreated }: Props) {
           required
         />
         <small>
-          {t("form.domainHelpBefore")} <code>gmail.com</code> {t("form.domainHelpAfter")}
+          {t("form.domainHelpBefore")} <code>gmail.com</code> / <code>outlook.com</code>
+          {t("form.domainHelpAfter")}
         </small>
       </label>
       {error ? (

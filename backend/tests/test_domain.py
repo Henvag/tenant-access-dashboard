@@ -10,6 +10,11 @@ def test_normalizes_gmail_and_googlemail():
     assert normalize_workspace_domain("googlemail.com") == "gmail.com"
 
 
+def test_normalizes_microsoft_consumer_aliases():
+    assert normalize_workspace_domain("Hotmail.com") == "outlook.com"
+    assert normalize_workspace_domain("live.com") == "outlook.com"
+
+
 def test_rejects_urls():
     with pytest.raises(ValueError):
         normalize_workspace_domain("https://acme.com")

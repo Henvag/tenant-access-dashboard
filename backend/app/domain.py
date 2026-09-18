@@ -17,4 +17,7 @@ def normalize_workspace_domain(raw: str) -> str:
         raise ValueError("Invalid workspace domain")
     if domain == "googlemail.com":
         return "gmail.com"
+    # Personal Microsoft account aliases → one demo domain.
+    if domain in {"hotmail.com", "live.com", "msn.com"}:
+        return "outlook.com"
     return domain

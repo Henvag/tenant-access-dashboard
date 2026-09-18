@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { loginUrl } from "./api";
 import { useLang } from "./i18n";
-import { IconGlobe, IconGoogle, IconLock, IconShield } from "./Icons";
+import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
 
@@ -101,10 +101,16 @@ export default function Landing({ initialError, initialTab }: Props) {
           <div className="tab-panel">
             <h2>{t("signin.title")}</h2>
             <p className="hint">{t("signin.hint")}</p>
-            <a className="btn btn-google btn-block" href={loginUrl()}>
-              <IconGoogle />
-              {t("signin.google")}
-            </a>
+            <div className="signin-actions">
+              <a className="btn btn-google btn-block" href={loginUrl("google")}>
+                <IconGoogle />
+                {t("signin.google")}
+              </a>
+              <a className="btn btn-microsoft btn-block" href={loginUrl("microsoft")}>
+                <IconMicrosoft />
+                {t("signin.microsoft")}
+              </a>
+            </div>
             <p className="fineprint">
               <IconGlobe width={14} height={14} />
               {t("signin.new")}{" "}

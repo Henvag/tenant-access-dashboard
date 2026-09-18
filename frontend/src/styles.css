@@ -181,6 +181,23 @@ code {
   background: var(--surface-2);
 }
 
+.btn-microsoft {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-microsoft:hover {
+  background: var(--surface-2);
+}
+
+.signin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .btn-ghost {
   background: transparent;
   color: inherit;

@@ -6,7 +6,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.auth.rls import set_tenant_rls
-from app.models import Tenant, User, UserRole
+from app.models import IdentityProvider, Tenant, User, UserRole
 
 
 pytestmark = pytest.mark.asyncio
@@ -28,7 +28,8 @@ async def test_rls_hides_other_tenant_users(app_session_factory: async_sessionma
             User(
                 tenant_id=acme.id,
                 email=f"ada@{acme.workspace_domain}",
-                google_sub=f"sub-acme-{suffix}",
+                idp=IdentityProvider.google,
+                oidc_sub=f"sub-acme-{suffix}",
                 role=UserRole.admin,
             )
         )
@@ -40,7 +41,8 @@ async def test_rls_hides_other_tenant_users(app_session_factory: async_sessionma
             User(
                 tenant_id=beta.id,
                 email=f"bob@{beta.workspace_domain}",
-                google_sub=f"sub-beta-{suffix}",
+                idp=IdentityProvider.google,
+                oidc_sub=f"sub-beta-{suffix}",
                 role=UserRole.admin,
             )
         )
@@ -72,7 +74,8 @@ async def test_insert_without_tenant_context_is_rejected(
             User(
                 tenant_id=tenant.id,
                 email=f"eve@{tenant.workspace_domain}",
-                google_sub=f"sub-lone-{suffix}",
+                idp=IdentityProvider.google,
+                oidc_sub=f"sub-lone-{suffix}",
                 role=UserRole.user,
             )
         )

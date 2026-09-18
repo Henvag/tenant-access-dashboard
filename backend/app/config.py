@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8000/auth/callback"
+    entra_client_id: str = ""
+    entra_client_secret: str = ""
+    # common = work + personal; consumers = personal Microsoft accounts only
+    entra_tenant_id: str = "common"
     session_secret: str = "change-me"
     frontend_origin: str = "http://localhost:5173"
     environment: str = "development"

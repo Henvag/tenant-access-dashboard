@@ -16,11 +16,16 @@ class UserRole(str, enum.Enum):
     user = "user"
 
 
+class IdentityProvider(str, enum.Enum):
+    google = "google"
+    microsoft = "microsoft"
+
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
         UniqueConstraint("email"),
-        UniqueConstraint("google_sub"),
+        UniqueConstraint("idp", "oidc_sub"),
     )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -31,7 +36,11 @@ class User(Base):
         nullable=False,
     )
     email: Mapped[str] = mapped_column(String(320), nullable=False)
-    google_sub: Mapped[str] = mapped_column(String(255), nullable=False)
+    idp: Mapped[IdentityProvider] = mapped_column(
+        Enum(IdentityProvider, name="identity_provider"),
+        nullable=False,
+    )
+    oidc_sub: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.rls import set_tenant_rls
 from app.domain import normalize_workspace_domain
 from app.models import Tenant, User, UserRole
+from app.models.user import IdentityProvider
 
 
 class LoginError(Exception):
@@ -28,11 +29,22 @@ def workspace_domain_from_claims(email: str, hosted_domain: str | None) -> str:
         raise LoginError("invalid_domain") from None
 
 
+def email_from_oidc_claims(claims: dict) -> str:
+    email = (claims.get("email") or "").strip().lower()
+    if email and "@" in email:
+        return email
+    preferred = (claims.get("preferred_username") or "").strip().lower()
+    if preferred and "@" in preferred:
+        return preferred
+    return ""
+
+
 async def upsert_user_from_oidc(
     session: AsyncSession,
     *,
     email: str,
-    google_sub: str,
+    idp: IdentityProvider,
+    oidc_sub: str,
     display_name: str | None,
     hosted_domain: str | None,
 ) -> User:
@@ -45,10 +57,14 @@ async def upsert_user_from_oidc(
 
     await set_tenant_rls(session, tenant.id)
 
-    user = await session.scalar(select(User).where(User.google_sub == google_sub))
+    user = await session.scalar(
+        select(User).where(User.idp == idp, User.oidc_sub == oidc_sub)
+    )
     if user is None:
         user = await session.scalar(select(User).where(User.email == email))
-        if user is not None and user.google_sub != google_sub:
+        # Same email + same IdP but different subject → conflict.
+        # Same email + different IdP → link (update idp/sub on the existing row).
+        if user is not None and user.idp == idp and user.oidc_sub != oidc_sub:
             raise LoginError("identity_conflict")
 
     now = datetime.now(UTC)
@@ -57,7 +73,8 @@ async def upsert_user_from_oidc(
         user = User(
             tenant_id=tenant.id,
             email=email,
-            google_sub=google_sub,
+            idp=idp,
+            oidc_sub=oidc_sub,
             role=UserRole.admin if user_count == 0 else UserRole.user,
             display_name=display_name,
             last_login_at=now,
@@ -66,6 +83,8 @@ async def upsert_user_from_oidc(
         await session.flush()
     else:
         user.email = email
+        user.idp = idp
+        user.oidc_sub = oidc_sub
         user.display_name = display_name
         user.last_login_at = now
 
