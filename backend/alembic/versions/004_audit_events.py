@@ -16,11 +16,24 @@ down_revision: Union[str, None] = "003_idp_subjects"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-audit_event_type = sa.Enum("login", name="audit_event_type")
-
 
 def upgrade() -> None:
-    audit_event_type.create(op.get_bind(), checkfirst=True)
+    # Create enums with IF NOT EXISTS semantics — create_table must not emit CREATE TYPE.
+    op.execute(
+        """
+        DO $$ BEGIN
+            CREATE TYPE audit_event_type AS ENUM ('login');
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END $$;
+        """
+    )
+
+    audit_event_type = postgresql.ENUM("login", name="audit_event_type", create_type=False)
+    identity_provider = postgresql.ENUM(
+        "google", "microsoft", name="identity_provider", create_type=False
+    )
+
     op.create_table(
         "audit_events",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -28,11 +41,7 @@ def upgrade() -> None:
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("event_type", audit_event_type, nullable=False),
-        sa.Column(
-            "idp",
-            postgresql.ENUM("google", "microsoft", name="identity_provider", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("idp", identity_provider, nullable=False),
         sa.Column("ip_address", sa.String(length=64), nullable=True),
         sa.Column("user_agent", sa.String(length=512), nullable=True),
         sa.Column(
@@ -80,4 +89,4 @@ def downgrade() -> None:
     op.drop_index("ix_audit_events_tenant_created", table_name="audit_events")
     op.drop_index(op.f("ix_audit_events_tenant_id"), table_name="audit_events")
     op.drop_table("audit_events")
-    audit_event_type.drop(op.get_bind(), checkfirst=True)
+    op.execute("DROP TYPE IF EXISTS audit_event_type")

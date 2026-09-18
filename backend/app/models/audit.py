@@ -33,7 +33,7 @@ class AuditEvent(Base):
     )
     email: Mapped[str] = mapped_column(String(320), nullable=False)
     event_type: Mapped[AuditEventType] = mapped_column(
-        Enum(AuditEventType, name="audit_event_type"),
+        Enum(AuditEventType, name="audit_event_type", create_constraint=False),
         nullable=False,
     )
     idp: Mapped[IdentityProvider] = mapped_column(
