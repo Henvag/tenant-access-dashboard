@@ -80,7 +80,7 @@ On every push: backend pytest against Postgres, frontend production build, Docke
 
 1. Push this repo to GitHub.
 2. Render → **New** → **Blueprint** → select the repo (`render.yaml`).
-3. Postgres is `basic-256mb` (Render no longer offers free Postgres). The web service is `free`.
+3. Postgres and the web service are both on Render's **free** plans. The database expires after **30 days** unless you upgrade. The web app sleeps after idle time.
 4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` when prompted.
 5. After the first deploy, copy the public URL (`https://<service>.onrender.com`) into Google OAuth:
    - Authorized origin: that URL
