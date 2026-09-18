@@ -26,34 +26,39 @@ export default function SignupForm({ onCreated }: Props) {
   }
 
   return (
-    <form className="panel" onSubmit={onSubmit}>
-      <h2>Register a company</h2>
-      <p className="lede">
-        Employees sign in with Google. The first person whose email matches this
-        domain becomes admin. For a personal Gmail demo, use gmail.com.
-      </p>
-      <label>
-        Company name
+    <form className="form" onSubmit={onSubmit}>
+      <label className="field">
+        <span>Company name</span>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoComplete="organization"
+          placeholder="Acme Inc"
           required
         />
       </label>
-      <label>
-        Google Workspace domain
+      <label className="field">
+        <span>Email domain</span>
         <input
           value={domain}
           onChange={(event) => setDomain(event.target.value)}
-          placeholder="gmail.com"
+          placeholder="acme.com"
           autoComplete="off"
+          spellCheck={false}
           required
         />
+        <small>
+          People sign in with Google using this domain. Use <code>gmail.com</code> for a
+          personal demo.
+        </small>
       </label>
-      {error ? <p className="banner error">{error}</p> : null}
-      <button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create tenant"}
+      {error ? (
+        <p className="banner error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
+        {pending ? "Creating…" : "Register company"}
       </button>
     </form>
   );
