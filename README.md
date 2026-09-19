@@ -1,131 +1,128 @@
 # Tenant Access Dashboard
 
-**A company signs up. Employees sign in with Google or Microsoft. An admin sees who has access — and can never see another company's people.**
+I wanted a small, finished project that shows how I think about multi-tenant SaaS: identity, isolation, and shipping the same app without locking it to one host.
 
-Small, finished, deployed. Built to show how I approach multi-tenant SaaS, identity (OIDC), and the DevOps that gets it into production.
+**Idea:** a company registers. People sign in with Google or Microsoft. An admin can see who has access — and cannot see another company's people, even if the app code forgets a filter.
 
 [![CI](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml)
 
-**Live demo → https://tenant-access-dashboard.onrender.com**
-*(free tier: first load can take ~30 s while the service wakes up)*
+**Why both Render and Fly?** Not because I need two demos — because I wanted to show the app isn't married to one cloud. Same multi-stage `Dockerfile`, same migrations and OIDC config; Render is a PaaS blueprint (`render.yaml`), Fly is a container platform (`fly.toml` + `fly deploy`). If the image is portable, switching hosts is mostly secrets and a redirect URI.
+
+| | URL | Role |
+| --- | --- | --- |
+| **Render** | https://tenant-access-dashboard.onrender.com | Primary demo / blueprint deploy. Free tier — cold start can take ~30 s |
+| **Fly.io** | https://tenant-access-dashboard.fly.dev | Same image on a second hosting model |
 
 ---
 
-## In pictures
+## Screenshots
 
 | Landing / sign-in | Admin overview |
 | --- | --- |
-| ![Landing page with Google sign-in and company registration](docs/screenshots/landing.png) | ![Admin overview with stat cards and recent sign-ins](docs/screenshots/overview.png) |
+| ![Landing](docs/screenshots/landing.png) | ![Overview](docs/screenshots/overview.png) |
 
-| People directory (admin) | Same dashboard in Norwegian |
+| People (admin) | Norwegian UI |
 | --- | --- |
-| ![People table with search, role filter and activity status](docs/screenshots/people.png) | ![Dashboard with the language toggle set to Norwegian](docs/screenshots/norwegian.png) |
+| ![People](docs/screenshots/people.png) | ![NO](docs/screenshots/norwegian.png) |
 
-## Try it in 30 seconds
+## Try it
 
-1. Open the demo, pick **Register company**, and enter your email domain (`gmail.com` or `outlook.com` for a personal demo).
-2. **Continue with Google** or **Continue with Microsoft** with an account on that domain. The first person from a domain becomes **admin**.
-3. You land on **Overview** (stats + recent audit activity). **People** is the directory; **Audit** lists every successful sign-in with IdP and time.
-4. Register a second company on a different domain and sign in from there. That admin sees **only** their tenant — the first one does not exist for them, and that is enforced by the database, not the UI.
+1. Open either link → **Register company** with your email domain (`gmail.com` or `outlook.com` works fine for a personal demo).
+2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
+3. **Overview** is stats + recent activity. **People** is the directory. **Audit** shows successful and failed sign-ins (which IdP, when, and why it failed if it did).
+4. Register a second company on a different domain and sign in there. You should only see that tenant.
+
+There's an **EN / NO** language toggle if you want to poke at the UI.
 
 ---
 
-## The interesting part: isolation you can't forget to apply
+## Why RLS, not just `WHERE tenant_id = ?`
 
-Most multi-tenant bugs are a missing `WHERE tenant_id = ?`. This project makes that bug impossible at the database layer with **PostgreSQL row-level security**:
+The classic multi-tenant bug is forgetting the tenant filter somewhere. I put isolation in Postgres so the database refuses to leak rows:
 
 ```sql
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE users FORCE ROW LEVEL SECURITY;   -- applies even to the table owner
+ALTER TABLE users FORCE ROW LEVEL SECURITY;   -- even the table owner
 
 CREATE POLICY users_tenant_isolation ON users
   USING      (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
   WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
 ```
 
-Every request that touches user data runs inside a transaction that first sets the tenant:
+On every request that needs tenant data I set the context for that transaction:
 
 ```python
 await session.execute(
-    text("SELECT set_config('app.tenant_id', :tenant_id, true)"),   # true = transaction-local
+    text("SELECT set_config('app.tenant_id', :tenant_id, true)"),
     {"tenant_id": str(tenant_id)},
 )
 ```
 
-What that buys you:
+No context → empty reads and rejected writes. CI runs the RLS tests as a normal DB role, not a superuser (superusers bypass RLS and would fake the result).
 
-- A query with **no** tenant context returns **zero rows** and rejects inserts — it fails closed.
-- A forgotten filter in application code cannot leak another tenant's rows.
-- `tests/test_rls.py` creates two tenants and proves each sees only its own users. CI runs those tests as a **non-superuser** role, because superusers bypass RLS and would make the test meaningless.
-
-## How sign-in maps to a tenant
+## Sign-in → tenant
 
 ```
-Google or Entra ID (OIDC) ──id_token──▶ FastAPI ──▶ email domain ──▶ tenant
+Google or Entra (OIDC) ──id_token──▶ FastAPI ──▶ email domain ──▶ tenant
 ```
 
-1. Company registers with a **workspace domain** (`acme.com`).
-2. User picks *Continue with Google* or *Continue with Microsoft*. Authlib runs the OpenID Connect code flow — no hand-rolled OAuth. The chosen provider is stored in the session for the shared `/auth/callback`.
-3. The email domain (or Google Workspace `hd` when present) is looked up in `tenants`. No tenant → clear error. Google `hd`/email mismatch → rejected.
-4. User is upserted **inside** that tenant's RLS context, tagged with `idp` + `oidc_sub`. First user on a domain gets `admin`; everyone after gets `user`. Signing in later with the other IdP on the same email links to the same user row. A **sign-in audit event** is written in the same transaction (IdP, time, IP). Failed sign-ins for a known tenant domain are recorded too (with an error code).
-5. A signed, HTTP-only session cookie carries `user_id` + `tenant_id`. Every later request re-applies the RLS context from it.
+Roughly:
 
-Roles are deliberately just `admin` / `user`. Admins see the directory; users see their own profile.
+1. Company registers a domain (`acme.com`).
+2. User picks Google or Microsoft. Authlib handles the OIDC flow; both IdPs land on the same `/auth/callback`.
+3. Email domain (or Google Workspace `hd`) has to match a registered tenant.
+4. User is created/updated **inside** that tenant's RLS context, stored with `idp` + `oidc_sub`. First user gets admin. Same email via the other IdP links to the same person. I write audit events for success and for failed sign-ins when we know the tenant.
+5. Session cookie holds `user_id` + `tenant_id`; later requests re-apply RLS from that.
 
-## Stack
+Roles are deliberately just `admin` and `user`. I kept the surface small on purpose.
 
-| Layer | Choice | Why |
+## What I used
+
+| | | Why I picked it |
 | --- | --- | --- |
-| API | **FastAPI** (Python 3.12), SQLAlchemy 2 async, Alembic | Fast to ship, typed, first-class async Postgres |
-| Auth | **Authlib** OIDC (Google + Microsoft Entra ID) | Same library, two IdPs — matches identity-platform work |
-| Data | **PostgreSQL 16** with RLS | Isolation enforced where it can't be bypassed |
-| UI | **React 18** + TypeScript + Vite | Built and served from the API — one origin, one cookie |
-| Ship | **Docker** (multi-stage), **GitHub Actions**, **Render** + **Fly** (`fly.toml`) | Same image, two hosting models |
-| Ops | JSON logs + `X-Request-ID`, `/health` checks Postgres | Debuggable in any host's log stream |
+| API | FastAPI, SQLAlchemy 2 async, Alembic | Comfortable, typed, good async Postgres story |
+| Auth | Authlib (Google + Entra ID) | One OIDC path for two IdPs |
+| DB | PostgreSQL 16 + RLS | Isolation where I can't forget it |
+| UI | React + TypeScript + Vite | Built into the API image — one origin, one cookie |
+| Ship | Docker, GitHub Actions, Render + Fly | One image, two hosting models (PaaS vs containers) |
+| Ops | JSON logs, request IDs, `/health` with a DB check | Something useful when the free tier misbehaves |
 
-Production is a single container: the Dockerfile builds the React app, copies it into the FastAPI image, runs migrations on start, and serves API + UI from the same origin. The UI is bilingual (EN/NO) with no i18n dependency.
+One container builds the frontend, copies it in, runs migrations on start, and serves everything.
 
-## Repository map
+## Layout
 
 ```
 backend/
   app/
-    api/         auth (OIDC login/callback/me/logout), tenants, users, audit
-    auth/        identity.py  domain→tenant resolution + user upsert
-                 oidc.py      Authlib clients (Google + Microsoft)
-                 rls.py       set_config('app.tenant_id') per transaction
-                 audit.py     append sign-in audit events
-    models/      Tenant, User, AuditEvent (SQLAlchemy)
-    schemas/     Pydantic request/response models
-    config.py    env-driven settings; public URL from RENDER_EXTERNAL_URL or PUBLIC_BASE_URL
-  alembic/       migrations, including the RLS policy
-  tests/         domain parsing + two-tenant RLS isolation tests
-frontend/
-  src/           Landing, Dashboard, UserTable, i18n (EN/NO), design tokens in styles.css
-.github/workflows/ci.yml   pytest (vs. Postgres, non-superuser) · frontend build · docker build
+    api/         auth, tenants, users, audit
+    auth/        identity, oidc, rls, audit
+    models/      Tenant, User, AuditEvent
+    config.py    public URL from RENDER_EXTERNAL_URL or PUBLIC_BASE_URL
+  alembic/
+  tests/
+frontend/        EN/NO i18n, dashboard, landing
 Dockerfile · docker-compose.yml · render.yaml · fly.toml
+.github/workflows/ci.yml
 ```
 
 ---
 
-## Run it locally
+## Run it yourself
 
-### Option A: Docker Compose (simplest)
+**Docker** (easiest):
 
 ```powershell
 docker compose up --build
 ```
 
-Open http://localhost:8000. Postgres is exposed on host port **5433** so it won't collide with a local install.
-OIDC redirect URI for both Google and Microsoft: `http://localhost:8000/auth/callback`.
+Then http://localhost:8000. Postgres is on host port **5433**.  
+Redirect URI for both IdPs: `http://localhost:8000/auth/callback`.
 
-### Option B: Without Docker
-
-Requires Postgres 16 with a database `access_dashboard`, Python 3.12, Node 22.
+**Without Docker:** Postgres 16, Python 3.12, Node 22.
 
 ```powershell
 cd backend
-copy .env.example .env          # set Google and/or Entra client credentials
+copy .env.example .env
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt -r requirements-dev.txt
 .\.venv\Scripts\alembic upgrade head
@@ -135,36 +132,26 @@ python -m venv .venv
 ```powershell
 cd frontend
 npm install
-npm run dev                     # UI on http://localhost:5173, calls the API on :8000
+npm run dev
 ```
 
-### Google OAuth client
+### Google
 
-Create a *Web application* OAuth client in Google Cloud and set:
+Create a Web OAuth client. Origins: `http://localhost:5173`, `http://localhost:8000` (plus the production URLs below). Redirect: `http://localhost:8000/auth/callback`. Add yourself as a test user on the consent screen.
 
-- Authorized origins: `http://localhost:5173`, `http://localhost:8000`
-- Redirect URI: `http://localhost:8000/auth/callback`
-- Add yourself as a test user on the consent screen
+### Microsoft Entra
 
-Register a company with your domain (`gmail.com` for a personal Google account) → *Continue with Google*.
+I used a free personal Microsoft account — no paid Azure subscription for app registration.
 
-### Microsoft Entra ID app (personal Microsoft account)
+1. [Entra admin center](https://entra.microsoft.com) → App registrations → New
+2. Accounts: any org directory **and** personal Microsoft accounts
+3. Redirect (Web): `http://localhost:8000/auth/callback`
+4. Client secret → `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET`. Leave `ENTRA_TENANT_ID=common`
+5. If email is missing on the token, add the optional `email` claim under Token configuration
 
-Free. No paid Azure subscription required for app registration + sign-in testing.
+`outlook.com` / `hotmail.com` / `live.com` all normalize to `outlook.com` when you register.
 
-1. Open [Microsoft Entra admin center](https://entra.microsoft.com) → **Identity** → **Applications** → **App registrations** → **New registration**.
-2. Name it (e.g. `Tenant Access Dashboard`).
-3. Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**.
-4. Redirect URI (Web): `http://localhost:8000/auth/callback` (and later `https://tenant-access-dashboard.onrender.com/auth/callback`).
-5. Create a **Client secret** under **Certificates & secrets**.
-6. Copy **Application (client) ID** and the secret into `.env` as `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET`. Leave `ENTRA_TENANT_ID=common`.
-7. Under **Token configuration**, add optional claim `email` to the ID token if Microsoft does not return it by default.
-
-Register a company with your Microsoft email domain (`outlook.com`, `hotmail.com`, or `live.com` — they normalize to `outlook.com`) → *Continue with Microsoft*.
-
-Both IdPs share the same callback URL; the app remembers which provider started the login in the session.
-
-## Tests
+## Tests & CI
 
 ```powershell
 cd backend
@@ -172,68 +159,56 @@ $env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/
 .\.venv\Scripts\pytest
 ```
 
-The suite creates a dedicated test database and a non-superuser `app_test` role, runs migrations, then asserts:
+I care most that tenant A cannot see B's users or audit rows, and that no tenant context fails closed.
 
-- tenant A cannot read tenant B's users (and vice versa)
-- tenant A cannot read tenant B's audit events
-- with no tenant context, reads return nothing and inserts are rejected
-- domain normalization and `hd`/email mismatch handling
-
-## CI/CD
-
-Every push runs three GitHub Actions jobs in parallel: **backend** (pytest against a Postgres 16 service), **frontend** (production build), **docker** (image build). Render redeploys `main` automatically from the blueprint.
-
-## Deploy on Render
-
-1. Fork/push to GitHub.
-2. Render → **New → Blueprint** → pick the repo. `render.yaml` provisions a web service + Postgres, both on free plans.
-3. Enter `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` and (optionally) `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET` when prompted. `SESSION_SECRET` is generated for you. `ENTRA_TENANT_ID` defaults to `common`.
-4. After the first deploy, add to each IdP app:
-   - Google: authorized origin + redirect `https://<service>.onrender.com/auth/callback`
-   - Entra: the same redirect URI as a Web platform redirect
-
-The app derives its redirect URI from `RENDER_EXTERNAL_URL` (Render) or `PUBLIC_BASE_URL` (Fly / other hosts).
-
-> Free-tier notes: the web service sleeps after inactivity (hence the slow first load) and the Postgres instance expires after 30 days unless upgraded.
-
-## Deploy on Fly.io (same Docker image)
-
-This is the second hosting model: **container platform** vs Render’s PaaS blueprint. Same `Dockerfile`, same app.
-
-1. Install the [Fly CLI](https://fly.io/docs/flyctl/install/) and run `fly auth login`.
-2. From the repo root (with `fly.toml` already in the repo):
-   ```powershell
-   fly apps create tenant-access-dashboard
-   ```
-   If the name is taken, edit `app` in `fly.toml` and create that name instead.
-3. Postgres — pick one:
-   - **Simplest demo:** reuse Render’s **External** `DATABASE_URL` as a Fly secret (app on Fly, DB on Render).
-   - **Fully on Fly:** `fly postgres create` and attach, or set `DATABASE_URL` from the Fly Postgres connection string (`postgresql://…` is fine; the app upgrades it to asyncpg).
-4. Set secrets (same OAuth clients as Render, plus a new public URL):
-   ```powershell
-   fly secrets set ENVIRONMENT=production
-   fly secrets set PUBLIC_BASE_URL=https://tenant-access-dashboard.fly.dev
-   fly secrets set SESSION_SECRET=some-long-random-string
-   fly secrets set DATABASE_URL="postgresql://..."
-   fly secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
-   fly secrets set ENTRA_CLIENT_ID=... ENTRA_CLIENT_SECRET=... ENTRA_TENANT_ID=common
-   ```
-5. Deploy:
-   ```powershell
-   fly deploy
-   ```
-6. Add the Fly URL to Google and Entra redirect URIs:
-   - `https://tenant-access-dashboard.fly.dev/auth/callback`
-   - Authorized origin: `https://tenant-access-dashboard.fly.dev`
-
-Render remains the primary live demo link in this README; Fly proves the image is portable.
+Every push runs pytest, a frontend production build, and a Docker build. Render redeploys `main` from the blueprint.
 
 ---
 
-## Scope, and what comes next
+## Deploy
 
-Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
+### Render
 
-- **Terraform** for infra as code beyond Render Blueprint / Fly CLI
+1. Push the repo → New Blueprint → pick `render.yaml`
+2. Paste Google / Entra client credentials. Session secret is generated for you.
+3. Add redirects:
+   - `https://tenant-access-dashboard.onrender.com/auth/callback`
+   - Google origin: `https://tenant-access-dashboard.onrender.com`
 
-Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail, basic production observability, and more than one hosting model.
+Fair warning on free: the web service sleeps, and free Postgres ages out after 30 days unless you upgrade.
+
+### Fly.io
+
+Render alone would be enough to run the app. Fly is here on purpose: **prove the Docker image is host-agnostic**. Blueprint/PaaS on Render, containers on Fly — if both work, the packaging is doing its job.
+
+Live: https://tenant-access-dashboard.fly.dev
+
+```powershell
+# Windows install: iwr https://fly.io/install.ps1 -useb | iex
+fly auth login
+fly apps create tenant-access-dashboard
+fly secrets set ENVIRONMENT=production `
+  PUBLIC_BASE_URL=https://tenant-access-dashboard.fly.dev `
+  SESSION_SECRET="<any long random string>" `
+  DATABASE_URL="<external postgres url>" `
+  GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... `
+  ENTRA_CLIENT_ID=... ENTRA_CLIENT_SECRET=... ENTRA_TENANT_ID=common
+fly deploy
+```
+
+I pointed Fly at Render's **external** `DATABASE_URL` so I didn't need a second database for the demo. Session secrets don't need to match across hosts — they only sign cookies for that domain.
+
+Add the Fly callback in Google and Entra the same way:
+
+- `https://tenant-access-dashboard.fly.dev/auth/callback`
+- Google origin: `https://tenant-access-dashboard.fly.dev`
+
+The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
+
+---
+
+## What I left out
+
+I capped the scope so I could actually finish it. No Terraform yet, no fancy role hierarchy, no on-prem AD.
+
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures), basic observability, EN/NO UI, and **one portable image** shown on two hosts — Render for the main demo, Fly to make the “same container, different platform” point explicit.
