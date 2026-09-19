@@ -76,9 +76,16 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                   </div>
                 </td>
                 <td>
-                  <span className={failed ? "role role-failed" : "role role-user"}>
-                    {failed ? t("audit.loginFailed") : t("audit.login")}
-                  </span>
+                  <div className="event-cell">
+                    <span className={failed ? "role role-failed" : "role role-user"}>
+                      {failed ? t("audit.loginFailed") : t("audit.login")}
+                    </span>
+                    {failed ? (
+                      <span className="audit-detail warn" title={detail}>
+                        {detail}
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td>
                   <span className="idp-label">
@@ -93,7 +100,7 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                 {!compact ? (
                   <td>
                     <span className={failed ? "audit-detail warn" : "audit-detail muted"} title={detail}>
-                      {detail}
+                      {failed ? detail : t("audit.noDetail")}
                     </span>
                   </td>
                 ) : null}

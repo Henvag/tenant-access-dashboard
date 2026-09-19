@@ -969,6 +969,18 @@ input:focus {
   color: #b42318;
 }
 
+.event-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.event-cell .audit-detail {
+  max-width: 18rem;
+  white-space: normal;
+}
+
 .dot-label {
   display: inline-flex;
   align-items: center;
