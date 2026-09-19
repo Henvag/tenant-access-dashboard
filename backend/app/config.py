@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     session_secret: str = "change-me"
     frontend_origin: str = "http://localhost:5173"
     environment: str = "development"
+    # Render sets RENDER_EXTERNAL_URL; on Fly (or others) set PUBLIC_BASE_URL.
     render_external_url: str = ""
+    public_base_url: str = ""
 
     @field_validator("database_url")
     @classmethod
@@ -34,13 +36,15 @@ class Settings(BaseSettings):
 
     @property
     def public_origin(self) -> str:
-        if self.is_production and self.render_external_url:
-            return self.render_external_url.rstrip("/")
+        if self.is_production:
+            base = (self.public_base_url or self.render_external_url).rstrip("/")
+            if base:
+                return base
         return self.frontend_origin.rstrip("/")
 
     @property
     def resolved_redirect_uri(self) -> str:
-        if self.is_production and self.render_external_url:
+        if self.is_production and (self.public_base_url or self.render_external_url):
             return f"{self.public_origin}/auth/callback"
         return self.google_redirect_uri
 

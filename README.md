@@ -80,7 +80,7 @@ Roles are deliberately just `admin` / `user`. Admins see the directory; users se
 | Auth | **Authlib** OIDC (Google + Microsoft Entra ID) | Same library, two IdPs — matches identity-platform work |
 | Data | **PostgreSQL 16** with RLS | Isolation enforced where it can't be bypassed |
 | UI | **React 18** + TypeScript + Vite | Built and served from the API — one origin, one cookie |
-| Ship | **Docker** (multi-stage), **GitHub Actions**, **Render** blueprint | Container in, URL out |
+| Ship | **Docker** (multi-stage), **GitHub Actions**, **Render** + **Fly** (`fly.toml`) | Same image, two hosting models |
 | Ops | JSON logs + `X-Request-ID`, `/health` checks Postgres | Debuggable in any host's log stream |
 
 Production is a single container: the Dockerfile builds the React app, copies it into the FastAPI image, runs migrations on start, and serves API + UI from the same origin. The UI is bilingual (EN/NO) with no i18n dependency.
@@ -97,13 +97,13 @@ backend/
                  audit.py     append sign-in audit events
     models/      Tenant, User, AuditEvent (SQLAlchemy)
     schemas/     Pydantic request/response models
-    config.py    env-driven settings; derives redirect URI from RENDER_EXTERNAL_URL in prod
+    config.py    env-driven settings; public URL from RENDER_EXTERNAL_URL or PUBLIC_BASE_URL
   alembic/       migrations, including the RLS policy
   tests/         domain parsing + two-tenant RLS isolation tests
 frontend/
   src/           Landing, Dashboard, UserTable, i18n (EN/NO), design tokens in styles.css
 .github/workflows/ci.yml   pytest (vs. Postgres, non-superuser) · frontend build · docker build
-Dockerfile · docker-compose.yml · render.yaml
+Dockerfile · docker-compose.yml · render.yaml · fly.toml
 ```
 
 ---
@@ -192,9 +192,41 @@ Every push runs three GitHub Actions jobs in parallel: **backend** (pytest again
    - Google: authorized origin + redirect `https://<service>.onrender.com/auth/callback`
    - Entra: the same redirect URI as a Web platform redirect
 
-The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing else to configure.
+The app derives its redirect URI from `RENDER_EXTERNAL_URL` (Render) or `PUBLIC_BASE_URL` (Fly / other hosts).
 
 > Free-tier notes: the web service sleeps after inactivity (hence the slow first load) and the Postgres instance expires after 30 days unless upgraded.
+
+## Deploy on Fly.io (same Docker image)
+
+This is the second hosting model: **container platform** vs Render’s PaaS blueprint. Same `Dockerfile`, same app.
+
+1. Install the [Fly CLI](https://fly.io/docs/flyctl/install/) and run `fly auth login`.
+2. From the repo root (with `fly.toml` already in the repo):
+   ```powershell
+   fly apps create tenant-access-dashboard
+   ```
+   If the name is taken, edit `app` in `fly.toml` and create that name instead.
+3. Postgres — pick one:
+   - **Simplest demo:** reuse Render’s **External** `DATABASE_URL` as a Fly secret (app on Fly, DB on Render).
+   - **Fully on Fly:** `fly postgres create` and attach, or set `DATABASE_URL` from the Fly Postgres connection string (`postgresql://…` is fine; the app upgrades it to asyncpg).
+4. Set secrets (same OAuth clients as Render, plus a new public URL):
+   ```powershell
+   fly secrets set ENVIRONMENT=production
+   fly secrets set PUBLIC_BASE_URL=https://tenant-access-dashboard.fly.dev
+   fly secrets set SESSION_SECRET=some-long-random-string
+   fly secrets set DATABASE_URL="postgresql://..."
+   fly secrets set GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
+   fly secrets set ENTRA_CLIENT_ID=... ENTRA_CLIENT_SECRET=... ENTRA_TENANT_ID=common
+   ```
+5. Deploy:
+   ```powershell
+   fly deploy
+   ```
+6. Add the Fly URL to Google and Entra redirect URIs:
+   - `https://tenant-access-dashboard.fly.dev/auth/callback`
+   - Authorized origin: `https://tenant-access-dashboard.fly.dev`
+
+Render remains the primary live demo link in this README; Fly proves the image is portable.
 
 ---
 
@@ -202,7 +234,6 @@ The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing
 
 Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
 
-- A second hosting model (**Fly.io**) with the same Docker image
-- **Terraform** for infra as code beyond the Render blueprint
+- **Terraform** for infra as code beyond Render Blueprint / Fly CLI
 
-Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail and basic production observability.
+Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail, basic production observability, and more than one hosting model.
