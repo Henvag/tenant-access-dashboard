@@ -12,6 +12,7 @@ class AuditEventOut(BaseModel):
     display_name: str | None = None
     event_type: AuditEventType
     idp: IdentityProvider
+    error_code: str | None = None
     ip_address: str | None
     created_at: datetime
 

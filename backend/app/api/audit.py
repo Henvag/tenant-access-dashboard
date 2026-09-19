@@ -31,6 +31,7 @@ async def list_audit_events(
             display_name=event.user.display_name if event.user else None,
             event_type=event.event_type,
             idp=event.idp,
+            error_code=event.error_code,
             ip_address=event.ip_address,
             created_at=event.created_at,
         )

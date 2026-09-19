@@ -67,7 +67,7 @@ Google or Entra ID (OIDC) ──id_token──▶ FastAPI ──▶ email domain
 1. Company registers with a **workspace domain** (`acme.com`).
 2. User picks *Continue with Google* or *Continue with Microsoft*. Authlib runs the OpenID Connect code flow — no hand-rolled OAuth. The chosen provider is stored in the session for the shared `/auth/callback`.
 3. The email domain (or Google Workspace `hd` when present) is looked up in `tenants`. No tenant → clear error. Google `hd`/email mismatch → rejected.
-4. User is upserted **inside** that tenant's RLS context, tagged with `idp` + `oidc_sub`. First user on a domain gets `admin`; everyone after gets `user`. Signing in later with the other IdP on the same email links to the same user row. A **sign-in audit event** is written in the same transaction (IdP, time, IP).
+4. User is upserted **inside** that tenant's RLS context, tagged with `idp` + `oidc_sub`. First user on a domain gets `admin`; everyone after gets `user`. Signing in later with the other IdP on the same email links to the same user row. A **sign-in audit event** is written in the same transaction (IdP, time, IP). Failed sign-ins for a known tenant domain are recorded too (with an error code).
 5. A signed, HTTP-only session cookie carries `user_id` + `tenant_id`. Every later request re-applies the RLS context from it.
 
 Roles are deliberately just `admin` / `user`. Admins see the directory; users see their own profile.
@@ -203,6 +203,5 @@ The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing
 Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
 
 - **Terraform** + a second hosting model (Fly.io or a Kubernetes target)
-- Failed-login / auth-error events in the audit trail
 
 Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail and basic production observability.

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.auth.audit import record_login
+from app.auth.audit import record_login, record_login_failure
 from app.auth.identity import (
     LoginError,
     email_from_oidc_claims,
@@ -98,13 +98,23 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)):
 
     email = email_from_oidc_claims(userinfo)
     oidc_sub = userinfo.get("sub")
-    if not email or not oidc_sub:
-        return _frontend_redirect(error="missing_claims")
-    if provider == "google" and userinfo.get("email_verified") is False:
-        return _frontend_redirect(error="unverified_email")
-
     idp = IdentityProvider.microsoft if provider == "microsoft" else IdentityProvider.google
     hosted_domain = userinfo.get("hd") if provider == "google" else None
+
+    if not email or not oidc_sub:
+        return _frontend_redirect(error="missing_claims")
+
+    if provider == "google" and userinfo.get("email_verified") is False:
+        await record_login_failure(
+            db,
+            email=email,
+            idp=idp,
+            error_code="unverified_email",
+            request=request,
+            hosted_domain=hosted_domain,
+        )
+        await db.commit()
+        return _frontend_redirect(error="unverified_email")
 
     try:
         user = await upsert_user_from_oidc(
@@ -119,9 +129,27 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)):
         await db.commit()
     except LoginError as exc:
         await db.rollback()
+        await record_login_failure(
+            db,
+            email=email,
+            idp=idp,
+            error_code=exc.code,
+            request=request,
+            hosted_domain=hosted_domain,
+        )
+        await db.commit()
         return _frontend_redirect(error=exc.code)
     except IntegrityError:
         await db.rollback()
+        await record_login_failure(
+            db,
+            email=email,
+            idp=idp,
+            error_code="identity_conflict",
+            request=request,
+            hosted_domain=hosted_domain,
+        )
+        await db.commit()
         return _frontend_redirect(error="identity_conflict")
 
     write_login_session(request.session, user)

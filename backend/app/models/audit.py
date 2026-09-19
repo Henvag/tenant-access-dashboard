@@ -14,6 +14,7 @@ from app.models.user import IdentityProvider
 
 class AuditEventType(str, enum.Enum):
     login = "login"
+    login_failed = "login_failed"
 
 
 class AuditEvent(Base):
@@ -40,6 +41,7 @@ class AuditEvent(Base):
         Enum(IdentityProvider, name="identity_provider", create_constraint=False),
         nullable=False,
     )
+    error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

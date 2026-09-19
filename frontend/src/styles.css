@@ -951,6 +951,24 @@ input:focus {
   color: var(--accent);
 }
 
+.role-failed {
+  background: #fde8e8;
+  color: #b42318;
+}
+
+.audit-detail {
+  display: inline-block;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
+.audit-detail.warn {
+  color: #b42318;
+}
+
 .dot-label {
   display: inline-flex;
   align-items: center;

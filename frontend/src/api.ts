@@ -66,8 +66,9 @@ export type AuditEvent = {
   id: string;
   email: string;
   display_name: string | null;
-  event_type: "login";
+  event_type: "login" | "login_failed";
   idp: "google" | "microsoft";
+  error_code: string | null;
   ip_address: string | null;
   created_at: string;
 };
