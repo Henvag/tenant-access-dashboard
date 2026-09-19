@@ -11,19 +11,18 @@ export default function SignupForm({ onCreated }: Props) {
   const { lang, t } = useLang();
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
+    setErrorCode(null);
     setPending(true);
     try {
       const tenant = await createTenant(name, domain);
       onCreated(tenant.workspace_domain);
     } catch (err) {
-      const raw = err instanceof Error ? err.message : "";
-      setError(messageForApiError(raw, lang) || t("form.error"));
+      setErrorCode(err instanceof Error && err.message ? err.message : "form_error");
     } finally {
       setPending(false);
     }
@@ -56,9 +55,9 @@ export default function SignupForm({ onCreated }: Props) {
           {t("form.domainHelpAfter")}
         </small>
       </label>
-      {error ? (
+      {errorCode ? (
         <p className="banner error" role="alert">
-          {error}
+          {errorCode === "form_error" ? t("form.error") : messageForApiError(errorCode, lang)}
         </p>
       ) : null}
       <button type="submit" className="btn btn-primary btn-block" disabled={pending}>

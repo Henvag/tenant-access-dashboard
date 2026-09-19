@@ -17,6 +17,7 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   domain_invalid: "error.domain_invalid",
   not_signed_in: "error.not_signed_in",
   admin_required: "error.admin_required",
+  load_people: "error.load_people",
   ...AUTH_ERROR_KEYS,
 };
 

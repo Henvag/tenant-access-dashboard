@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loginUrl } from "./api";
+import { messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
@@ -8,15 +9,16 @@ import SignupForm from "./SignupForm";
 type Tab = "signin" | "register";
 
 type Props = {
-  initialError: string | null;
+  initialErrorCode: string | null;
   initialTab: Tab;
 };
 
-export default function Landing({ initialError, initialTab }: Props) {
-  const { t } = useLang();
+export default function Landing({ initialErrorCode, initialTab }: Props) {
+  const { lang, t } = useLang();
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [error, setError] = useState<string | null>(initialError);
+  const [errorCode, setErrorCode] = useState<string | null>(initialErrorCode);
   const [noticeDomain, setNoticeDomain] = useState<string | null>(null);
+  const error = messageForAuthError(errorCode, lang);
 
   return (
     <main className="landing">
@@ -126,7 +128,7 @@ export default function Landing({ initialError, initialTab }: Props) {
             <p className="hint">{t("register.hint")}</p>
             <SignupForm
               onCreated={(domain) => {
-                setError(null);
+                setErrorCode(null);
                 setNoticeDomain(domain);
                 setTab("signin");
               }}

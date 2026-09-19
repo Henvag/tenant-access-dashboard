@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMe, Me } from "./api";
 import Dashboard from "./Dashboard";
-import { messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import Landing from "./Landing";
 
@@ -19,7 +18,7 @@ function readAuthErrorCode(): string | null {
 }
 
 export default function App() {
-  const { lang, t } = useLang();
+  const { t } = useLang();
   const [session, setSession] = useState<Session>({ status: "loading" });
   const [authErrorCode] = useState(readAuthErrorCode);
 
@@ -49,7 +48,7 @@ export default function App() {
   if (session.status === "anonymous") {
     return (
       <Landing
-        initialError={messageForAuthError(authErrorCode, lang)}
+        initialErrorCode={authErrorCode}
         initialTab={authErrorCode === "no_tenant" ? "register" : "signin"}
       />
     );

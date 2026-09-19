@@ -33,7 +33,7 @@ export default function Dashboard({ me }: Props) {
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
   const [loadingAudit, setLoadingAudit] = useState(isAdmin);
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
@@ -41,13 +41,13 @@ export default function Dashboard({ me }: Props) {
     if (!isAdmin) return;
     setLoadingUsers(true);
     setLoadingAudit(true);
-    setError(null);
+    setErrorCode(null);
     try {
       const [nextUsers, nextEvents] = await Promise.all([listUsers(), listAuditEvents(50)]);
       setUsers(nextUsers);
       setEvents(nextEvents);
     } catch (err) {
-      setError(err instanceof Error ? messageForApiError(err.message, lang) : t("error.loadPeople"));
+      setErrorCode(err instanceof Error && err.message ? err.message : "load_people");
       setUsers((current) => current ?? []);
       setEvents((current) => current ?? []);
     } finally {
@@ -190,9 +190,9 @@ export default function Dashboard({ me }: Props) {
           ) : null}
         </header>
 
-        {error ? (
+        {errorCode ? (
           <p className="banner error" role="alert">
-            {error}
+            {messageForApiError(errorCode, lang)}
           </p>
         ) : null}
 
