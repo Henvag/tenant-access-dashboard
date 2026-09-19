@@ -10,10 +10,32 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   oidc_failed: "auth.oidc_failed",
 };
 
+const API_ERROR_KEYS: Record<string, TKey> = {
+  tenant_exists: "error.tenant_exists",
+  name_required: "error.name_required",
+  domain_url: "error.domain_url",
+  domain_invalid: "error.domain_invalid",
+  not_signed_in: "error.not_signed_in",
+  admin_required: "error.admin_required",
+  ...AUTH_ERROR_KEYS,
+};
+
 export function messageForAuthError(code: string | null, lang: Lang): string | null {
   if (!code) return null;
   const key = AUTH_ERROR_KEYS[code];
   return key ? translate(lang, key) : translate(lang, "auth.generic", { code });
+}
+
+export function messageForApiError(codeOrMessage: string, lang: Lang): string {
+  const key = API_ERROR_KEYS[codeOrMessage];
+  if (key) return translate(lang, key);
+  // Pydantic may return "Value error, domain_invalid"
+  const match = codeOrMessage.match(/\b(tenant_exists|name_required|domain_url|domain_invalid)\b/);
+  if (match) {
+    const mapped = API_ERROR_KEYS[match[1]];
+    if (mapped) return translate(lang, mapped);
+  }
+  return codeOrMessage || translate(lang, "error.generic");
 }
 
 export function formatTimestamp(value: string | null, lang: Lang): string {

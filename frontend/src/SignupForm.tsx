@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { createTenant } from "./api";
+import { messageForApiError } from "./format";
 import { useLang } from "./i18n";
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
 };
 
 export default function SignupForm({ onCreated }: Props) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,8 @@ export default function SignupForm({ onCreated }: Props) {
       const tenant = await createTenant(name, domain);
       onCreated(tenant.workspace_domain);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("form.error"));
+      const raw = err instanceof Error ? err.message : "";
+      setError(messageForApiError(raw, lang) || t("form.error"));
     } finally {
       setPending(false);
     }

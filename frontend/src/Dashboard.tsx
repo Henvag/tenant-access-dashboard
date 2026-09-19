@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AuditEvent, listAuditEvents, listUsers, logoutUrl, Me, TenantUser } from "./api";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
-import { formatTimestamp, isWithinDays } from "./format";
+import { formatTimestamp, isWithinDays, messageForApiError } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
@@ -47,7 +47,7 @@ export default function Dashboard({ me }: Props) {
       setUsers(nextUsers);
       setEvents(nextEvents);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("error.loadPeople"));
+      setError(err instanceof Error ? messageForApiError(err.message, lang) : t("error.loadPeople"));
       setUsers((current) => current ?? []);
       setEvents((current) => current ?? []);
     } finally {

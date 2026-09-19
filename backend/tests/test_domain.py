@@ -16,8 +16,13 @@ def test_normalizes_microsoft_consumer_aliases():
 
 
 def test_rejects_urls():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="domain_url"):
         normalize_workspace_domain("https://acme.com")
+
+
+def test_rejects_invalid_domain():
+    with pytest.raises(ValueError, match="domain_invalid"):
+        normalize_workspace_domain("not a domain")
 
 
 def test_claims_prefer_hosted_domain():

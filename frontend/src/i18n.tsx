@@ -114,6 +114,13 @@ const en = {
     "Member of {tenant}. Only admins can see the full list of people. Last sign-in: {time}.",
   "error.loadPeople": "Could not load people",
   "error.loadAudit": "Could not load audit log",
+  "error.generic": "Something went wrong. Try again.",
+  "error.tenant_exists": "A company is already registered for that email domain.",
+  "error.name_required": "Company name is required.",
+  "error.domain_url": "Enter a domain like acme.com, not a URL.",
+  "error.domain_invalid": "That email domain is not valid.",
+  "error.not_signed_in": "Not signed in.",
+  "error.admin_required": "Admin role required.",
 
   "auth.no_tenant":
     "No company is registered for your email domain yet. Register it first, then sign in.",
@@ -238,6 +245,13 @@ const no: Record<TKey, string> = {
     "Medlem av {tenant}. Bare administratorer kan se hele personlisten. Sist innlogget: {time}.",
   "error.loadPeople": "Kunne ikke laste personer",
   "error.loadAudit": "Kunne ikke laste revisjonsloggen",
+  "error.generic": "Noe gikk galt. Prøv igjen.",
+  "error.tenant_exists": "Et selskap er allerede registrert for det e-postdomenet.",
+  "error.name_required": "Selskapsnavn er påkrevd.",
+  "error.domain_url": "Skriv inn et domene som acme.com, ikke en URL.",
+  "error.domain_invalid": "E-postdomenet er ikke gyldig.",
+  "error.not_signed_in": "Ikke innlogget.",
+  "error.admin_required": "Administratorrolle kreves.",
 
   "auth.no_tenant":
     "Ingen selskap er registrert for e-postdomenet ditt enda. Registrer det først, og logg deretter inn.",

@@ -18,7 +18,7 @@ async def create_tenant(body: TenantCreate, db: AsyncSession = Depends(get_db)) 
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A tenant already exists for this workspace domain",
+            detail="tenant_exists",
         )
 
     tenant = Tenant(name=body.name, workspace_domain=body.workspace_domain)
@@ -29,7 +29,7 @@ async def create_tenant(body: TenantCreate, db: AsyncSession = Depends(get_db)) 
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A tenant already exists for this workspace domain",
+            detail="tenant_exists",
         ) from None
 
     await db.refresh(tenant)

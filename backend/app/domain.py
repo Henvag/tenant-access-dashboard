@@ -10,11 +10,11 @@ def normalize_workspace_domain(raw: str) -> str:
     if domain.startswith("@"):
         domain = domain[1:]
     if domain.startswith("http://") or domain.startswith("https://"):
-        raise ValueError("Enter a domain like acme.com, not a URL")
+        raise ValueError("domain_url")
     if "/" in domain or " " in domain:
-        raise ValueError("Invalid workspace domain")
+        raise ValueError("domain_invalid")
     if not _DOMAIN_RE.match(domain):
-        raise ValueError("Invalid workspace domain")
+        raise ValueError("domain_invalid")
     if domain == "googlemail.com":
         return "gmail.com"
     # Personal Microsoft account aliases → one demo domain.

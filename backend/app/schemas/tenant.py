@@ -15,7 +15,7 @@ class TenantCreate(BaseModel):
     def strip_name(cls, value: str) -> str:
         cleaned = value.strip()
         if not cleaned:
-            raise ValueError("Company name is required")
+            raise ValueError("name_required")
         return cleaned
 
     @field_validator("workspace_domain")

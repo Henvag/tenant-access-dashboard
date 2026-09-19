@@ -14,7 +14,7 @@ async def get_current_user(
 ) -> User:
     identities = read_login_session(request.session)
     if identities is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not signed in")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="not_signed_in")
 
     user_id, tenant_id = identities
     await set_tenant_rls(db, tenant_id)
@@ -23,7 +23,7 @@ async def get_current_user(
     )
     if user is None or user.tenant_id != tenant_id:
         request.session.clear()
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not signed in")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="not_signed_in")
     return user
 
 
@@ -31,6 +31,6 @@ async def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != UserRole.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin role required",
+            detail="admin_required",
         )
     return user

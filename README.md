@@ -202,6 +202,7 @@ The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing
 
 Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
 
-- **Terraform** + a second hosting model (Fly.io or a Kubernetes target)
+- A second hosting model (**Fly.io**) with the same Docker image
+- **Terraform** for infra as code beyond the Render blueprint
 
 Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail and basic production observability.
