@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,10 +12,14 @@ from app.api.tenants import router as tenants_router
 from app.api.users import router as users_router
 from app.auth.oidc import create_oauth
 from app.config import STATIC_DIR, settings
+from app.health import database_reachable
+from app.logging_config import configure_logging
+from app.observability import RequestIdMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    configure_logging(json_logs=settings.is_production)
     app.state.oauth = create_oauth(settings)
     yield
 
@@ -34,6 +38,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Outermost: assign/echo X-Request-ID and emit structured access logs.
+app.add_middleware(RequestIdMiddleware)
 app.include_router(auth_router)
 app.include_router(tenants_router)
 app.include_router(users_router)
@@ -41,8 +47,16 @@ app.include_router(audit_router)
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(response: Response):
+    """Liveness + DB readiness. Render uses this path as the health check."""
+    db_ok = await database_reachable()
+    body = {
+        "status": "ok" if db_ok else "degraded",
+        "database": "ok" if db_ok else "unavailable",
+    }
+    if not db_ok:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return body
 
 
 def _mount_frontend() -> None:

@@ -81,6 +81,7 @@ Roles are deliberately just `admin` / `user`. Admins see the directory; users se
 | Data | **PostgreSQL 16** with RLS | Isolation enforced where it can't be bypassed |
 | UI | **React 18** + TypeScript + Vite | Built and served from the API — one origin, one cookie |
 | Ship | **Docker** (multi-stage), **GitHub Actions**, **Render** blueprint | Container in, URL out |
+| Ops | JSON logs + `X-Request-ID`, `/health` checks Postgres | Debuggable in any host's log stream |
 
 Production is a single container: the Dockerfile builds the React app, copies it into the FastAPI image, runs migrations on start, and serves API + UI from the same origin. The UI is bilingual (EN/NO) with no i18n dependency.
 
@@ -202,6 +203,6 @@ The app derives its redirect URI from `RENDER_EXTERNAL_URL`, so there is nothing
 Kept deliberately small so it could be **finished**. Not in this repo, in rough order of what I'd add next:
 
 - **Terraform** + a second hosting model (Fly.io or a Kubernetes target)
-- Structured logging / request IDs and a deeper `/health`
+- Failed-login / auth-error events in the audit trail
 
-Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail.
+Roles beyond `admin` / `user` and Active Directory (on-prem) are also out — the point was multi-tenant isolation plus cloud IdPs (Google Workspace + Entra ID), with a tenant-scoped audit trail and basic production observability.
