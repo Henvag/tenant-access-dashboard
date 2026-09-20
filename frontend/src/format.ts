@@ -62,6 +62,10 @@ export function messageForAuthError(code: string | null, lang: Lang): string | n
 export function messageForApiError(codeOrMessage: string, lang: Lang): string {
   const key = API_ERROR_KEYS[codeOrMessage];
   if (key) return translate(lang, key);
+  const failed = codeOrMessage.match(/^request_failed:(\d+)$/);
+  if (failed) {
+    return translate(lang, "error.request_failed", { status: failed[1] });
+  }
   // Pydantic may return "Value error, domain_invalid"
   const match = codeOrMessage.match(/\b(tenant_exists|name_required|domain_url|domain_invalid)\b/);
   if (match) {

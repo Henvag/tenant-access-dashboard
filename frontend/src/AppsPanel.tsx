@@ -260,15 +260,17 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
             <code className="mono">{issuer}</code>
             <CopyButton value={issuer} />
           </div>
-          {[
-            ["Discovery", `${issuer}/.well-known/openid-configuration`],
-            ["Authorize", `${issuer}/oauth/authorize`],
-            ["Token", `${issuer}/oauth/token`],
-            ["Userinfo", `${issuer}/oauth/userinfo`],
-            ["JWKS", `${issuer}/.well-known/jwks.json`],
-          ].map(([label, url]) => (
-            <div className="kv-row" key={label}>
-              <span className="kv-label">{label}</span>
+          {(
+            [
+              ["apps.endpoint.discovery", `${issuer}/.well-known/openid-configuration`],
+              ["apps.endpoint.authorize", `${issuer}/oauth/authorize`],
+              ["apps.endpoint.token", `${issuer}/oauth/token`],
+              ["apps.endpoint.userinfo", `${issuer}/oauth/userinfo`],
+              ["apps.endpoint.jwks", `${issuer}/.well-known/jwks.json`],
+            ] as const satisfies ReadonlyArray<readonly [TKey, string]>
+          ).map(([labelKey, url]) => (
+            <div className="kv-row" key={labelKey}>
+              <span className="kv-label">{t(labelKey)}</span>
               <code className="mono">{url}</code>
               <CopyButton value={url} />
             </div>

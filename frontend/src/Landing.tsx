@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loginUrl } from "./api";
+import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
@@ -33,15 +34,100 @@ export default function Landing({
         <LanguageToggle />
       </div>
 
-      <section className="landing-intro">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true" />
-          <span className="brand-name">{t("brand")}</span>
-        </div>
+      <div className="landing-hero">
+        <section className="landing-intro">
+          <div className="brand brand-hero">
+            <BrandMark size={40} />
+            <span className="brand-name">{t("brand")}</span>
+          </div>
 
-        <h1>{t("landing.title")}</h1>
-        <p className="landing-lede">{t("landing.lede")}</p>
+          <h1>{t("landing.title")}</h1>
+          <p className="landing-lede">{t("landing.lede")}</p>
+        </section>
 
+        <section className="landing-card">
+          <div className="tabs" role="tablist" aria-label={t("tabs.label")}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "signin"}
+              className={tab === "signin" ? "tab active" : "tab"}
+              onClick={() => setTab("signin")}
+            >
+              {t("tabs.signin")}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "register"}
+              className={tab === "register" ? "tab active" : "tab"}
+              onClick={() => setTab("register")}
+            >
+              {t("tabs.register")}
+            </button>
+          </div>
+
+          {continueApp ? (
+            <div className="banner info" role="status">
+              <IconPlug width={16} height={16} />
+              <div>
+                <strong>{t("landing.continue", { app: continueApp })}</strong>
+                <p className="banner-sub">{t("landing.continueHint")}</p>
+              </div>
+            </div>
+          ) : null}
+          {error ? (
+            <p className="banner error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {noticeDomain ? (
+            <p className="banner ok" role="status">
+              {t("notice.registered", { domain: noticeDomain })}
+            </p>
+          ) : null}
+
+          {tab === "signin" ? (
+            <div className="tab-panel">
+              <h2>{t("signin.title")}</h2>
+              <p className="hint">{t("signin.hint")}</p>
+              <div className="signin-actions">
+                <a className="btn btn-google btn-block" href={loginUrl("google")}>
+                  <IconGoogle />
+                  {t("signin.google")}
+                </a>
+                <a className="btn btn-microsoft btn-block" href={loginUrl("microsoft")}>
+                  <IconMicrosoft />
+                  {t("signin.microsoft")}
+                </a>
+              </div>
+              <p className="fineprint">
+                <IconGlobe width={14} height={14} />
+                {t("signin.new")}{" "}
+                <button type="button" className="link" onClick={() => setTab("register")}>
+                  {t("signin.registerFirst")}
+                </button>
+                .
+              </p>
+            </div>
+          ) : (
+            <div className="tab-panel">
+              <h2>{t("register.title")}</h2>
+              <p className="hint">{t("register.hint")}</p>
+              <SignupForm
+                onCreated={(domain) => {
+                  setErrorCode(null);
+                  setNoticeDomain(domain);
+                  setTab("signin");
+                }}
+              />
+            </div>
+          )}
+        </section>
+      </div>
+
+      <section className="landing-features" aria-labelledby="landing-features-title">
+        <h2 id="landing-features-title">{t("landing.featuresTitle")}</h2>
         <ul className="feature-list">
           <li>
             <span className="feature-icon">
@@ -80,83 +166,6 @@ export default function Landing({
             </div>
           </li>
         </ul>
-      </section>
-
-      <section className="landing-card">
-        <div className="tabs" role="tablist" aria-label={t("tabs.label")}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "signin"}
-            className={tab === "signin" ? "tab active" : "tab"}
-            onClick={() => setTab("signin")}
-          >
-            {t("tabs.signin")}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "register"}
-            className={tab === "register" ? "tab active" : "tab"}
-            onClick={() => setTab("register")}
-          >
-            {t("tabs.register")}
-          </button>
-        </div>
-
-        {continueApp ? (
-          <p className="banner info" role="status">
-            <IconPlug width={16} height={16} />
-            {t("landing.continue", { app: continueApp })}
-          </p>
-        ) : null}
-        {error ? (
-          <p className="banner error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {noticeDomain ? (
-          <p className="banner ok" role="status">
-            {t("notice.registered", { domain: noticeDomain })}
-          </p>
-        ) : null}
-
-        {tab === "signin" ? (
-          <div className="tab-panel">
-            <h2>{t("signin.title")}</h2>
-            <p className="hint">{t("signin.hint")}</p>
-            <div className="signin-actions">
-              <a className="btn btn-google btn-block" href={loginUrl("google")}>
-                <IconGoogle />
-                {t("signin.google")}
-              </a>
-              <a className="btn btn-microsoft btn-block" href={loginUrl("microsoft")}>
-                <IconMicrosoft />
-                {t("signin.microsoft")}
-              </a>
-            </div>
-            <p className="fineprint">
-              <IconGlobe width={14} height={14} />
-              {t("signin.new")}{" "}
-              <button type="button" className="link" onClick={() => setTab("register")}>
-                {t("signin.registerFirst")}
-              </button>
-              .
-            </p>
-          </div>
-        ) : (
-          <div className="tab-panel">
-            <h2>{t("register.title")}</h2>
-            <p className="hint">{t("register.hint")}</p>
-            <SignupForm
-              onCreated={(domain) => {
-                setErrorCode(null);
-                setNoticeDomain(domain);
-                setTab("signin");
-              }}
-            />
-          </div>
-        )}
       </section>
     </main>
   );

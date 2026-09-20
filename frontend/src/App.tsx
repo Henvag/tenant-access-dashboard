@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMe, Me } from "./api";
+import BrandMark from "./BrandMark";
 import Dashboard from "./Dashboard";
 import { AppDenial } from "./format";
 import { useLang } from "./i18n";
@@ -60,7 +61,7 @@ export default function App() {
   if (session.status === "loading") {
     return (
       <div className="splash" aria-busy="true">
-        <span className="brand-mark" aria-hidden="true" />
+        <BrandMark size={40} />
         <p>{t("app.loading")}</p>
       </div>
     );
@@ -84,7 +85,7 @@ export default function App() {
     window.location.replace("/oauth/resume");
     return (
       <div className="splash" aria-busy="true">
-        <span className="brand-mark" aria-hidden="true" />
+        <BrandMark size={40} />
         <p>{t("landing.continue", { app: entry.continueApp })}</p>
       </div>
     );

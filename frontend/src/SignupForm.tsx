@@ -45,7 +45,7 @@ export default function SignupForm({ onCreated }: Props) {
         <input
           value={domain}
           onChange={(event) => setDomain(event.target.value)}
-          placeholder="acme.com"
+          placeholder={t("form.domainPlaceholder")}
           autoComplete="off"
           spellCheck={false}
           required

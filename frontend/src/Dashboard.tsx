@@ -4,6 +4,7 @@ import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
+import BrandMark from "./BrandMark";
 import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import {
@@ -117,7 +118,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <BrandMark size={28} />
           <span className="brand-name">{t("brand")}</span>
         </div>
 
@@ -244,8 +245,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
         {!isAdmin ? (
           <>
             <AppTiles refreshKey={tilesKey} />
-            <section className="card">
-              <div className="card-head">
+            <section className="panel">
+              <div className="panel-head">
                 <h2>{t("member.title")}</h2>
               </div>
               <div className="member-view">
@@ -296,8 +297,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
             <AppTiles refreshKey={tilesKey} />
 
-            <section className="card">
-              <div className="card-head">
+            <section className="panel">
+              <div className="panel-head">
                 <div>
                   <h2>{t("recent.title")}</h2>
                   <p className="hint">{t("recent.hint", { domain: me.workspace_domain })}</p>

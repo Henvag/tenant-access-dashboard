@@ -1,8 +1,8 @@
 import { Lang, useLang } from "./i18n";
 
-const OPTIONS: { value: Lang; label: string; title: string }[] = [
-  { value: "en", label: "EN", title: "English" },
-  { value: "no", label: "NO", title: "Norsk" },
+const OPTIONS: { value: Lang; label: string; titleKey: "lang.en" | "lang.no" }[] = [
+  { value: "en", label: "EN", titleKey: "lang.en" },
+  { value: "no", label: "NO", titleKey: "lang.no" },
 ];
 
 type Props = {
@@ -25,7 +25,7 @@ export default function LanguageToggle({ variant = "light" }: Props) {
           className={lang === option.value ? "lang-opt active" : "lang-opt"}
           onClick={() => setLang(option.value)}
           aria-pressed={lang === option.value}
-          title={option.title}
+          title={t(option.titleKey)}
           lang={option.value === "no" ? "nb" : "en"}
         >
           {option.label}

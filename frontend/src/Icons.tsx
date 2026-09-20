@@ -9,7 +9,7 @@ function base(props: IconProps) {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.8,
+    strokeWidth: 1.75,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     "aria-hidden": true,
@@ -146,10 +146,10 @@ export function IconMore(props: IconProps) {
 export function IconPlug(props: IconProps) {
   return (
     <svg {...base(props)}>
-      <path d="M12 22v-5" />
-      <path d="M9 8V2" />
-      <path d="M15 8V2" />
-      <path d="M18 8v5a6 6 0 0 1-12 0V8z" />
+      <path d="M9 2v4" />
+      <path d="M15 2v4" />
+      <path d="M7 6h10v4a5 5 0 0 1-10 0V6z" />
+      <path d="M12 15v7" />
     </svg>
   );
 }
