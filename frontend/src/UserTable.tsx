@@ -205,7 +205,7 @@ export default function UserTable({
                 {showActions ? (
                   <td className="col-actions">
                     {items.length === 0 ? (
-                      <span className="muted">{"\u2014"}</span>
+                      <span className="muted">{"-"}</span>
                     ) : (
                       <RowMenu items={items} busy={busy} label={t("people.moreActions")} />
                     )}

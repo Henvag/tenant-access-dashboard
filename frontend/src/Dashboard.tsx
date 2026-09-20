@@ -300,26 +300,26 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             <section className="stats">
               <StatCard
                 label={t("stats.people")}
-                value={pendingPeople ? "\u2014" : stats.total}
+                value={pendingPeople ? "-" : stats.total}
                 hint={t("stats.peopleHint")}
                 icon={<IconUsers />}
                 tone="accent"
               />
               <StatCard
                 label={t("stats.admins")}
-                value={pendingPeople ? "\u2014" : stats.admins}
+                value={pendingPeople ? "-" : stats.admins}
                 hint={t("stats.adminsHint")}
                 icon={<IconShield />}
               />
               <StatCard
                 label={t("stats.members")}
-                value={pendingPeople ? "\u2014" : stats.members}
+                value={pendingPeople ? "-" : stats.members}
                 hint={t("stats.membersHint")}
                 icon={<IconGrid />}
               />
               <StatCard
                 label={t("stats.active")}
-                value={pendingPeople ? "\u2014" : stats.activeWeek}
+                value={pendingPeople ? "-" : stats.activeWeek}
                 hint={t("stats.activeHint")}
                 icon={<IconActivity />}
                 tone="warm"

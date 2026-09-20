@@ -2,15 +2,15 @@
 
 I wanted a small, finished project that shows how I think about multi-tenant SaaS: identity, isolation, and shipping the same app without locking it to one host.
 
-**Idea:** a company registers. People sign in with Google or Microsoft. An admin can see who has access — and cannot see another company's people, even if the app code forgets a filter. The dashboard is also an **OpenID Connect provider**: register Grafana (or any OIDC app) under **Apps**, decide who may use it, and your team signs in to it with the same account. Every sign-in and denial lands in the audit log.
+**Idea:** a company registers. People sign in with Google or Microsoft. An admin can see who has access, and cannot see another company's people, even if the app code forgets a filter. The dashboard is also an **OpenID Connect provider**: register Grafana (or any OIDC app) under **Apps**, decide who may use it, and your team signs in to it with the same account. Every sign-in and denial lands in the audit log.
 
 [![CI](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml)
 
-**Why both Render and Fly?** Not because I need two demos — because I wanted to show the app isn't married to one cloud. Same multi-stage `Dockerfile`, same migrations and OIDC config; Render is a PaaS blueprint (`render.yaml`), Fly is a container platform (`fly.toml` + `fly deploy`). If the image is portable, switching hosts is mostly secrets and a redirect URI.
+**Why both Render and Fly?** Not because I need two demos. I wanted to show the app isn't married to one cloud. Same multi-stage `Dockerfile`, same migrations and OIDC config; Render is a PaaS blueprint (`render.yaml`), Fly is a container platform (`fly.toml` + `fly deploy`). If the image is portable, switching hosts is mostly secrets and a redirect URI.
 
 | | URL | Role |
 | --- | --- | --- |
-| **Render** | https://tenant-access-dashboard.onrender.com | Primary demo / blueprint deploy. Free tier — cold start can take ~30 s |
+| **Render** | https://tenant-access-dashboard.onrender.com | Primary demo / blueprint deploy. Free tier (cold start can take ~30 s) |
 | **Fly.io** | https://tenant-access-dashboard.fly.dev | Same image on a second hosting model |
 | **Grafana** | https://tenant-access-grafana.onrender.com | Demo app that signs in *through* the dashboard (SSO + role mapping) |
 | **Outline** | https://tenant-access-outline.onrender.com | Notion-like wiki, same OIDC provider (second relying party) |
@@ -23,24 +23,28 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 | --- | --- |
 | ![Landing](docs/screenshots/landing.png) | ![Overview](docs/screenshots/overview.png) |
 
-| People (invite link) | Apps + OIDC issuer |
+| People | Apps |
 | --- | --- |
 | ![People](docs/screenshots/people.png) | ![Apps](docs/screenshots/apps.png) |
 
-| Audit | Grafana SSO / Norwegian |
+| Audit | Grafana (after SSO) |
 | --- | --- |
-| ![Audit](docs/screenshots/audit.png) | ![Grafana](docs/screenshots/grafana-login.png) ![NO](docs/screenshots/norwegian.png) |
+| ![Audit](docs/screenshots/audit.png) | ![Grafana](docs/screenshots/grafana.png) |
+
+| Outline (after SSO) | Sign-in (NO) |
+| --- | --- |
+| ![Outline](docs/screenshots/outline.png) | ![Norwegian](docs/screenshots/norwegian.png) |
 
 ## Try it
 
-1. Open either link → **Register company** with your email domain (`gmail.com` or `outlook.com` works fine for a personal demo).
+1. Open either link. **Register company** with your email domain (`gmail.com` or `outlook.com` works for a personal demo).
 2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
-3. **Overview** is stats + recent activity. **People** is the directory — the company **owner** (first signer) can **Promote** / **Demote** and **Disable** access; promoted admins can disable members. **Audit** shows sign-ins, failures, and access/role changes.
-4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned people), copy the client id + secret. Everyone gets a **Your apps** launcher on the Overview.
-5. Open the Grafana or Outline demo → **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is a Notion-style wiki using the same IdP. Try a user who isn't assigned — denial lands in **Audit**.
-6. Register a second company on a different domain and sign in there. You should only see that tenant — including its apps.
+3. **Overview** is stats and recent activity. **People** is the directory: the company **owner** (first signer) can promote, demote, and disable access; promoted admins can disable members. **Audit** lists sign-ins, failures, and access changes.
+4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned), copy the client id and secret. Everyone gets a **Your apps** launcher on Overview.
+5. Open Grafana or Outline and choose **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is the wiki. Try a user who is not assigned; the denial shows up in **Audit**.
+6. Register a second company on another domain and sign in there. You should only see that tenant, including its apps.
 
-There's an **EN / NO** language toggle if you want to poke at the UI.
+There is an **EN / NO** language toggle if you want to check the UI.
 
 ---
 
@@ -66,9 +70,9 @@ await session.execute(
 )
 ```
 
-No context → empty reads and rejected writes. CI runs the RLS tests as a normal DB role, not a superuser (superusers bypass RLS and would fake the result).
+No context -> empty reads and rejected writes. CI runs the RLS tests as a normal DB role, not a superuser (superusers bypass RLS and would fake the result).
 
-## Sign-in → tenant
+## Sign-in -> tenant
 
 ```
 Google or Entra (OIDC) ──id_token──▶ FastAPI ──▶ email domain ──▶ tenant
@@ -97,10 +101,10 @@ Grafana ──/oauth/userinfo─────────────▶ email, n
 
 - **Discovery + JWKS** at `/.well-known/openid-configuration` and `/.well-known/jwks.json`. Signing keys are RSA-2048, stored in Postgres (both hosts have ephemeral disks), cached in memory, rotatable.
 - **Authorization code + PKCE (S256) only.** Codes are hashed at rest, single-use, live 60 s, and are burned on any failed exchange. Client secrets are stored hashed.
-- **Redirect URIs must match exactly.** An unregistered URI never gets a redirect — the user sees a dashboard error page instead.
+- **Redirect URIs must match exactly.** An unregistered URI never gets a redirect. The user sees a dashboard error page instead.
 - **Access policy per app:** everyone, admins only, or an explicit list of people. Denials say why (`not_assigned`, `admins_only`, `user_disabled`, `wrong_tenant`, `app_disabled`).
 - **Role claim** is `owner` / `admin` / `member`, so relying parties can map it. Grafana turns that into Admin / Editor / Viewer via `GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH`.
-- **RLS still applies.** Clients, grants and codes are tenant tables under FORCE RLS. The unauthenticated token endpoint resolves `client_id → tenant_id` through a tiny secret-free lookup table, sets the tenant, and only then reads the protected rows.
+- **RLS still applies.** Clients, grants and codes are tenant tables under FORCE RLS. The unauthenticated token endpoint resolves `client_id -> tenant_id` through a tiny secret-free lookup table, sets the tenant, and only then reads the protected rows.
 - **Not signed in yet?** The authorize request is parked in the session; after Google/Microsoft sign-in the callback resumes it, so "Sign in to continue to Grafana" is a real flow, not a dead end.
 
 ## What I used
@@ -111,7 +115,7 @@ Grafana ──/oauth/userinfo─────────────▶ email, n
 | Auth | Authlib (Google + Entra ID) | One OIDC path for two IdPs |
 | OIDC provider | joserfc (RS256 JWT/JWKS), PKCE | Issue tokens to apps like Grafana; keys live in Postgres |
 | DB | PostgreSQL 16 + RLS | Isolation where I can't forget it |
-| UI | React + TypeScript + Vite | Built into the API image — one origin, one cookie |
+| UI | React + TypeScript + Vite | Built into the API image. One origin, one cookie |
 | Ship | Docker, GitHub Actions, Render + Fly | One image, two hosting models (PaaS vs containers) |
 | Ops | JSON logs, request IDs, `/health`, basic security headers | Something useful when the free tier misbehaves |
 
@@ -173,12 +177,12 @@ Create a Web OAuth client. Origins: `http://localhost:5173`, `http://localhost:8
 
 ### Microsoft Entra
 
-I used a free personal Microsoft account — no paid Azure subscription for app registration.
+I used a free personal Microsoft account. No paid Azure subscription for app registration.
 
-1. [Entra admin center](https://entra.microsoft.com) → App registrations → New
+1. [Entra admin center](https://entra.microsoft.com) -> App registrations -> New
 2. Accounts: any org directory **and** personal Microsoft accounts
 3. Redirect (Web): `http://localhost:8000/auth/callback`
-4. Client secret → `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET`. Leave `ENTRA_TENANT_ID=common`
+4. Client secret -> `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET`. Leave `ENTRA_TENANT_ID=common`
 5. If email is missing on the token, add the optional `email` claim under Token configuration
 
 `outlook.com` / `hotmail.com` / `live.com` all normalize to `outlook.com` when you register.
@@ -191,7 +195,7 @@ $env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/
 .\.venv\Scripts\pytest
 ```
 
-I care most that tenant A cannot see B's users, audit rows or apps, and that no tenant context fails closed. The provider tests run the whole code flow over HTTP: register app → denied → grant → code → token (Basic auth + PKCE) → userinfo → replayed code rejected → audit rows present.
+I care most that tenant A cannot see B's users, audit rows or apps, and that no tenant context fails closed. The provider tests run the whole code flow over HTTP: register app -> denied -> grant -> code -> token (Basic auth + PKCE) -> userinfo -> replayed code rejected -> audit rows present.
 
 Every push runs pytest, a frontend production build, and a Docker build. Render redeploys `main` from the blueprint.
 
@@ -201,7 +205,7 @@ Every push runs pytest, a frontend production build, and a Docker build. Render 
 
 ### Render
 
-1. Push the repo → New Blueprint → pick `render.yaml`
+1. Push the repo -> New Blueprint -> pick `render.yaml`
 2. Paste Google / Entra client credentials. Session secret is generated for you.
 3. Add redirects:
    - `https://tenant-access-dashboard.onrender.com/auth/callback`
@@ -211,21 +215,21 @@ Fair warning on free: the web service sleeps, and free Postgres ages out after 3
 
 ### Grafana as a relying party
 
-ender.yaml\ also declares \	enant-access-grafana\: stock \grafana/grafana-oss\ with generic OAuth pointed at the dashboard and the login form disabled, so SSO is the only way in.
+`render.yaml` also declares `tenant-access-grafana`: stock `grafana/grafana-oss` with generic OAuth pointed at the dashboard and the login form disabled, so SSO is the only way in.
 
 1. In the dashboard -> **Apps -> New app** -> choose **Grafana** from the catalog.
-2. Paste your Grafana base URL (e.g. \https://tenant-access-grafana.onrender.com\). Redirect and launch paths are filled in for you.
-3. Copy the client id / secret into the Grafana service's \GF_AUTH_GENERIC_OAUTH_CLIENT_ID\ / \_CLIENT_SECRET\ env vars and redeploy.
-4. Open Grafana -> **Sign in with Tenant Access**. Role mapping is in the blueprint: \owner -> Admin\, \dmin -> Editor\, \member -> Viewer\.
+2. Paste your Grafana base URL (e.g. `https://tenant-access-grafana.onrender.com`). Redirect and launch paths are filled in for you.
+3. Copy the client id / secret into the Grafana service's `GF_AUTH_GENERIC_OAUTH_CLIENT_ID` / `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET` env vars and redeploy.
+4. Open Grafana -> **Sign in with Tenant Access**. Role mapping is in the blueprint: `owner` -> Admin, `admin` -> Editor, `member` -> Viewer.
 
 ### Outline as a relying party
 
-Outline is a self-hosted Notion-like wiki (image pinned in `Dockerfile.outline`). It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier — fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
+Outline is a self-hosted Notion-like wiki (image pinned in `Dockerfile.outline`). It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier. Fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
 
-1. **Apps → New app** → choose **Outline** from the catalog.
+1. **Apps -> New app** -> choose **Outline** from the catalog.
 2. Paste your Outline base URL (e.g. `https://tenant-access-outline.onrender.com`). Redirect (`/auth/oidc.callback`) and launch URL are derived automatically.
 3. Paste client id / secret into Outline's `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` and redeploy.
-4. Open Outline → **Continue with Tenant Access**.
+4. Open Outline -> **Continue with Tenant Access**.
 
 Any other OpenID Connect app: pick **Custom OpenID Connect** and enter redirect URIs yourself.
 
@@ -239,7 +243,7 @@ Locally, any OIDC client works against `http://localhost:8000` (issuer, discover
 
 ### Fly.io
 
-Render alone would be enough to run the app. Fly is here on purpose: **prove the Docker image is host-agnostic**. Blueprint/PaaS on Render, containers on Fly — if both work, the packaging is doing its job.
+Render alone would be enough to run the app. Fly is here on purpose: **prove the Docker image is host-agnostic**. Blueprint/PaaS on Render, containers on Fly. If both work, the packaging is doing its job.
 
 Live: https://tenant-access-dashboard.fly.dev
 
@@ -251,12 +255,12 @@ fly secrets set ENVIRONMENT=production `
   PUBLIC_BASE_URL=https://tenant-access-dashboard.fly.dev `
   SESSION_SECRET="<any long random string>" `
   DATABASE_URL="<external postgres url>" `
-  GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... `
-  ENTRA_CLIENT_ID=... ENTRA_CLIENT_SECRET=... ENTRA_TENANT_ID=common
+  GOOGLE_CLIENT_ID=. GOOGLE_CLIENT_SECRET=. `
+  ENTRA_CLIENT_ID=. ENTRA_CLIENT_SECRET=. ENTRA_TENANT_ID=common
 fly deploy
 ```
 
-I pointed Fly at Render's **external** `DATABASE_URL` so I didn't need a second database for the demo. Session secrets don't need to match across hosts — they only sign cookies for that domain.
+I pointed Fly at Render's **external** `DATABASE_URL` so I didn't need a second database for the demo. Session secrets don't need to match across hosts. They only sign cookies for that domain.
 
 Add the Fly callback in Google and Entra the same way:
 
@@ -268,12 +272,12 @@ The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
 ### Infra as code
 
 - **Live Render demo:** Blueprint (`render.yaml`).
-- **Optional Terraform:** `infra/render/` — same web + Postgres shape if you prefer state over Blueprint. See [`infra/README.md`](infra/README.md).
-- **Fly:** `fly.toml` + `flyctl` (Fly’s older TF provider isn’t something I’d hang a demo on).
+- **Optional Terraform:** `infra/render/`. Same web + Postgres shape if you prefer state over Blueprint. See [`infra/README.md`](infra/README.md).
+- **Fly:** `fly.toml` + `flyctl` (Fly's older TF provider isn't something I'd hang a demo on).
 
 ### Ops & threat model
 
-How I think about sessions, RLS, secrets, cold starts, and what’s still missing: [`docs/ops.md`](docs/ops.md). Optional Cloudflare edge (custom domain, SSL, rate limits without a global bot wall): [`docs/cloudflare.md`](docs/cloudflare.md).
+How I think about sessions, RLS, secrets, cold starts, and what's still missing: [`docs/ops.md`](docs/ops.md). Optional Cloudflare edge (custom domain, SSL, rate limits without a global bot wall): [`docs/cloudflare.md`](docs/cloudflare.md).
 
 ---
 
