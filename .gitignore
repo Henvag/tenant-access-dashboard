@@ -12,3 +12,15 @@ dist/
 .DS_Store
 
 .cursor/
+
+# Terraform / OpenTofu
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+!**/*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

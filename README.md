@@ -85,7 +85,7 @@ Roles are deliberately just `admin` and `user`. I kept the surface small on purp
 | DB | PostgreSQL 16 + RLS | Isolation where I can't forget it |
 | UI | React + TypeScript + Vite | Built into the API image — one origin, one cookie |
 | Ship | Docker, GitHub Actions, Render + Fly | One image, two hosting models (PaaS vs containers) |
-| Ops | JSON logs, request IDs, `/health` with a DB check | Something useful when the free tier misbehaves |
+| Ops | JSON logs, request IDs, `/health`, basic security headers | Something useful when the free tier misbehaves |
 
 One container builds the frontend, copies it in, runs migrations on start, and serves everything.
 
@@ -102,6 +102,8 @@ backend/
   tests/
 frontend/        EN/NO i18n, dashboard, landing
 Dockerfile · docker-compose.yml · render.yaml · fly.toml
+infra/render/  Terraform twin of the Render Blueprint (optional)
+docs/ops.md    How I'd run this + threat notes
 .github/workflows/ci.yml
 ```
 
@@ -205,10 +207,20 @@ Add the Fly callback in Google and Entra the same way:
 
 The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
 
+### Infra as code
+
+- **Live Render demo:** Blueprint (`render.yaml`).
+- **Optional Terraform:** `infra/render/` — same web + Postgres shape if you prefer state over Blueprint. See [`infra/README.md`](infra/README.md).
+- **Fly:** `fly.toml` + `flyctl` (Fly’s older TF provider isn’t something I’d hang a demo on).
+
+### Ops & threat model
+
+How I think about sessions, RLS, secrets, cold starts, and what’s still missing (e.g. login rate limits): [`docs/ops.md`](docs/ops.md).
+
 ---
 
 ## What I left out
 
-I capped the scope so I could actually finish it. No Terraform yet, no fancy role hierarchy, no on-prem AD.
+I capped the scope so I could actually finish it. No fancy role hierarchy, no on-prem AD, no login rate limiting yet.
 
-What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures), basic observability, EN/NO UI, and **one portable image** shown on two hosts — Render for the main demo, Fly to make the “same container, different platform” point explicit.
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures), basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.

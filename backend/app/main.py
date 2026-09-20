@@ -15,6 +15,7 @@ from app.config import STATIC_DIR, settings
 from app.health import database_reachable
 from app.logging_config import configure_logging
 from app.observability import RequestIdMiddleware
+from app.security_headers import SecurityHeadersMiddleware
 
 
 @asynccontextmanager
@@ -38,6 +39,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 # Outermost: assign/echo X-Request-ID and emit structured access logs.
 app.add_middleware(RequestIdMiddleware)
 app.include_router(auth_router)

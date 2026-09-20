@@ -1,0 +1,14 @@
+# copy to terraform.tfvars (gitignored) — never commit real secrets
+
+name_prefix = "tenant-access"
+region      = "frankfurt"
+repo_url    = "https://github.com/Henvag/tenant-access-dashboard"
+branch      = "main"
+
+google_client_id     = "...."
+google_client_secret = "...."
+
+# optional — leave empty if Google-only
+entra_client_id     = ""
+entra_client_secret = ""
+entra_tenant_id     = "common"
