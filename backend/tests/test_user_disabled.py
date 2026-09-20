@@ -41,9 +41,10 @@ async def _seed_tenant_with_users(
             role=UserRole.user,
         )
         session.add_all([admin, member])
+        # Flush (and any refresh) must happen before commit: set_config is
+        # transaction-local, so post-commit SELECT under FORCE RLS sees nothing.
+        await session.flush()
         await session.commit()
-        await session.refresh(admin)
-        await session.refresh(member)
         return tenant, admin, member
 
 
