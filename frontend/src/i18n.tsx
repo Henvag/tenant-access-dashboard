@@ -16,7 +16,8 @@ const en = {
   "feature.isolated.title": "Isolated per tenant",
   "feature.isolated.body": "Postgres row-level security keeps companies apart.",
   "feature.roles.title": "Admin and member roles",
-  "feature.roles.body": "The first person from a domain becomes admin.",
+  "feature.roles.body":
+    "The first person on a domain becomes the company owner. Owners can promote admins.",
 
   "tabs.label": "Get started",
   "tabs.signin": "Sign in",
@@ -47,6 +48,9 @@ const en = {
   "sidebar.tenant": "Tenant",
   "role.admin": "Admin",
   "role.member": "Member",
+  "role.ownerLabel": "Owner",
+  "role.ownerHint": "Company owner — registered this workspace",
+  "role.adminHint": "Admin — promoted by the owner",
   "signout": "Sign out",
   "lang.label": "Language",
 
@@ -82,6 +86,9 @@ const en = {
   "people.enable": "Enable",
   "people.working": "Working…",
   "people.disableConfirm": "Disable access for {email}? They will not be able to sign in.",
+  "people.promote": "Promote",
+  "people.demote": "Demote",
+  "people.demoteConfirm": "Demote {email} to member? They will lose admin access.",
 
   "audit.title": "Sign-in audit",
   "audit.hint": "{count} events · isolated to your tenant",
@@ -96,6 +103,8 @@ const en = {
   "audit.userEnabled": "Access enabled",
   "audit.userDisabledDetail": "An admin disabled this account",
   "audit.userEnabledDetail": "An admin re-enabled this account",
+  "audit.roleChanged": "Role changed",
+  "audit.roleChangedDetail": "Role updated by the owner",
   "audit.failedUnknown": "Sign-in failed",
   "audit.noDetail": "—",
   "audit.emptyTitle": "No audit events yet",
@@ -136,6 +145,12 @@ const en = {
   "error.cannot_disable_self": "You cannot disable your own account.",
   "error.cannot_disable_last_admin": "You cannot disable the last active admin.",
   "error.user_disabled": "This account has been disabled.",
+  "error.cannot_disable_owner": "You cannot disable the company owner.",
+  "error.cannot_disable_admin": "Only the owner can disable another admin.",
+  "error.owner_required": "Only the company owner can change roles.",
+  "error.cannot_change_own_role": "You cannot change your own role.",
+  "error.cannot_change_owner_role": "The company owner's role cannot be changed.",
+  "error.cannot_demote_last_admin": "You cannot demote the last active admin.",
 
   "auth.no_tenant":
     "No company is registered for your email domain yet. Register it first, then sign in.",
@@ -163,7 +178,8 @@ const no: Record<TKey, string> = {
   "feature.isolated.title": "Isolert per tenant",
   "feature.isolated.body": "Postgres row-level security holder selskapene adskilt.",
   "feature.roles.title": "Admin- og medlemsroller",
-  "feature.roles.body": "Den første fra et domene blir administrator.",
+  "feature.roles.body":
+    "Den første på et domene blir selskapseier. Eiere kan forfremme administratorer.",
 
   "tabs.label": "Kom i gang",
   "tabs.signin": "Logg inn",
@@ -194,6 +210,9 @@ const no: Record<TKey, string> = {
   "sidebar.tenant": "Tenant",
   "role.admin": "Administrator",
   "role.member": "Medlem",
+  "role.ownerLabel": "Eier",
+  "role.ownerHint": "Selskapseier — registrerte denne arbeidsplassen",
+  "role.adminHint": "Administrator — forfremmet av eieren",
   "signout": "Logg ut",
   "lang.label": "Språk",
 
@@ -229,6 +248,9 @@ const no: Record<TKey, string> = {
   "people.enable": "Aktiver",
   "people.working": "Jobber…",
   "people.disableConfirm": "Deaktivere tilgang for {email}? De vil ikke kunne logge inn.",
+  "people.promote": "Forfrem",
+  "people.demote": "Nedgrader",
+  "people.demoteConfirm": "Nedgradere {email} til medlem? De mister administratortilgang.",
 
   "audit.title": "Innloggingsrevisjon",
   "audit.hint": "{count} hendelser · isolert til din tenant",
@@ -243,6 +265,8 @@ const no: Record<TKey, string> = {
   "audit.userEnabled": "Tilgang aktivert",
   "audit.userDisabledDetail": "En administrator deaktiverte denne kontoen",
   "audit.userEnabledDetail": "En administrator aktiverte denne kontoen på nytt",
+  "audit.roleChanged": "Rolle endret",
+  "audit.roleChangedDetail": "Rollen ble oppdatert av eieren",
   "audit.failedUnknown": "Innlogging feilet",
   "audit.noDetail": "—",
   "audit.emptyTitle": "Ingen revisjonshendelser enda",
@@ -283,6 +307,12 @@ const no: Record<TKey, string> = {
   "error.cannot_disable_self": "Du kan ikke deaktivere din egen konto.",
   "error.cannot_disable_last_admin": "Du kan ikke deaktivere den siste aktive administratoren.",
   "error.user_disabled": "Denne kontoen er deaktivert.",
+  "error.cannot_disable_owner": "Du kan ikke deaktivere selskapseieren.",
+  "error.cannot_disable_admin": "Bare eieren kan deaktivere en annen administrator.",
+  "error.owner_required": "Bare selskapseieren kan endre roller.",
+  "error.cannot_change_own_role": "Du kan ikke endre din egen rolle.",
+  "error.cannot_change_owner_role": "Selskapseierens rolle kan ikke endres.",
+  "error.cannot_demote_last_admin": "Du kan ikke nedgradere den siste aktive administratoren.",
 
   "auth.no_tenant":
     "Ingen selskap er registrert for e-postdomenet ditt enda. Registrer det først, og logg deretter inn.",

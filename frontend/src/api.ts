@@ -13,6 +13,7 @@ export type Me = {
   workspace_domain: string;
   last_login_at: string | null;
   disabled: boolean;
+  is_owner: boolean;
 };
 
 export type TenantUser = {
@@ -22,6 +23,7 @@ export type TenantUser = {
   role: UserRole;
   last_login_at: string | null;
   disabled: boolean;
+  is_owner: boolean;
 };
 
 export type Tenant = {
@@ -68,7 +70,7 @@ export type AuditEvent = {
   id: string;
   email: string;
   display_name: string | null;
-  event_type: "login" | "login_failed" | "user_disabled" | "user_enabled";
+  event_type: "login" | "login_failed" | "user_disabled" | "user_enabled" | "role_changed";
   idp: "google" | "microsoft";
   error_code: string | null;
   ip_address: string | null;
@@ -87,6 +89,13 @@ export function setUserDisabled(userId: string, disabled: boolean): Promise<Tena
   return request<TenantUser>(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ disabled }),
+  });
+}
+
+export function setUserRole(userId: string, role: UserRole): Promise<TenantUser> {
+  return request<TenantUser>(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
   });
 }
 

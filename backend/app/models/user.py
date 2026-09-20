@@ -46,7 +46,10 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     disabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    tenant: Mapped["Tenant"] = relationship(back_populates="users")
+    tenant: Mapped["Tenant"] = relationship(
+        back_populates="users",
+        foreign_keys=[tenant_id],
+    )
 
     @property
     def disabled(self) -> bool:

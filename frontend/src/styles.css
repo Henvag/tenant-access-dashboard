@@ -674,8 +674,23 @@ input:focus {
 }
 
 .me-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
   color: var(--side-muted);
   font-size: 0.8rem;
+}
+
+.me-role-icon {
+  color: var(--accent);
+}
+
+.me-owner-hint {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.75;
+  letter-spacing: 0.02em;
 }
 
 .content {
@@ -938,6 +953,7 @@ input:focus {
 .role {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   padding: 0.18rem 0.6rem;
   border-radius: 999px;
   font-size: 0.78rem;
@@ -946,14 +962,30 @@ input:focus {
   color: var(--ink-2);
 }
 
+.role-icon {
+  flex-shrink: 0;
+}
+
 .role-admin {
   background: var(--accent-soft);
   color: var(--accent);
 }
 
+.role-owner {
+  background: var(--accent);
+  color: #fff;
+}
+
 .role-failed {
   background: #fde8e8;
   color: #b42318;
+}
+
+.access-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
 }
 
 .status-pill {

@@ -30,6 +30,8 @@ function eventLabelKey(eventType: AuditEvent["event_type"]): TKey {
       return "audit.userDisabled";
     case "user_enabled":
       return "audit.userEnabled";
+    case "role_changed":
+      return "audit.roleChanged";
     default:
       return "audit.login";
   }
@@ -41,6 +43,7 @@ function eventTone(eventType: AuditEvent["event_type"]): string {
     case "user_disabled":
       return "role role-failed";
     case "user_enabled":
+    case "role_changed":
       return "role role-admin";
     default:
       return "role role-user";
@@ -91,7 +94,11 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                 ? t("audit.userDisabledDetail")
                 : event.event_type === "user_enabled"
                   ? t("audit.userEnabledDetail")
-                  : "—";
+                  : event.event_type === "role_changed"
+                    ? event.error_code
+                      ? `${t("audit.roleChangedDetail")} (${event.error_code})`
+                      : t("audit.roleChangedDetail")
+                    : "—";
             return (
               <tr key={event.id}>
                 <td>
@@ -139,7 +146,8 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                     >
                       {failed ||
                       event.event_type === "user_disabled" ||
-                      event.event_type === "user_enabled"
+                      event.event_type === "user_enabled" ||
+                      event.event_type === "role_changed"
                         ? detail
                         : t("audit.noDetail")}
                     </span>

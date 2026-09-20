@@ -144,7 +144,15 @@ export default function Dashboard({ me }: Props) {
             <Avatar name={me.display_name} email={me.email} />
             <div className="me-text">
               <span className="me-name">{me.display_name || me.email}</span>
-              <span className="me-role">{isAdmin ? t("role.admin") : t("role.member")}</span>
+              <span className="me-role">
+                {me.is_owner ? (
+                  <IconShield width={12} height={12} className="me-role-icon" />
+                ) : null}
+                {isAdmin ? t("role.admin") : t("role.member")}
+                {me.is_owner ? (
+                  <span className="me-owner-hint">{t("role.ownerLabel")}</span>
+                ) : null}
+              </span>
             </div>
           </div>
           <div className="sidebar-actions">
@@ -302,6 +310,7 @@ export default function Dashboard({ me }: Props) {
               <UserTable
                 users={filtered}
                 currentUserId={me.id}
+                actorIsOwner={me.is_owner}
                 canManage={isAdmin}
                 onUserUpdated={(updated) => {
                   setUsers((current) =>

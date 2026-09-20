@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { setUserDisabled, TenantUser } from "./api";
+import { setUserDisabled, setUserRole, TenantUser, UserRole } from "./api";
 import Avatar from "./Avatar";
 import { formatTimestamp, isWithinDays, messageForApiError, relativeTime } from "./format";
 import { TKey, useLang } from "./i18n";
+import { IconShield, IconShieldOutline } from "./Icons";
 
 type Props = {
   users: TenantUser[];
   currentUserId?: string;
+  /** Signed-in user is the company owner (can promote/demote). */
+  actorIsOwner?: boolean;
   emptyTitle: string;
   emptyBody: string;
   compact?: boolean;
@@ -22,9 +25,31 @@ function activity(user: TenantUser): { key: TKey; tone: string } {
   return { key: "activity.inactive", tone: "idle" };
 }
 
+function RoleBadge({ user }: { user: TenantUser }) {
+  const { t } = useLang();
+  if (user.role === "admin" && user.is_owner) {
+    return (
+      <span className="role role-owner" title={t("role.ownerHint")}>
+        <IconShield width={12} height={12} className="role-icon" />
+        {t("role.admin")}
+      </span>
+    );
+  }
+  if (user.role === "admin") {
+    return (
+      <span className="role role-admin" title={t("role.adminHint")}>
+        <IconShieldOutline width={12} height={12} className="role-icon" />
+        {t("role.admin")}
+      </span>
+    );
+  }
+  return <span className="role role-user">{t("role.member")}</span>;
+}
+
 export default function UserTable({
   users,
   currentUserId,
+  actorIsOwner = false,
   emptyTitle,
   emptyBody,
   compact = false,
@@ -35,15 +60,11 @@ export default function UserTable({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function toggleDisabled(user: TenantUser) {
-    const nextDisabled = !user.disabled;
-    if (nextDisabled && !window.confirm(t("people.disableConfirm", { email: user.email }))) {
-      return;
-    }
-    setBusyId(user.id);
+  async function runAction(userId: string, action: () => Promise<TenantUser>) {
+    setBusyId(userId);
     setActionError(null);
     try {
-      const updated = await setUserDisabled(user.id, nextDisabled);
+      const updated = await action();
       onUserUpdated?.(updated);
     } catch (err) {
       const code = err instanceof Error ? err.message : "generic";
@@ -51,6 +72,21 @@ export default function UserTable({
     } finally {
       setBusyId(null);
     }
+  }
+
+  function toggleDisabled(user: TenantUser) {
+    const nextDisabled = !user.disabled;
+    if (nextDisabled && !window.confirm(t("people.disableConfirm", { email: user.email }))) {
+      return;
+    }
+    void runAction(user.id, () => setUserDisabled(user.id, nextDisabled));
+  }
+
+  function changeRole(user: TenantUser, role: UserRole) {
+    if (role === "user" && !window.confirm(t("people.demoteConfirm", { email: user.email }))) {
+      return;
+    }
+    void runAction(user.id, () => setUserRole(user.id, role));
   }
 
   if (users.length === 0) {
@@ -85,6 +121,11 @@ export default function UserTable({
             const state = activity(user);
             const isYou = user.id === currentUserId;
             const busy = busyId === user.id;
+            const canDisable = !isYou && !user.is_owner && (actorIsOwner || user.role === "user");
+            const showPromote = actorIsOwner && !isYou && !user.is_owner && user.role === "user";
+            const showDemote = actorIsOwner && !isYou && !user.is_owner && user.role === "admin";
+            const hasActions = canDisable || showPromote || showDemote;
+
             return (
               <tr key={user.id} className={user.disabled ? "row-disabled" : undefined}>
                 <td>
@@ -103,9 +144,7 @@ export default function UserTable({
                   </div>
                 </td>
                 <td>
-                  <span className={`role role-${user.role}`}>
-                    {user.role === "admin" ? t("role.admin") : t("role.member")}
-                  </span>
+                  <RoleBadge user={user} />
                 </td>
                 {!compact ? (
                   <td>
@@ -120,21 +159,49 @@ export default function UserTable({
                 </td>
                 {canManage && !compact ? (
                   <td className="num">
-                    {isYou ? (
+                    {!hasActions ? (
                       <span className="muted">—</span>
                     ) : (
-                      <button
-                        type="button"
-                        className={user.disabled ? "btn btn-ghost btn-table" : "btn btn-ghost btn-table danger"}
-                        disabled={busy}
-                        onClick={() => void toggleDisabled(user)}
-                      >
-                        {busy
-                          ? t("people.working")
-                          : user.disabled
-                            ? t("people.enable")
-                            : t("people.disable")}
-                      </button>
+                      <div className="access-actions">
+                        {showPromote ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-table"
+                            disabled={busy}
+                            onClick={() => changeRole(user, "admin")}
+                          >
+                            {busy ? t("people.working") : t("people.promote")}
+                          </button>
+                        ) : null}
+                        {showDemote ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-table"
+                            disabled={busy}
+                            onClick={() => changeRole(user, "user")}
+                          >
+                            {busy ? t("people.working") : t("people.demote")}
+                          </button>
+                        ) : null}
+                        {canDisable ? (
+                          <button
+                            type="button"
+                            className={
+                              user.disabled
+                                ? "btn btn-ghost btn-table"
+                                : "btn btn-ghost btn-table danger"
+                            }
+                            disabled={busy}
+                            onClick={() => toggleDisabled(user)}
+                          >
+                            {busy
+                              ? t("people.working")
+                              : user.disabled
+                                ? t("people.enable")
+                                : t("people.disable")}
+                          </button>
+                        ) : null}
+                      </div>
                     )}
                   </td>
                 ) : null}

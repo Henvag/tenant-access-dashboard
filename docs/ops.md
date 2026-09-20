@@ -37,7 +37,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 3. **Session theft** — HttpOnly + Secure + HTTPS-only hosts. Still vulnerable to XSS in our own origin; keep the SPA dependency surface small and avoid `eval`-style patterns.
 4. **Credential stuffing / login spam** — **not rate-limited yet**. I'd put a reverse-proxy or app-level limit on `/auth/login/*` and `/auth/callback` before calling this production-grade.
 5. **Identity conflict** (same email+IdP, different `sub`) — we reject and audit rather than silently merge. That's intentional.
-6. **Stale access** — admins can disable a user in People; login and existing sessions are rejected (`user_disabled`). You can't disable yourself or the last active admin.
+6. **Stale access** — owners and admins can disable users in People; login and existing sessions are rejected (`user_disabled`). The company **owner** (first user on the tenant) can promote/demote admins; promoted admins can only disable members. You can't disable yourself, the owner, or the last active admin.
 7. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.
 
 ## Ops habits

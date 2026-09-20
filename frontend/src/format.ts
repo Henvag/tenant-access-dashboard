@@ -22,6 +22,12 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   cannot_disable_self: "error.cannot_disable_self",
   cannot_disable_last_admin: "error.cannot_disable_last_admin",
   user_disabled: "error.user_disabled",
+  cannot_disable_owner: "error.cannot_disable_owner",
+  cannot_disable_admin: "error.cannot_disable_admin",
+  owner_required: "error.owner_required",
+  cannot_change_own_role: "error.cannot_change_own_role",
+  cannot_change_owner_role: "error.cannot_change_owner_role",
+  cannot_demote_last_admin: "error.cannot_demote_last_admin",
   load_people: "error.load_people",
   ...AUTH_ERROR_KEYS,
 };

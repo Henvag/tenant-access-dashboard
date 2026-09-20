@@ -17,6 +17,7 @@ class AuditEventType(str, enum.Enum):
     login_failed = "login_failed"
     user_disabled = "user_disabled"
     user_enabled = "user_enabled"
+    role_changed = "role_changed"
 
 
 class AuditEvent(Base):

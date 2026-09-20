@@ -48,6 +48,15 @@ export function IconShield(props: IconProps) {
   );
 }
 
+/** Outline shield for promoted admins (no checkmark). */
+export function IconShieldOutline(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 export function IconActivity(props: IconProps) {
   return (
     <svg {...base(props)}>

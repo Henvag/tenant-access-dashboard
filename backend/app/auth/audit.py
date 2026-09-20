@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.identity import LoginError, workspace_domain_from_claims
 from app.auth.rls import set_tenant_rls
-from app.models import AuditEvent, AuditEventType, IdentityProvider, Tenant, User
+from app.models import AuditEvent, AuditEventType, IdentityProvider, Tenant, User, UserRole
 
 
 def _client_ip(request: Request) -> str | None:
@@ -102,6 +102,31 @@ async def record_user_access_change(
         event_type=AuditEventType.user_disabled if disabled else AuditEventType.user_enabled,
         idp=actor.idp,
         error_code=None,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    session.add(event)
+    await session.flush()
+    return event
+
+
+async def record_role_change(
+    session: AsyncSession,
+    *,
+    actor: User,
+    target: User,
+    from_role: UserRole,
+    to_role: UserRole,
+    request: Request,
+) -> AuditEvent:
+    """Append role_changed. Caller must already have RLS set."""
+    event = AuditEvent(
+        tenant_id=target.tenant_id,
+        user_id=target.id,
+        email=target.email,
+        event_type=AuditEventType.role_changed,
+        idp=actor.idp,
+        error_code=f"{from_role.value}->{to_role.value}"[:64],
         ip_address=_client_ip(request),
         user_agent=_user_agent(request),
     )

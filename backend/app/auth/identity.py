@@ -81,6 +81,8 @@ async def upsert_user_from_oidc(
         )
         session.add(user)
         await session.flush()
+        if user_count == 0:
+            tenant.owner_user_id = user.id
     else:
         if user.disabled_at is not None:
             raise LoginError("user_disabled")
