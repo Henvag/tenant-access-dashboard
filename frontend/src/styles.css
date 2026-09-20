@@ -527,16 +527,18 @@ input:focus {
 }
 
 .feature-icon-wide {
-  width: 52px;
+  width: auto;
+  min-width: 52px;
+  max-width: 140px;
   height: 34px;
-  padding: 0 4px;
+  padding: 0 8px;
 }
 
 .feature-icon-wide img {
   display: block;
-  width: 100%;
-  height: auto;
-  max-height: 22px;
+  width: auto;
+  height: 18px;
+  max-width: 124px;
   object-fit: contain;
 }
 

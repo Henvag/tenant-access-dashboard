@@ -132,7 +132,7 @@ export default function Landing({
         <ul className="feature-list">
           <li>
             <span className="feature-icon feature-icon-wide">
-              <img src={idpPairMark} alt="" width={40} height={21} />
+              <img src={idpPairMark} alt="" height={18} />
             </span>
             <div>
               <strong>{t("feature.google.title")}</strong>
