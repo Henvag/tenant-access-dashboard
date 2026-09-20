@@ -77,5 +77,20 @@ export default function App() {
     );
   }
 
-  return <Dashboard me={session.me} denial={entry.denial} />;
+  // Parked app SSO: authorize redirected here with ?continue= while a login
+  // session already exists (or was established). Resume instead of dumping
+  // the user on the dashboard and dropping the RP redirect.
+  if (entry.continueApp) {
+    window.location.replace("/oauth/resume");
+    return (
+      <div className="splash" aria-busy="true">
+        <span className="brand-mark" aria-hidden="true" />
+        <p>{t("landing.continue", { app: entry.continueApp })}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Dashboard me={session.me} denial={entry.denial} entryError={entry.errorCode} />
+  );
 }

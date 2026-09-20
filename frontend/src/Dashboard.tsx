@@ -28,9 +28,11 @@ type Props = {
   me: Me;
   /** Set when the user was just refused access to an app at /oauth/authorize. */
   denial?: AppDenial | null;
+  /** Other authorize errors (unknown client, bad redirect, …) while logged in. */
+  entryError?: string | null;
 };
 
-export default function Dashboard({ me, denial = null }: Props) {
+export default function Dashboard({ me, denial = null, entryError = null }: Props) {
   const { lang, t } = useLang();
   const isAdmin = me.role === "admin";
   const [view, setView] = useState<View>("overview");
@@ -40,7 +42,7 @@ export default function Dashboard({ me, denial = null }: Props) {
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
   const [loadingAudit, setLoadingAudit] = useState(isAdmin);
-  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(entryError);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 

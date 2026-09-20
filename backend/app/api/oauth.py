@@ -223,6 +223,23 @@ async def authorize(request: Request, db: AsyncSession = Depends(get_db)):
     return RedirectResponse(f"{redirect_uri}?{urlencode(params)}", status_code=302)
 
 
+@router.get("/oauth/resume")
+async def resume_authorize(request: Request):
+    """Resume a parked authorize request after the SPA loaded a logged-in session.
+
+    Outline (and other RPs) send the browser to /oauth/authorize; if we parked
+    because the session cookie was missing on that hop, the SPA may still have
+    a valid login. The frontend sends the user here to finish the RP redirect.
+    """
+    pending = request.session.get(PENDING_AUTHORIZE_KEY)
+    if not pending:
+        return _frontend({})
+    return RedirectResponse(
+        f"{settings.public_origin}/oauth/authorize?{pending}",
+        status_code=status.HTTP_302_FOUND,
+    )
+
+
 # ---------- token ----------
 
 

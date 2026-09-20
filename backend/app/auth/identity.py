@@ -100,10 +100,16 @@ async def upsert_user_from_oidc(
 
 
 def write_login_session(session_data: dict, user: User) -> None:
+    # Keep a parked /oauth/authorize query across re-login so SSO can resume.
+    from app.oauth.pending import PENDING_AUTHORIZE_KEY
+
+    pending = session_data.get(PENDING_AUTHORIZE_KEY)
     session_data.clear()
     session_data["user_id"] = str(user.id)
     session_data["tenant_id"] = str(user.tenant_id)
     session_data["role"] = user.role.value
+    if pending:
+        session_data[PENDING_AUTHORIZE_KEY] = pending
 
 
 def read_login_session(session_data: dict) -> tuple[UUID, UUID] | None:
