@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +19,12 @@ class AuditEventType(str, enum.Enum):
     user_disabled = "user_disabled"
     user_enabled = "user_enabled"
     role_changed = "role_changed"
+    app_created = "app_created"
+    app_deleted = "app_deleted"
+    app_access_granted = "app_access_granted"
+    app_access_revoked = "app_access_revoked"
+    app_login = "app_login"
+    app_login_denied = "app_login_denied"
 
 
 class AuditEvent(Base):
@@ -47,6 +54,8 @@ class AuditEvent(Base):
     error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    # Free-form context (app name, denial reason, from/to role). Nullable for old rows.
+    details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

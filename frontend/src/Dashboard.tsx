@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { AuditEvent, listAuditEvents, listUsers, logoutUrl, Me, TenantUser } from "./api";
+import AppsPanel from "./AppsPanel";
+import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
-import { formatTimestamp, isWithinDays, messageForApiError } from "./format";
+import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
   IconGrid,
   IconList,
   IconLogout,
+  IconPlug,
   IconRefresh,
   IconSearch,
   IconShield,
@@ -18,17 +21,21 @@ import LanguageToggle from "./LanguageToggle";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 
-type View = "overview" | "people" | "audit";
+type View = "overview" | "people" | "apps" | "audit";
 type RoleFilter = "all" | "admin" | "user";
 
 type Props = {
   me: Me;
+  /** Set when the user was just refused access to an app at /oauth/authorize. */
+  denial?: AppDenial | null;
 };
 
-export default function Dashboard({ me }: Props) {
+export default function Dashboard({ me, denial = null }: Props) {
   const { lang, t } = useLang();
   const isAdmin = me.role === "admin";
   const [view, setView] = useState<View>("overview");
+  const [tilesKey, setTilesKey] = useState(0);
+  const [showDenial, setShowDenial] = useState(Boolean(denial));
   const [users, setUsers] = useState<TenantUser[] | null>(null);
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
@@ -96,7 +103,13 @@ export default function Dashboard({ me }: Props) {
   const loading = loadingUsers || loadingAudit;
 
   const title =
-    view === "overview" ? t("nav.overview") : view === "people" ? t("nav.people") : t("nav.audit");
+    view === "overview"
+      ? t("nav.overview")
+      : view === "people"
+        ? t("nav.people")
+        : view === "apps"
+          ? t("nav.apps")
+          : t("nav.audit");
 
   return (
     <div className="app">
@@ -131,6 +144,14 @@ export default function Dashboard({ me }: Props) {
                 <IconUsers />
                 {t("nav.people")}
                 {users ? <span className="nav-count">{users.length}</span> : null}
+              </button>
+              <button
+                type="button"
+                className={view === "apps" ? "nav-item active" : "nav-item"}
+                onClick={() => setView("apps")}
+              >
+                <IconPlug />
+                {t("nav.apps")}
               </button>
               <button
                 type="button"
@@ -209,26 +230,37 @@ export default function Dashboard({ me }: Props) {
             {messageForApiError(errorCode, lang)}
           </p>
         ) : null}
+        {showDenial && denial ? (
+          <p className="banner error banner-dismiss" role="alert">
+            <span>{messageForAppDenial(denial, lang)}</span>
+            <button type="button" className="link" onClick={() => setShowDenial(false)}>
+              {t("apps.done")}
+            </button>
+          </p>
+        ) : null}
 
         {!isAdmin ? (
-          <section className="card">
-            <div className="card-head">
-              <h2>{t("member.title")}</h2>
-            </div>
-            <div className="member-view">
-              <Avatar name={me.display_name} email={me.email} size="lg" />
-              <div>
-                <strong>{me.display_name || me.email}</strong>
-                <p className="hint">{me.email}</p>
-                <p className="hint">
-                  {t("member.body", {
-                    tenant: me.tenant_name,
-                    time: formatTimestamp(me.last_login_at, lang),
-                  })}
-                </p>
+          <>
+            <AppTiles refreshKey={tilesKey} />
+            <section className="card">
+              <div className="card-head">
+                <h2>{t("member.title")}</h2>
               </div>
-            </div>
-          </section>
+              <div className="member-view">
+                <Avatar name={me.display_name} email={me.email} size="lg" />
+                <div>
+                  <strong>{me.display_name || me.email}</strong>
+                  <p className="hint">{me.email}</p>
+                  <p className="hint">
+                    {t("member.body", {
+                      tenant: me.tenant_name,
+                      time: formatTimestamp(me.last_login_at, lang),
+                    })}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </>
         ) : view === "overview" ? (
           <>
             <section className="stats">
@@ -259,6 +291,8 @@ export default function Dashboard({ me }: Props) {
                 tone="warm"
               />
             </section>
+
+            <AppTiles refreshKey={tilesKey} />
 
             <section className="card">
               <div className="card-head">
@@ -329,6 +363,15 @@ export default function Dashboard({ me }: Props) {
               />
             )}
           </section>
+        ) : view === "apps" ? (
+          <AppsPanel
+            tenantName={me.tenant_name}
+            users={users}
+            onChanged={() => {
+              setTilesKey((k) => k + 1);
+              void listAuditEvents(50).then(setEvents).catch(() => undefined);
+            }}
+          />
         ) : (
           <section className="card">
             <div className="card-head">

@@ -9,7 +9,26 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   identity_conflict: "auth.identity_conflict",
   user_disabled: "auth.user_disabled",
   oidc_failed: "auth.oidc_failed",
+  app_unknown_client: "auth.app_unknown_client",
+  app_invalid_redirect: "auth.app_invalid_redirect",
 };
+
+const DENIAL_KEYS: Record<string, TKey> = {
+  not_assigned: "denied.not_assigned",
+  admins_only: "denied.admins_only",
+  user_disabled: "denied.user_disabled",
+  wrong_tenant: "denied.wrong_tenant",
+  app_disabled: "denied.app_disabled",
+};
+
+/** Result of an app sign-in attempt that was refused at /oauth/authorize. */
+export type AppDenial = { app: string; reason: string | null };
+
+export function messageForAppDenial(denial: AppDenial, lang: Lang): string {
+  const head = translate(lang, "auth.app_access_denied", { app: denial.app });
+  const key = denial.reason ? DENIAL_KEYS[denial.reason] : undefined;
+  return key ? `${head} ${translate(lang, key)}` : head;
+}
 
 const API_ERROR_KEYS: Record<string, TKey> = {
   tenant_exists: "error.tenant_exists",
@@ -29,6 +48,8 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   cannot_change_owner_role: "error.cannot_change_owner_role",
   cannot_demote_last_admin: "error.cannot_demote_last_admin",
   load_people: "error.load_people",
+  app_not_found: "error.app_not_found",
+  app_limit_reached: "error.app_limit_reached",
   ...AUTH_ERROR_KEYS,
 };
 

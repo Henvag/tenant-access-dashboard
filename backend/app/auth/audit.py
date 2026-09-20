@@ -110,6 +110,35 @@ async def record_user_access_change(
     return event
 
 
+async def record_app_event(
+    session: AsyncSession,
+    *,
+    tenant_id,
+    event_type: AuditEventType,
+    email: str,
+    idp: IdentityProvider,
+    request: Request,
+    user_id=None,
+    error_code: str | None = None,
+    details: dict | None = None,
+) -> AuditEvent:
+    """Append an app_* event (registration, grants, app sign-ins). RLS must be set."""
+    event = AuditEvent(
+        tenant_id=tenant_id,
+        user_id=user_id,
+        email=email,
+        event_type=event_type,
+        idp=idp,
+        error_code=error_code[:64] if error_code else None,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+        details=details,
+    )
+    session.add(event)
+    await session.flush()
+    return event
+
+
 async def record_role_change(
     session: AsyncSession,
     *,
@@ -129,6 +158,7 @@ async def record_role_change(
         error_code=f"{from_role.value}->{to_role.value}"[:64],
         ip_address=_client_ip(request),
         user_agent=_user_agent(request),
+        details={"from_role": from_role.value, "to_role": to_role.value},
     )
     session.add(event)
     await session.flush()

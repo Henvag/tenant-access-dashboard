@@ -57,10 +57,72 @@ type Presentation = {
   warn: boolean;
 };
 
+const DENIAL_REASON_KEYS: Record<string, TKey> = {
+  not_assigned: "reason.not_assigned",
+  admins_only: "reason.admins_only",
+  wrong_tenant: "reason.wrong_tenant",
+  app_disabled: "reason.app_disabled",
+  user_disabled: "reason.user_disabled",
+};
+
 function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>) => string): Presentation {
   const code = event.error_code ?? undefined;
+  const app = event.details?.app ?? "—";
+  const by = event.details?.by ?? "";
 
   switch (event.event_type) {
+    case "app_login":
+      return {
+        labelKey: "audit.appLogin",
+        tone: "accent",
+        reason: { text: app, tone: "neutral" },
+        sentence: t("audit.appLoginDetail", { app }),
+        warn: false,
+      };
+    case "app_login_denied": {
+      const reasonKey = code ? DENIAL_REASON_KEYS[code] : undefined;
+      return {
+        labelKey: "audit.appLoginDenied",
+        tone: "danger",
+        reason: { text: reasonKey ? t(reasonKey) : app, tone: "danger" },
+        sentence: `${t("audit.appLoginDeniedDetail", { app })}${
+          reasonKey ? ` — ${t(reasonKey)}` : ""
+        }`,
+        warn: true,
+      };
+    }
+    case "app_created":
+      return {
+        labelKey: "audit.appCreated",
+        tone: "ok",
+        reason: { text: app, tone: "neutral" },
+        sentence: t("audit.appCreatedDetail", { app }),
+        warn: false,
+      };
+    case "app_deleted":
+      return {
+        labelKey: "audit.appDeleted",
+        tone: "warn",
+        reason: { text: app, tone: "neutral" },
+        sentence: t("audit.appDeletedDetail", { app }),
+        warn: false,
+      };
+    case "app_access_granted":
+      return {
+        labelKey: "audit.appGranted",
+        tone: "ok",
+        reason: { text: app, tone: "neutral" },
+        sentence: t("audit.appGrantedDetail", { app, by }),
+        warn: false,
+      };
+    case "app_access_revoked":
+      return {
+        labelKey: "audit.appRevoked",
+        tone: "warn",
+        reason: { text: app, tone: "neutral" },
+        sentence: t("audit.appRevokedDetail", { app, by }),
+        warn: false,
+      };
     case "login_failed": {
       const reasonKey = code ? REASON_KEYS[code] : undefined;
       const sentenceKey = code ? ERROR_KEYS[code] : undefined;
@@ -96,7 +158,11 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         warn: false,
       };
     case "role_changed": {
-      const toAdmin = code ? code.endsWith("->admin") : false;
+      const toAdmin = event.details?.to_role
+        ? event.details.to_role === "admin"
+        : code
+          ? code.endsWith("->admin")
+          : false;
       return {
         labelKey: "audit.roleChanged",
         tone: "accent",

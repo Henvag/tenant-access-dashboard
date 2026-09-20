@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { loginUrl } from "./api";
-import { messageForAuthError } from "./format";
+import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
-import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconShield } from "./Icons";
+import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
 
@@ -11,14 +11,21 @@ type Tab = "signin" | "register";
 type Props = {
   initialErrorCode: string | null;
   initialTab: Tab;
+  denial?: AppDenial | null;
+  continueApp?: string | null;
 };
 
-export default function Landing({ initialErrorCode, initialTab }: Props) {
+export default function Landing({
+  initialErrorCode,
+  initialTab,
+  denial = null,
+  continueApp = null,
+}: Props) {
   const { lang, t } = useLang();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [errorCode, setErrorCode] = useState<string | null>(initialErrorCode);
   const [noticeDomain, setNoticeDomain] = useState<string | null>(null);
-  const error = messageForAuthError(errorCode, lang);
+  const error = denial ? messageForAppDenial(denial, lang) : messageForAuthError(errorCode, lang);
 
   return (
     <main className="landing">
@@ -63,6 +70,15 @@ export default function Landing({ initialErrorCode, initialTab }: Props) {
               <span>{t("feature.roles.body")}</span>
             </div>
           </li>
+          <li>
+            <span className="feature-icon">
+              <IconPlug />
+            </span>
+            <div>
+              <strong>{t("feature.apps.title")}</strong>
+              <span>{t("feature.apps.body")}</span>
+            </div>
+          </li>
         </ul>
       </section>
 
@@ -88,6 +104,12 @@ export default function Landing({ initialErrorCode, initialTab }: Props) {
           </button>
         </div>
 
+        {continueApp ? (
+          <p className="banner info" role="status">
+            <IconPlug width={16} height={16} />
+            {t("landing.continue", { app: continueApp })}
+          </p>
+        ) : null}
         {error ? (
           <p className="banner error" role="alert">
             {error}

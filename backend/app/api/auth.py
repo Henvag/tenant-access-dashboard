@@ -18,6 +18,7 @@ from app.config import settings
 from app.db import get_db
 from app.models import User
 from app.models.user import IdentityProvider
+from app.oauth.pending import PENDING_AUTHORIZE_KEY
 from app.schemas.user import MeOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -152,7 +153,14 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)):
         await db.commit()
         return _frontend_redirect(error="identity_conflict")
 
+    # An app sign-in (/oauth/authorize) may have parked its request before login.
+    pending_authorize = request.session.get(PENDING_AUTHORIZE_KEY)
     write_login_session(request.session, user)
+    if pending_authorize:
+        return RedirectResponse(
+            f"{settings.public_origin}/oauth/authorize?{pending_authorize}",
+            status_code=status.HTTP_302_FOUND,
+        )
     return _frontend_redirect()
 
 

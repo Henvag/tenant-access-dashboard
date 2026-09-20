@@ -14,6 +14,7 @@ class AuditEventOut(BaseModel):
     idp: IdentityProvider
     error_code: str | None = None
     ip_address: str | None
+    details: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

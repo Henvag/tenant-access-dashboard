@@ -33,6 +33,7 @@ async def list_audit_events(
             idp=event.idp,
             error_code=event.error_code,
             ip_address=event.ip_address,
+            details=event.details,
             created_at=event.created_at,
         )
         for event in events
