@@ -125,6 +125,24 @@ export function IconList(props: IconProps) {
   );
 }
 
+export function IconChevron(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+export function IconMore(props: IconProps) {
+  return (
+    <svg {...base(props)} fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
 export function IconGoogle(props: IconProps) {
   return (
     <svg width={18} height={18} viewBox="0 0 48 48" aria-hidden="true" {...props}>

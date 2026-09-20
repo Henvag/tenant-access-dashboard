@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { setUserDisabled, setUserRole, TenantUser, UserRole } from "./api";
 import Avatar from "./Avatar";
 import { formatTimestamp, isWithinDays, messageForApiError, relativeTime } from "./format";
 import { TKey, useLang } from "./i18n";
-import { IconShield, IconShieldOutline } from "./Icons";
+import { IconMore, IconRefresh, IconShield, IconShieldOutline } from "./Icons";
+import Tip from "./Tooltip";
 
 type Props = {
   users: TenantUser[];
@@ -29,21 +30,109 @@ function RoleBadge({ user }: { user: TenantUser }) {
   const { t } = useLang();
   if (user.role === "admin" && user.is_owner) {
     return (
-      <span className="role role-owner" title={t("role.ownerHint")}>
-        <IconShield width={12} height={12} className="role-icon" />
-        {t("role.admin")}
-      </span>
+      <Tip label={t("role.ownerHint")}>
+        <span className="pill pill-solid" tabIndex={0}>
+          <IconShield width={12} height={12} />
+          {t("role.admin")}
+        </span>
+      </Tip>
     );
   }
   if (user.role === "admin") {
     return (
-      <span className="role role-admin" title={t("role.adminHint")}>
-        <IconShieldOutline width={12} height={12} className="role-icon" />
-        {t("role.admin")}
-      </span>
+      <Tip label={t("role.adminHint")}>
+        <span className="pill pill-accent" tabIndex={0}>
+          <IconShieldOutline width={12} height={12} />
+          {t("role.admin")}
+        </span>
+      </Tip>
     );
   }
-  return <span className="role role-user">{t("role.member")}</span>;
+  return <span className="pill">{t("role.member")}</span>;
+}
+
+type MenuItem = {
+  key: string;
+  label: string;
+  danger?: boolean;
+  onSelect: () => void;
+};
+
+/**
+ * Compact "⋯" row menu. The list is position:fixed so it is never clipped by
+ * the table's scroll container; it closes on outside click, Escape or scroll.
+ */
+function RowMenu({ items, busy, label }: { items: MenuItem[]; busy: boolean; label: string }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onPointer = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) close();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  return (
+    <div className="menu" ref={wrapRef}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="btn-icon"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+        disabled={busy}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {busy ? (
+          <IconRefresh width={15} height={15} className="spin" />
+        ) : (
+          <IconMore width={16} height={16} />
+        )}
+      </button>
+      {open && pos ? (
+        <div className="menu-list" role="menu" style={{ top: pos.top, right: pos.right }}>
+          {items.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="menuitem"
+              className={item.danger ? "menu-item danger" : "menu-item"}
+              onClick={() => {
+                setOpen(false);
+                item.onSelect();
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function UserTable({
@@ -103,17 +192,23 @@ export default function UserTable({
     );
   }
 
+  const showActions = canManage && !compact;
+
   return (
     <div className="table-wrap">
       {actionError ? <p className="banner error">{actionError}</p> : null}
       <table className={compact ? "table compact" : "table"}>
         <thead>
           <tr>
-            <th>{t("table.person")}</th>
+            <th className="col-person">{t("table.person")}</th>
             <th>{t("table.role")}</th>
-            {!compact ? <th>{t("table.activity")}</th> : null}
+            {!compact ? <th className="col-optional">{t("table.activity")}</th> : null}
             <th className="num">{t("table.lastSignin")}</th>
-            {canManage && !compact ? <th className="num">{t("table.access")}</th> : null}
+            {showActions ? (
+              <th className="col-actions">
+                <span className="sr-only">{t("people.actions")}</span>
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -124,19 +219,46 @@ export default function UserTable({
             const canDisable = !isYou && !user.is_owner && (actorIsOwner || user.role === "user");
             const showPromote = actorIsOwner && !isYou && !user.is_owner && user.role === "user";
             const showDemote = actorIsOwner && !isYou && !user.is_owner && user.role === "admin";
-            const hasActions = canDisable || showPromote || showDemote;
+
+            const items: MenuItem[] = [];
+            if (showPromote) {
+              items.push({
+                key: "promote",
+                label: t("people.promote"),
+                onSelect: () => changeRole(user, "admin"),
+              });
+            }
+            if (showDemote) {
+              items.push({
+                key: "demote",
+                label: t("people.demote"),
+                onSelect: () => changeRole(user, "user"),
+              });
+            }
+            if (canDisable) {
+              items.push({
+                key: "access",
+                label: user.disabled ? t("people.enable") : t("people.disable"),
+                danger: !user.disabled,
+                onSelect: () => toggleDisabled(user),
+              });
+            }
 
             return (
               <tr key={user.id} className={user.disabled ? "row-disabled" : undefined}>
-                <td>
+                <td className="col-person">
                   <div className="person">
                     <Avatar name={user.display_name} email={user.email} size="sm" />
                     <div className="person-text">
                       <span className="person-name">
-                        {user.display_name || user.email.split("@")[0]}
-                        {isYou ? <span className="you">{t("table.you")}</span> : null}
+                        <span className="name-text">
+                          {user.display_name || user.email.split("@")[0]}
+                        </span>
+                        {isYou ? (
+                          <span className="pill pill-xs pill-accent">{t("table.you")}</span>
+                        ) : null}
                         {user.disabled ? (
-                          <span className="status-pill">{t("status.disabled")}</span>
+                          <span className="pill pill-xs pill-danger">{t("status.disabled")}</span>
                         ) : null}
                       </span>
                       <span className="person-email">{user.email}</span>
@@ -147,61 +269,28 @@ export default function UserTable({
                   <RoleBadge user={user} />
                 </td>
                 {!compact ? (
-                  <td>
+                  <td className="col-optional">
                     <span className={`dot-label tone-${state.tone}`}>
                       <i />
                       {t(state.key)}
                     </span>
                   </td>
                 ) : null}
-                <td className="num" title={formatTimestamp(user.last_login_at, lang)}>
-                  {relativeTime(user.last_login_at, lang)}
+                <td className="num">
+                  {user.last_login_at ? (
+                    <Tip label={formatTimestamp(user.last_login_at, lang)}>
+                      {relativeTime(user.last_login_at, lang)}
+                    </Tip>
+                  ) : (
+                    relativeTime(user.last_login_at, lang)
+                  )}
                 </td>
-                {canManage && !compact ? (
-                  <td className="num">
-                    {!hasActions ? (
+                {showActions ? (
+                  <td className="col-actions">
+                    {items.length === 0 ? (
                       <span className="muted">—</span>
                     ) : (
-                      <div className="access-actions">
-                        {showPromote ? (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-table"
-                            disabled={busy}
-                            onClick={() => changeRole(user, "admin")}
-                          >
-                            {busy ? t("people.working") : t("people.promote")}
-                          </button>
-                        ) : null}
-                        {showDemote ? (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-table"
-                            disabled={busy}
-                            onClick={() => changeRole(user, "user")}
-                          >
-                            {busy ? t("people.working") : t("people.demote")}
-                          </button>
-                        ) : null}
-                        {canDisable ? (
-                          <button
-                            type="button"
-                            className={
-                              user.disabled
-                                ? "btn btn-ghost btn-table"
-                                : "btn btn-ghost btn-table danger"
-                            }
-                            disabled={busy}
-                            onClick={() => toggleDisabled(user)}
-                          >
-                            {busy
-                              ? t("people.working")
-                              : user.disabled
-                                ? t("people.enable")
-                                : t("people.disable")}
-                          </button>
-                        ) : null}
-                      </div>
+                      <RowMenu items={items} busy={busy} label={t("people.moreActions")} />
                     )}
                   </td>
                 ) : null}
