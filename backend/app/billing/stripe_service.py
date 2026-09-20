@@ -164,25 +164,31 @@ def downgrade_to_free(tenant: Tenant) -> None:
     tenant.plan_expires_at = None
 
 
-def parse_webhook(payload: bytes, sig_header: str) -> Any:
+def parse_webhook(payload: bytes, sig_header: str) -> dict[str, Any]:
     if not settings.stripe_webhook_secret:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="stripe_unconfigured"
         )
     try:
-        return stripe.Webhook.construct_event(
+        event = stripe.Webhook.construct_event(
             payload, sig_header, settings.stripe_webhook_secret
         )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_stripe_signature"
         ) from exc
+    # stripe-python returns StripeObjects; convert so handlers can use .get().
+    if hasattr(event, "to_dict"):
+        return event.to_dict()
+    return dict(event)
 
 
-def tenant_id_from_metadata(meta: dict | None) -> UUID | None:
+def tenant_id_from_metadata(meta: dict | Any | None) -> UUID | None:
     if not meta:
         return None
-    raw = meta.get("tenant_id")
+    if hasattr(meta, "to_dict"):
+        meta = meta.to_dict()
+    raw = meta.get("tenant_id") if isinstance(meta, dict) else getattr(meta, "tenant_id", None)
     if not raw:
         return None
     try:
