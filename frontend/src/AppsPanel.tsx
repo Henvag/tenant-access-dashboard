@@ -17,7 +17,8 @@ import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
 import { messageForApiError } from "./format";
 import { TKey, useLang } from "./i18n";
-import { IconExternal, IconKey, IconPlug, IconPlus, IconSearch } from "./Icons";
+import AppMark from "./AppMark";
+import { IconExternal, IconKey, IconPlus, IconSearch } from "./Icons";
 import Modal from "./Modal";
 import RowMenu, { MenuItem } from "./RowMenu";
 
@@ -185,9 +186,7 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
             {apps.map((app) => (
               <li key={app.id} className={app.disabled ? "app-row app-disabled" : "app-row"}>
                 <div className="app-row-main">
-                  <span className="app-mark" aria-hidden="true">
-                    <IconPlug width={18} height={18} />
-                  </span>
+                  <AppMark name={app.name} />
                   <div className="app-row-text">
                     <div className="app-row-title">
                       <span className="name-text">{app.name}</span>

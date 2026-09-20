@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { listMyApps, MyApp } from "./api";
+import AppMark from "./AppMark";
 import { useLang } from "./i18n";
-import { IconExternal, IconPlug } from "./Icons";
+import { IconExternal } from "./Icons";
 import Tip from "./Tooltip";
 
 /** Okta-style launcher: the apps this person is allowed to sign in to. */
@@ -50,18 +51,14 @@ export default function AppTiles({ refreshKey = 0 }: { refreshKey?: number }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                <span className="tile-mark" aria-hidden="true">
-                  <IconPlug />
-                </span>
+                <AppMark name={app.name} size="sm" />
                 <span className="tile-name">{app.name}</span>
                 <IconExternal width={14} height={14} className="tile-ext" />
               </a>
             ) : (
               <Tip key={app.id} label={t("myapps.noLaunch")}>
                 <span className="tile tile-static" tabIndex={0}>
-                  <span className="tile-mark" aria-hidden="true">
-                    <IconPlug />
-                  </span>
+                  <AppMark name={app.name} size="sm" />
                   <span className="tile-name">{app.name}</span>
                 </span>
               </Tip>

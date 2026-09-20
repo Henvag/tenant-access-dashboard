@@ -1497,6 +1497,26 @@ fieldset.field legend {
   background: linear-gradient(135deg, var(--accent-soft), #dbeafe);
   color: var(--accent-strong);
   flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.app-mark-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+/* Product logos (e.g. Grafana) — fill the rounded mark; logo already has a dark plate. */
+.app-mark-brand {
+  background: #111;
+  padding: 0;
+}
+
+.app-mark-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .app-row-text {
