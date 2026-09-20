@@ -19,15 +19,17 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 ## Screenshots
 
-| Landing / sign-in (EN) | Landing (NO) |
+| Landing | Overview |
 | --- | --- |
-| ![Landing](docs/screenshots/landing.png) | ![Norwegian](docs/screenshots/norwegian.png) |
+| ![Landing](docs/screenshots/landing.png) | ![Overview](docs/screenshots/overview.png) |
 
-| Grafana SSO | |
+| People (invite link) | Apps + OIDC issuer |
 | --- | --- |
-| ![Grafana](docs/screenshots/grafana-login.png) | Sign in to Grafana *through* Tenant Access |
+| ![People](docs/screenshots/people.png) | ![Apps](docs/screenshots/apps.png) |
 
-Public shots are refreshed with Playwright (`scripts/capture-screenshots.mjs`). Admin Overview / People still need a signed-in session — add `overview.png` / `people.png` when you have one.
+| Audit | Grafana SSO / Norwegian |
+| --- | --- |
+| ![Audit](docs/screenshots/audit.png) | ![Grafana](docs/screenshots/grafana-login.png) ![NO](docs/screenshots/norwegian.png) |
 
 ## Try it
 

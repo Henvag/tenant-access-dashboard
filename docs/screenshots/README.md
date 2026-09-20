@@ -4,13 +4,15 @@ Referenced from the root `README.md`.
 
 | File | What |
 | --- | --- |
-| `landing.png` | Signed-out landing, **EN**, Sign in tab |
-| `norwegian.png` | Same landing with language set to **NO** |
-| `grafana-login.png` | Grafana demo → **Sign in with Tenant Access** |
-| `overview.png` | *(optional)* Admin Overview — needs a signed-in session |
-| `people.png` | *(optional)* People with invite controls — needs a signed-in session |
+| `landing.png` | Signed-out landing, Sign in tab |
+| `overview.png` | Admin Overview — stats, Your apps, recent activity |
+| `people.png` | People directory + **Copy invite link** |
+| `apps.png` | Registered apps + OIDC issuer endpoints |
+| `audit.png` | Audit log (sign-ins and app sign-ins) |
+| `norwegian.png` | Landing with language set to **NO** (Playwright) |
+| `grafana-login.png` | Grafana → **Sign in with Tenant Access** (Playwright) |
 
-Refresh the public ones:
+Public landing / Grafana / NO can be refreshed with:
 
 ```bash
 npm install --no-save playwright@1.49.1
@@ -18,4 +20,4 @@ npx playwright install chromium
 node scripts/capture-screenshots.mjs
 ```
 
-Viewport: 1440×900. Blur emails before committing if you add authenticated shots.
+Admin shots are captured manually while signed in. Prefer blurring emails before a public push if you do not want addresses in the repo.
