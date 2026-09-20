@@ -79,8 +79,8 @@ services:
       - key: GF_ANALYTICS_CHECK_FOR_UPDATES
         value: "false"
 
-  # Second relying party: Outline (Notion-like wiki). Shares tenant-access-db (one free Postgres).
-  # Register "Outline" under Apps with redirect …/auth/oidc.callback, then paste client id/secret.
+  # Outline wiki (OIDC RP). Uses Redis + a dedicated `outline` DB on tenant-access-db
+  # (entrypoint rewrites DATABASE_URL). Register redirect …/auth/oidc.callback, paste secrets.
   - type: web
     name: tenant-access-outline
     runtime: docker

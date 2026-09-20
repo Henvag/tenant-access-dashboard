@@ -1,2 +1,11 @@
 # Thin wrapper so Render can deploy Outline via this repo's Docker build.
+# Rewrites DATABASE_URL to a dedicated `outline` database on the same Postgres
+# instance (free tier allows only one Postgres; Outline must not share tables).
 FROM docker.io/outlinewiki/outline:0.82.0
+
+USER root
+COPY outline-entrypoint.sh /outline-entrypoint.sh
+RUN chmod +x /outline-entrypoint.sh
+USER nodejs
+
+ENTRYPOINT ["/outline-entrypoint.sh"]
