@@ -1,0 +1,2 @@
+# Thin wrapper so Render can deploy Outline via this repo's Docker build.
+FROM docker.io/outlinewiki/outline:0.82.0
