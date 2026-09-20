@@ -69,9 +69,11 @@ async def set_user_disabled(
         disabled=body.disabled,
         request=request,
     )
+    # Build the response before commit: set_config is transaction-local, so
+    # refresh() after commit fails under FORCE RLS (write already succeeded).
+    out = _to_out(target)
     await db.commit()
-    await db.refresh(target)
-    return _to_out(target)
+    return out
 
 
 def _to_out(user: User) -> TenantUserOut:
