@@ -37,6 +37,12 @@ export default function Dashboard({ me }: Props) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
+  // Prefer the people list for ownership: /auth/me can be stale if the page
+  // was opened before the owner migration and only People was refreshed.
+  const actorIsOwner =
+    Boolean(me.is_owner) ||
+    Boolean(users?.some((u) => u.id === me.id && u.is_owner));
+
   async function refresh() {
     if (!isAdmin) return;
     setLoadingUsers(true);
@@ -145,11 +151,11 @@ export default function Dashboard({ me }: Props) {
             <div className="me-text">
               <span className="me-name">{me.display_name || me.email}</span>
               <span className="me-role">
-                {me.is_owner ? (
+                {actorIsOwner ? (
                   <IconShield width={12} height={12} className="me-role-icon" />
                 ) : null}
                 {isAdmin ? t("role.admin") : t("role.member")}
-                {me.is_owner ? (
+                {actorIsOwner ? (
                   <span className="me-owner-hint">{t("role.ownerLabel")}</span>
                 ) : null}
               </span>
@@ -310,7 +316,7 @@ export default function Dashboard({ me }: Props) {
               <UserTable
                 users={filtered}
                 currentUserId={me.id}
-                actorIsOwner={me.is_owner}
+                actorIsOwner={actorIsOwner}
                 canManage={isAdmin}
                 onUserUpdated={(updated) => {
                   setUsers((current) =>
