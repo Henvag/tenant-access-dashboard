@@ -6,7 +6,13 @@ import { IconExternal, IconPlug } from "./Icons";
 import Tip from "./Tooltip";
 
 /** Launcher: apps this person is allowed to open. */
-export default function AppTiles({ refreshKey = 0 }: { refreshKey?: number }) {
+export default function AppTiles({
+  refreshKey = 0,
+  signedInEmail,
+}: {
+  refreshKey?: number;
+  signedInEmail?: string;
+}) {
   const { t } = useLang();
   const [apps, setApps] = useState<MyApp[] | null>(null);
 
@@ -30,6 +36,9 @@ export default function AppTiles({ refreshKey = 0 }: { refreshKey?: number }) {
         <div>
           <h2>{t("myapps.title")}</h2>
           <p className="hint">{t("myapps.hint")}</p>
+          {signedInEmail ? (
+            <p className="hint fine">{t("member.signedInAs", { email: signedInEmail })}</p>
+          ) : null}
         </div>
       </div>
       {apps === null ? (

@@ -206,23 +206,29 @@ Fair warning on free: the web service sleeps, and free Postgres ages out after 3
 
 ### Grafana as a relying party
 
-`render.yaml` also declares `tenant-access-grafana`: stock `grafana/grafana-oss` with generic OAuth pointed at the dashboard and the login form disabled, so SSO is the only way in.
+ender.yaml\ also declares \	enant-access-grafana\: stock \grafana/grafana-oss\ with generic OAuth pointed at the dashboard and the login form disabled, so SSO is the only way in.
 
-1. In the dashboard → **Apps → New app**. Name `Grafana`, redirect URI `https://tenant-access-grafana.onrender.com/login/generic_oauth`, launch URL the same, pick a policy.
-2. Copy the client id + secret into the Grafana service's `GF_AUTH_GENERIC_OAUTH_CLIENT_ID` / `_CLIENT_SECRET` env vars and redeploy.
-3. Open Grafana → **Sign in with Tenant Access**. Role mapping is in the blueprint: `owner → Admin`, `admin → Editor`, `member → Viewer`.
+1. In the dashboard -> **Apps -> New app** -> choose **Grafana** from the catalog.
+2. Paste your Grafana base URL (e.g. \https://tenant-access-grafana.onrender.com\). Redirect and launch paths are filled in for you.
+3. Copy the client id / secret into the Grafana service's \GF_AUTH_GENERIC_OAUTH_CLIENT_ID\ / \_CLIENT_SECRET\ env vars and redeploy.
+4. Open Grafana -> **Sign in with Tenant Access**. Role mapping is in the blueprint: \owner -> Admin\, \dmin -> Editor\, \member -> Viewer\.
 
 ### Outline as a relying party
 
 Outline is a self-hosted Notion-like wiki (image pinned in `Dockerfile.outline`). It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier — fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
 
-1. **Apps → New app**. Name `Outline`, redirect URI `https://tenant-access-outline.onrender.com/auth/oidc.callback`, launch URL `https://tenant-access-outline.onrender.com`, pick a policy.
-2. Paste client id / secret into Outline's `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` and redeploy.
-3. Open Outline → **Continue with Tenant Access**.
+1. **Apps → New app** → choose **Outline** from the catalog.
+2. Paste your Outline base URL (e.g. `https://tenant-access-outline.onrender.com`). Redirect (`/auth/oidc.callback`) and launch URL are derived automatically.
+3. Paste client id / secret into Outline's `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` and redeploy.
+4. Open Outline → **Continue with Tenant Access**.
+
+Any other OpenID Connect app: pick **Custom OpenID Connect** and enter redirect URIs yourself.
 
 Tokens include `preferred_username` (email) so Outline's default username claim works; we also set `OIDC_USERNAME_CLAIM=email` in the blueprint.
 
 **Members:** Outline creates a person from whoever is signed into the dashboard when OIDC finishes. To add a second email, sign out of both Outline and the dashboard, sign into the dashboard as that email, then launch Outline again. One Outline install is one shared workspace.
+
+Bookmarkable admin views: `?view=apps`, `?view=people`, `?view=audit` on the dashboard URL.
 
 Locally, any OIDC client works against `http://localhost:8000` (issuer, discovery, JWKS).
 

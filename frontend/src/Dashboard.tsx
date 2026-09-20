@@ -25,6 +25,23 @@ import UserTable from "./UserTable";
 type View = "overview" | "people" | "apps" | "audit";
 type RoleFilter = "all" | "admin" | "user";
 
+const VIEWS: View[] = ["overview", "people", "apps", "audit"];
+
+function viewFromUrl(isAdmin: boolean): View {
+  const raw = new URLSearchParams(window.location.search).get("view");
+  if (!raw || !VIEWS.includes(raw as View)) return "overview";
+  const next = raw as View;
+  if (!isAdmin && next !== "overview") return "overview";
+  return next;
+}
+
+function setViewInUrl(next: View) {
+  const url = new URL(window.location.href);
+  if (next === "overview") url.searchParams.delete("view");
+  else url.searchParams.set("view", next);
+  window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+}
+
 type Props = {
   me: Me;
   /** Set when the user was just refused access to an app at /oauth/authorize. */
@@ -36,7 +53,7 @@ type Props = {
 export default function Dashboard({ me, denial = null, entryError = null }: Props) {
   const { lang, t } = useLang();
   const isAdmin = me.role === "admin";
-  const [view, setView] = useState<View>("overview");
+  const [view, setViewState] = useState<View>(() => viewFromUrl(isAdmin));
   const [tilesKey, setTilesKey] = useState(0);
   const [showDenial, setShowDenial] = useState(Boolean(denial));
   const [users, setUsers] = useState<TenantUser[] | null>(null);
@@ -46,6 +63,11 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   const [errorCode, setErrorCode] = useState<string | null>(entryError);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+
+  function setView(next: View) {
+    setViewState(next);
+    setViewInUrl(next);
+  }
 
   // Prefer the people list for ownership: /auth/me can be stale if the page
   // was opened before the owner migration and only People was refreshed.
@@ -244,7 +266,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
         {!isAdmin ? (
           <>
-            <AppTiles refreshKey={tilesKey} />
+            <AppTiles refreshKey={tilesKey} signedInEmail={me.email} />
             <section className="panel">
               <div className="panel-head">
                 <h2>{t("member.title")}</h2>
@@ -295,7 +317,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               />
             </section>
 
-            <AppTiles refreshKey={tilesKey} />
+            <AppTiles refreshKey={tilesKey} signedInEmail={me.email} />
 
             <section className="panel">
               <div className="panel-head">

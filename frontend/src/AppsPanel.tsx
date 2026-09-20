@@ -20,7 +20,9 @@ import { TKey, useLang } from "./i18n";
 import AppMark from "./AppMark";
 import { IconExternal, IconKey, IconPlus, IconSearch } from "./Icons";
 import Modal from "./Modal";
+import NewAppWizard, { CatalogEmptyCta } from "./NewAppWizard";
 import RowMenu, { MenuItem } from "./RowMenu";
+import { AppTemplateId, templateById } from "./appCatalog";
 
 type Props = {
   tenantName: string;
@@ -32,7 +34,13 @@ type Props = {
 type Dialog =
   | { kind: "new" }
   | { kind: "edit"; app: RegisteredApp }
-  | { kind: "secret"; app: RegisteredApp; secret: string; mode: "created" | "rotated" }
+  | {
+      kind: "secret";
+      app: RegisteredApp;
+      secret: string;
+      mode: "created" | "rotated";
+      templateId?: AppTemplateId;
+    }
   | { kind: "access"; app: RegisteredApp };
 
 const POLICY_LABEL: Record<AccessPolicy, TKey> = {
@@ -53,15 +61,24 @@ const POLICY_PILL: Record<AccessPolicy, string> = {
   assigned: "pill pill-warn",
 };
 
-function redirectTip(
-  name: string,
-  launchUrl: string,
+function setupTip(
+  app: RegisteredApp,
+  templateId: AppTemplateId | undefined,
   t: (key: TKey, vars?: Record<string, string | number>) => string,
-): string {
-  const origin = new URL(launchUrl).origin;
-  if (/outline/i.test(name)) return t("apps.outlineTip", { url: origin });
-  if (/grafana/i.test(name)) return t("apps.grafanaTip", { url: origin });
-  return t("apps.redirectTip", { url: origin });
+): string | null {
+  const launch = app.launch_url;
+  if (!launch) return null;
+  try {
+    const origin = new URL(launch).origin;
+    if (templateId) {
+      return t(templateById(templateId).tipKey, { url: origin });
+    }
+    if (/outline/i.test(app.name)) return t("apps.outlineTip", { url: origin });
+    if (/grafana/i.test(app.name)) return t("apps.grafanaTip", { url: origin });
+    return t("apps.redirectTip", { url: origin });
+  } catch {
+    return null;
+  }
 }
 
 export default function AppsPanel({ tenantName, users, onChanged }: Props) {
@@ -158,6 +175,7 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
         <div className="card-head">
           <div>
             <h2>{t("apps.title")}</h2>
+            <p className="hint">{t("apps.story")}</p>
             <p className="hint">{t("apps.hint", { tenant: tenantName })}</p>
           </div>
           <button type="button" className="btn btn-primary" onClick={() => setDialog({ kind: "new" })}>
@@ -183,15 +201,7 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
             ))}
           </div>
         ) : apps.length === 0 ? (
-          <div className="empty">
-            <div className="empty-art" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
-            <h3>{t("apps.emptyTitle")}</h3>
-            <p>{t("apps.emptyBody")}</p>
-          </div>
+          <CatalogEmptyCta onPick={() => setDialog({ kind: "new" })} />
         ) : (
           <ul className="app-list">
             {apps.map((app) => (
@@ -279,18 +289,20 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
       </section>
 
       {dialog?.kind === "new" ? (
-        <Modal
-          title={t("apps.newTitle")}
-          hint={t("apps.newHint", { tenant: tenantName })}
-          onClose={() => setDialog(null)}
-        >
-          <AppForm
+        <Modal title={t("apps.newTitle")} hint={t("apps.story")} onClose={() => setDialog(null)} wide>
+          <NewAppWizard
             tenantName={tenantName}
             onCancel={() => setDialog(null)}
-            onSubmit={async (input) => {
+            onSubmit={async (input, templateId) => {
               const created = await createApp(input);
               upsert(created);
-              setDialog({ kind: "secret", app: created, secret: created.client_secret, mode: "created" });
+              setDialog({
+                kind: "secret",
+                app: created,
+                secret: created.client_secret,
+                mode: "created",
+                templateId,
+              });
             }}
           />
         </Modal>
@@ -341,9 +353,10 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
               <CopyButton value={issuer} />
             </div>
           </div>
-          {dialog.app.launch_url ? (
-            <p className="hint tip-box">{redirectTip(dialog.app.name, dialog.app.launch_url, t)}</p>
-          ) : null}
+          {(() => {
+            const tip = setupTip(dialog.app, dialog.templateId, t);
+            return tip ? <p className="hint tip-box">{tip}</p> : null;
+          })()}
           <div className="modal-actions">
             <button type="button" className="btn btn-primary" onClick={() => setDialog(null)}>
               {t("apps.done")}

@@ -6,6 +6,7 @@ import { useLang } from "./i18n";
 import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
+import idpPairMark from "./assets/google-microsoft.png";
 
 type Tab = "signin" | "register";
 
@@ -130,8 +131,8 @@ export default function Landing({
         <h2 id="landing-features-title">{t("landing.featuresTitle")}</h2>
         <ul className="feature-list">
           <li>
-            <span className="feature-icon">
-              <IconGoogle width={16} height={16} />
+            <span className="feature-icon feature-icon-wide">
+              <img src={idpPairMark} alt="" width={40} height={21} />
             </span>
             <div>
               <strong>{t("feature.google.title")}</strong>
