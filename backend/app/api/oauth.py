@@ -48,6 +48,7 @@ from app.oauth.service import (
     role_claim,
     verify_secret,
 )
+from app.rate_limit import rate_limit_token
 
 router = APIRouter(tags=["oidc-provider"])
 
@@ -277,6 +278,7 @@ def _client_credentials(
 async def token(
     request: Request,
     db: AsyncSession = Depends(get_db),
+    _rl: None = Depends(rate_limit_token),
     grant_type: str = Form(""),
     code: str = Form(""),
     redirect_uri: str = Form(""),

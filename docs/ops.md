@@ -34,13 +34,14 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 | Secrets via env / platform secret stores, not git | Render Blueprint, Fly secrets, `.env` gitignored |
 | Basic browser hardening headers | `SecurityHeadersMiddleware` |
 | Real visitor IP when behind Cloudflare (`CF-Connecting-IP`) | `app/http_client.py` → audit |
+| Per-IP sliding-window limits on `/auth/login`, `/auth/callback`, `/oauth/token` | `app/rate_limit.py` (in-process) |
 
 ## Threats I care about here
 
 1. **Cross-tenant data leak** — mitigated by FORCE RLS + CI tests as a non-superuser. Superuser DB access bypasses RLS; production app DB roles must not be superuser.
 2. **OIDC / redirect abuse** — redirect URI is fixed per host (`RENDER_EXTERNAL_URL` / `PUBLIC_BASE_URL`). Both production URLs must be registered at the IdP.
 3. **Session theft** — HttpOnly + Secure + HTTPS-only hosts. Still vulnerable to XSS in our own origin; keep the SPA dependency surface small and avoid `eval`-style patterns.
-4. **Credential stuffing / login spam** — edge rate limits on `/auth/login` and `/auth/callback` via Cloudflare (see [`docs/cloudflare.md`](cloudflare.md)). App-level limits can still be added later as defense in depth.
+4. **Credential stuffing / login spam** — in-app per-IP limits (30/min on auth, 60/min on token). Optional Cloudflare edge rules on top — see [`docs/cloudflare.md`](cloudflare.md). Multi-instance deploys would need a shared store (Redis) for the counters.
 5. **Identity conflict** (same email+IdP, different `sub`) — we reject and audit rather than silently merge. That's intentional.
 6. **Stale access** — owners and admins can disable users in People; login and existing sessions are rejected (`user_disabled`). The company **owner** (first user on the tenant) can promote/demote admins; promoted admins can only disable members. You can't disable yourself, the owner, or the last active admin.
 7. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.

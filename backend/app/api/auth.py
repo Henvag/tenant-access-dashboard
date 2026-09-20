@@ -19,6 +19,7 @@ from app.db import get_db
 from app.models import User
 from app.models.user import IdentityProvider
 from app.oauth.pending import PENDING_AUTHORIZE_KEY
+from app.rate_limit import rate_limit_auth
 from app.schemas.user import MeOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -61,7 +62,11 @@ def _oauth_client(request: Request, provider: str):
 
 
 @router.get("/login")
-async def login(request: Request, provider: str = "google"):
+async def login(
+    request: Request,
+    provider: str = "google",
+    _: None = Depends(rate_limit_auth),
+):
     """Start OIDC. Tenant is resolved from email domain after callback."""
     provider = provider.strip().lower()
     if provider not in PROVIDERS or not _provider_configured(provider):
@@ -73,7 +78,11 @@ async def login(request: Request, provider: str = "google"):
 
 
 @router.get("/callback")
-async def callback(request: Request, db: AsyncSession = Depends(get_db)):
+async def callback(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit_auth),
+):
     provider = (request.session.pop("oidc_provider", None) or "google").lower()
     if provider not in PROVIDERS or not _provider_configured(provider):
         return _frontend_redirect(error="oidc_failed")
