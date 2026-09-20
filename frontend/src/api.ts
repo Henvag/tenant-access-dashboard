@@ -154,15 +154,51 @@ export function rotateAppSecret(appId: string): Promise<{ client_secret: string 
   return request<{ client_secret: string }>(`/apps/${appId}/rotate-secret`, { method: "POST" });
 }
 
-export function getAppGrants(appId: string): Promise<string[]> {
-  return request<string[]>(`/apps/${appId}/grants`);
+export function getAppGrants(appId: string): Promise<AppGrants> {
+  return request<AppGrants>(`/apps/${appId}/grants`);
 }
 
-export function setAppGrants(appId: string, userIds: string[]): Promise<string[]> {
-  return request<string[]>(`/apps/${appId}/grants`, {
+export function setAppGrants(
+  appId: string,
+  userIds: string[],
+  emails: string[] = [],
+): Promise<AppGrants> {
+  return request<AppGrants>(`/apps/${appId}/grants`, {
     method: "PUT",
-    body: JSON.stringify({ user_ids: userIds }),
+    body: JSON.stringify({ user_ids: userIds, emails }),
   });
+}
+
+export type CompanyInvite = {
+  token: string;
+  url: string;
+  created_at: string;
+};
+
+export type PublicInvite = {
+  tenant_name: string;
+  workspace_domain: string;
+};
+
+export type AppGrants = {
+  user_ids: string[];
+  pending_emails: string[];
+};
+
+export function getCompanyInvite(): Promise<CompanyInvite | null> {
+  return request<CompanyInvite | null>("/invites/company");
+}
+
+export function ensureCompanyInvite(): Promise<CompanyInvite> {
+  return request<CompanyInvite>("/invites/company", { method: "POST" });
+}
+
+export function rotateCompanyInvite(): Promise<CompanyInvite> {
+  return request<CompanyInvite>("/invites/company/rotate", { method: "POST" });
+}
+
+export function lookupPublicInvite(token: string): Promise<PublicInvite> {
+  return request<PublicInvite>(`/public/invites/${encodeURIComponent(token)}`);
 }
 
 export function issuerUrl(): string {

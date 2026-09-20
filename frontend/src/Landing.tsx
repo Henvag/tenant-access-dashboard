@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { loginUrl } from "./api";
+import { useEffect, useState } from "react";
+import { lookupPublicInvite, loginUrl, PublicInvite } from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
@@ -15,6 +15,7 @@ type Props = {
   initialTab: Tab;
   denial?: AppDenial | null;
   continueApp?: string | null;
+  inviteToken?: string | null;
 };
 
 export default function Landing({
@@ -22,12 +23,32 @@ export default function Landing({
   initialTab,
   denial = null,
   continueApp = null,
+  inviteToken = null,
 }: Props) {
   const { lang, t } = useLang();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [errorCode, setErrorCode] = useState<string | null>(initialErrorCode);
   const [noticeDomain, setNoticeDomain] = useState<string | null>(null);
+  const [invite, setInvite] = useState<PublicInvite | null>(null);
   const error = denial ? messageForAppDenial(denial, lang) : messageForAuthError(errorCode, lang);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    let cancelled = false;
+    lookupPublicInvite(inviteToken)
+      .then((info) => {
+        if (!cancelled) {
+          setInvite(info);
+          setTab("signin");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setErrorCode("invite_not_found");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken]);
 
   return (
     <main className="landing">
@@ -68,6 +89,17 @@ export default function Landing({
             </button>
           </div>
 
+          {invite ? (
+            <div className="banner info" role="status">
+              <IconShield width={16} height={16} />
+              <div>
+                <strong>{t("landing.invite", { tenant: invite.tenant_name })}</strong>
+                <p className="banner-sub">
+                  {t("landing.inviteHint", { domain: invite.workspace_domain })}
+                </p>
+              </div>
+            </div>
+          ) : null}
           {continueApp ? (
             <div className="banner info" role="status">
               <IconPlug width={16} height={16} />

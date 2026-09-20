@@ -11,6 +11,7 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   oidc_failed: "auth.oidc_failed",
   app_unknown_client: "auth.app_unknown_client",
   app_invalid_redirect: "auth.app_invalid_redirect",
+  invite_not_found: "error.invite_not_found",
 };
 
 const DENIAL_KEYS: Record<string, TKey> = {
@@ -50,6 +51,10 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   load_people: "error.load_people",
   app_not_found: "error.app_not_found",
   app_limit_reached: "error.app_limit_reached",
+  invalid_email: "error.invalid_email",
+  email_domain_mismatch: "error.email_domain_mismatch",
+  invite_not_found: "error.invite_not_found",
+  tenant_missing: "error.tenant_missing",
   ...AUTH_ERROR_KEYS,
 };
 

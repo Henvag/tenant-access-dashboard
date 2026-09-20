@@ -1,6 +1,12 @@
 import { TKey } from "./i18n";
 
-export type AppTemplateId = "grafana" | "outline" | "custom";
+export type AppTemplateId =
+  | "grafana"
+  | "outline"
+  | "portainer"
+  | "gitea"
+  | "bookstack"
+  | "custom";
 
 export type AppTemplate = {
   id: AppTemplateId;
@@ -43,6 +49,39 @@ export const APP_CATALOG: AppTemplate[] = [
     tipKey: "apps.outlineTip",
   },
   {
+    id: "portainer",
+    defaultName: "Portainer",
+    markName: "Portainer",
+    titleKey: "catalog.portainer.title",
+    bodyKey: "catalog.portainer.body",
+    pathHintKey: "catalog.portainer.path",
+    redirectPath: "/",
+    launchPath: "/",
+    tipKey: "apps.portainerTip",
+  },
+  {
+    id: "gitea",
+    defaultName: "Gitea",
+    markName: "Gitea",
+    titleKey: "catalog.gitea.title",
+    bodyKey: "catalog.gitea.body",
+    pathHintKey: "catalog.gitea.path",
+    redirectPath: "/user/oauth2/tenant-access/callback",
+    launchPath: "/",
+    tipKey: "apps.giteaTip",
+  },
+  {
+    id: "bookstack",
+    defaultName: "BookStack",
+    markName: "BookStack",
+    titleKey: "catalog.bookstack.title",
+    bodyKey: "catalog.bookstack.body",
+    pathHintKey: "catalog.bookstack.path",
+    redirectPath: "/oidc/callback",
+    launchPath: "/",
+    tipKey: "apps.bookstackTip",
+  },
+  {
     id: "custom",
     defaultName: "",
     markName: "Custom",
@@ -72,12 +111,12 @@ export function urlsFromTemplate(
   if (!base || !template.redirectPath) {
     return { redirect: "", launch: "" };
   }
-  const redirect = `${base}${template.redirectPath}`;
+  // "/" means the app root (often with a trailing slash for OAuth callbacks).
+  const redirect =
+    template.redirectPath === "/" ? `${base}/` : `${base}${template.redirectPath}`;
   const launch =
-    template.launchPath === "/"
+    template.launchPath === "/" || !template.launchPath
       ? base
-      : template.launchPath
-        ? `${base}${template.launchPath}`
-        : base;
+      : `${base}${template.launchPath}`;
   return { redirect, launch };
 }

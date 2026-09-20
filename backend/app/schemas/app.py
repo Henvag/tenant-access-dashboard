@@ -112,7 +112,13 @@ class AppPatch(BaseModel):
 
 
 class GrantsIn(BaseModel):
-    user_ids: list[UUID] = Field(max_length=500)
+    user_ids: list[UUID] = Field(default_factory=list, max_length=500)
+    emails: list[str] = Field(default_factory=list, max_length=200)
+
+
+class GrantsOut(BaseModel):
+    user_ids: list[UUID]
+    pending_emails: list[str]
 
 
 class MyAppOut(BaseModel):

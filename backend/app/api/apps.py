@@ -12,12 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, require_admin
 from app.auth.audit import record_app_event
 from app.db import get_db
+from app.domain import normalize_workspace_domain
 from app.models import (
     AccessPolicy,
     AppGrant,
     AuditEventType,
     OAuthClient,
     OAuthClientLookup,
+    PendingAppGrant,
     User,
     UserRole,
 )
@@ -28,6 +30,7 @@ from app.schemas.app import (
     AppOut,
     AppPatch,
     GrantsIn,
+    GrantsOut,
     MyAppOut,
     SecretOut,
 )
@@ -43,7 +46,15 @@ async def _grant_counts(db: AsyncSession, client_pks: list[UUID]) -> dict[UUID, 
         .where(AppGrant.client_pk.in_(client_pks))
         .group_by(AppGrant.client_pk)
     )
-    return {pk: count for pk, count in rows.all()}
+    counts = {pk: count for pk, count in rows.all()}
+    pending_rows = await db.execute(
+        select(PendingAppGrant.client_pk, func.count())
+        .where(PendingAppGrant.client_pk.in_(client_pks))
+        .group_by(PendingAppGrant.client_pk)
+    )
+    for pk, count in pending_rows.all():
+        counts[pk] = counts.get(pk, 0) + count
+    return counts
 
 
 def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
@@ -227,29 +238,59 @@ async def rotate_secret(
     return SecretOut(client_secret=secret)
 
 
-@router.get("/{app_id}/grants", response_model=list[UUID])
+def _normalize_grant_email(raw: str, workspace_domain: str) -> str:
+    email = raw.strip().lower()
+    if "@" not in email or len(email) > 320:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_email")
+    local, _, domain = email.partition("@")
+    if not local or not domain:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_email")
+    try:
+        normalized = normalize_workspace_domain(domain)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_email") from None
+    if normalized != workspace_domain:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="email_domain_mismatch")
+    return f"{local}@{normalized}"
+
+
+@router.get("/{app_id}/grants", response_model=GrantsOut)
 async def list_grants(
     app_id: UUID,
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-) -> list[UUID]:
+) -> GrantsOut:
     client = await _load(db, app_id)
-    return list(
+    user_ids = list(
         (await db.scalars(select(AppGrant.user_id).where(AppGrant.client_pk == client.id))).all()
     )
+    pending = list(
+        (
+            await db.scalars(
+                select(PendingAppGrant.email).where(PendingAppGrant.client_pk == client.id)
+            )
+        ).all()
+    )
+    return GrantsOut(user_ids=sorted(user_ids, key=str), pending_emails=sorted(pending))
 
 
-@router.put("/{app_id}/grants", response_model=list[UUID])
+@router.put("/{app_id}/grants", response_model=GrantsOut)
 async def set_grants(
     app_id: UUID,
     payload: GrantsIn,
     request: Request,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-) -> list[UUID]:
-    """Replace the assigned set. Each add/remove is audited against the affected person."""
+) -> GrantsOut:
+    """Replace assigned users and pending emails. Adds/removes are audited."""
     client = await _load(db, app_id)
+    tenant = admin.tenant
+    workspace_domain = tenant.workspace_domain if tenant is not None else ""
+    if not workspace_domain:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="tenant_missing")
+
     wanted = set(payload.user_ids)
+    wanted_emails = {_normalize_grant_email(e, workspace_domain) for e in payload.emails}
 
     # Only users in this tenant can be granted (RLS already guarantees the query scope).
     users = {
@@ -258,6 +299,19 @@ async def set_grants(
     unknown = wanted - set(users)
     if unknown:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user_not_found")
+
+    # If an email already belongs to a user in the tenant, promote to a real grant.
+    if wanted_emails:
+        existing_by_email = {
+            u.email: u
+            for u in (
+                await db.scalars(select(User).where(User.email.in_(wanted_emails)))
+            ).all()
+        }
+        for email, user in existing_by_email.items():
+            wanted.add(user.id)
+            users[user.id] = user
+            wanted_emails.discard(email)
 
     existing = {
         g.user_id: g
@@ -305,5 +359,49 @@ async def set_grants(
                 details={"app": client.name, "by": admin.email},
             )
 
+    existing_pending = {
+        p.email: p
+        for p in (
+            await db.scalars(
+                select(PendingAppGrant).where(PendingAppGrant.client_pk == client.id)
+            )
+        ).all()
+    }
+    for email in wanted_emails - set(existing_pending):
+        db.add(
+            PendingAppGrant(
+                tenant_id=admin.tenant_id,
+                client_pk=client.id,
+                email=email,
+                granted_by=admin.id,
+            )
+        )
+        await record_app_event(
+            db,
+            tenant_id=admin.tenant_id,
+            event_type=AuditEventType.app_access_granted,
+            email=email,
+            user_id=None,
+            idp=admin.idp,
+            request=request,
+            details={"app": client.name, "by": admin.email, "pending": True},
+        )
+
+    for email in set(existing_pending) - wanted_emails:
+        await db.delete(existing_pending[email])
+        await record_app_event(
+            db,
+            tenant_id=admin.tenant_id,
+            event_type=AuditEventType.app_access_revoked,
+            email=email,
+            user_id=None,
+            idp=admin.idp,
+            request=request,
+            details={"app": client.name, "by": admin.email, "pending": True},
+        )
+
     await db.commit()
-    return sorted(wanted, key=str)
+    return GrantsOut(
+        user_ids=sorted(wanted, key=str),
+        pending_emails=sorted(wanted_emails),
+    )

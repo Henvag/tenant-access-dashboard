@@ -90,7 +90,16 @@ const en = {
   "people.noMatches": "No matches",
   "people.noMatchesBody": "Try a different search or clear the role filter.",
   "people.emptyTitle": "No people yet",
-  "people.emptyBody": "Everyone who signs in with a matching work email appears here.",
+  "people.emptyBody":
+    "Share the invite link, or wait for people to sign in with a matching work email.",
+  "people.invite": "Copy invite link",
+  "people.inviteWorking": "Preparing…",
+  "people.inviteCopied": "Invite link copied",
+  "people.inviteHint":
+    "Anyone with this link sees your company name, then signs in with Google or Microsoft. Their email must match @{domain}.",
+  "people.inviteRotate": "New link",
+  "people.inviteRotateConfirm":
+    "Create a new invite link? The old link stops working.",
   "people.disable": "Disable",
   "people.enable": "Enable",
   "people.working": "Working…",
@@ -183,6 +192,10 @@ const en = {
   "error.cannot_change_own_role": "You cannot change your own role.",
   "error.cannot_change_owner_role": "The company owner's role cannot be changed.",
   "error.cannot_demote_last_admin": "You cannot demote the last active admin.",
+  "error.invalid_email": "Enter a valid email address.",
+  "error.email_domain_mismatch": "Email must use your company domain.",
+  "error.invite_not_found": "That invite link is invalid or expired.",
+  "error.tenant_missing": "Company not found.",
 
   "auth.no_tenant":
     "No company is registered for your email domain yet. Register it first, then sign in.",
@@ -262,12 +275,24 @@ const en = {
   "apps.deleteConfirm": "Delete {name}? Sign-ins to it stop immediately.",
   "apps.grants": "{count} assigned",
   "apps.accessTitle": "Access to {name}",
-  "apps.accessHint": "Pick who may sign in. Every change is written to the audit log.",
+  "apps.accessHint":
+    "Pick who may sign in, or add work emails for people who have not joined yet. Every change is written to the audit log.",
+  "apps.pendingEmails": "Pending emails",
+  "apps.pendingEmailsHint": "Emails must use @{domain}. Access unlocks when they first sign in.",
+  "apps.pendingEmailPlaceholder": "name@{domain}",
+  "apps.addEmail": "Add",
+  "apps.pendingBadge": "Pending",
+  "apps.grantsWithPending": "{count} assigned · {pending} pending",
   "apps.settingsFor": "Settings for {name}",
   "apps.open": "Open",
   "apps.moreActions": "More actions",
   "apps.grafanaTip": "Grafana: set the redirect URI to {url}/login/generic_oauth.",
   "apps.outlineTip": "Outline: set the redirect URI to {url}/auth/oidc.callback.",
+  "apps.portainerTip":
+    "Portainer: under Settings → Authentication → OAuth, paste issuer and client details. Redirect URI is the Portainer root URL.",
+  "apps.giteaTip":
+    "Gitea: add an OAuth2 authentication source named tenant-access so the callback path matches /user/oauth2/tenant-access/callback.",
+  "apps.bookstackTip": "BookStack: enable OIDC and set the redirect URI to {url}/oidc/callback.",
   "apps.redirectTip": "Register the app's callback URL under Redirect URIs (see its OpenID Connect docs).",
 
   "catalog.pickTitle": "Choose an app",
@@ -283,12 +308,24 @@ const en = {
   "catalog.outline.title": "Outline",
   "catalog.outline.body": "Company wiki and docs. Same sign-in as this dashboard.",
   "catalog.outline.path": "Redirect: /auth/oidc.callback",
+  "catalog.portainer.title": "Portainer",
+  "catalog.portainer.body": "Docker and Kubernetes admin UI. Team signs in with work accounts.",
+  "catalog.portainer.path": "Redirect: / (Portainer root)",
+  "catalog.gitea.title": "Gitea",
+  "catalog.gitea.body": "Self-hosted Git. Name the OAuth source tenant-access.",
+  "catalog.gitea.path": "Redirect: /user/oauth2/tenant-access/callback",
+  "catalog.bookstack.title": "BookStack",
+  "catalog.bookstack.body": "Docs and knowledge base with OpenID Connect.",
+  "catalog.bookstack.path": "Redirect: /oidc/callback",
   "catalog.custom.title": "Custom OpenID Connect",
   "catalog.custom.body": "Any app that supports OpenID Connect. You enter the redirect URIs yourself.",
   "catalog.custom.path": "You provide redirect and launch URLs",
   "catalog.emptyCta": "Connect your first app",
   "catalog.showUrls": "Edit redirect URLs",
   "catalog.hideUrls": "Hide URL fields",
+
+  "landing.invite": "{tenant} invited you",
+  "landing.inviteHint": "Sign in with a work email at @{domain}.",
   "member.signedInAs": "Signed in as {email}",
 
   "myapps.title": "Your apps",
@@ -409,7 +446,16 @@ const no: Record<TKey, string> = {
   "people.noMatches": "Ingen treff",
   "people.noMatchesBody": "Prøv et annet søk eller fjern rollefilteret.",
   "people.emptyTitle": "Ingen personer enda",
-  "people.emptyBody": "Alle som logger inn med en matchende jobb-e-post vises her.",
+  "people.emptyBody":
+    "Del invitasjonslenken, eller vent til folk logger inn med en matchende jobb-e-post.",
+  "people.invite": "Kopier invitasjonslenke",
+  "people.inviteWorking": "Forbereder…",
+  "people.inviteCopied": "Invitasjonslenke kopiert",
+  "people.inviteHint":
+    "Alle med denne lenken ser selskapsnavnet ditt, og logger deretter inn med Google eller Microsoft. E-posten må matche @{domain}.",
+  "people.inviteRotate": "Ny lenke",
+  "people.inviteRotateConfirm":
+    "Opprette en ny invitasjonslenke? Den gamle slutter å virke.",
   "people.disable": "Deaktiver",
   "people.enable": "Aktiver",
   "people.working": "Jobber…",
@@ -502,6 +548,10 @@ const no: Record<TKey, string> = {
   "error.cannot_change_own_role": "Du kan ikke endre din egen rolle.",
   "error.cannot_change_owner_role": "Selskapseierens rolle kan ikke endres.",
   "error.cannot_demote_last_admin": "Du kan ikke nedgradere den siste aktive administratoren.",
+  "error.invalid_email": "Skriv inn en gyldig e-postadresse.",
+  "error.email_domain_mismatch": "E-posten må bruke selskapets domene.",
+  "error.invite_not_found": "Invitasjonslenken er ugyldig eller utløpt.",
+  "error.tenant_missing": "Selskapet ble ikke funnet.",
 
   "auth.no_tenant":
     "Ingen selskap er registrert for e-postdomenet ditt enda. Registrer det først, og logg deretter inn.",
@@ -581,12 +631,26 @@ const no: Record<TKey, string> = {
   "apps.deleteConfirm": "Slette {name}? Innlogginger til den stopper umiddelbart.",
   "apps.grants": "{count} tildelt",
   "apps.accessTitle": "Tilgang til {name}",
-  "apps.accessHint": "Velg hvem som kan logge inn. Hver endring skrives til revisjonsloggen.",
+  "apps.accessHint":
+    "Velg hvem som kan logge inn, eller legg til jobb-e-poster for folk som ikke har blitt med ennå. Hver endring skrives til revisjonsloggen.",
+  "apps.pendingEmails": "Ventende e-poster",
+  "apps.pendingEmailsHint":
+    "E-poster må bruke @{domain}. Tilgang låses opp ved første innlogging.",
+  "apps.pendingEmailPlaceholder": "navn@{domain}",
+  "apps.addEmail": "Legg til",
+  "apps.pendingBadge": "Venter",
+  "apps.grantsWithPending": "{count} tildelt · {pending} venter",
   "apps.settingsFor": "Innstillinger for {name}",
   "apps.open": "Åpne",
   "apps.moreActions": "Flere handlinger",
   "apps.grafanaTip": "Grafana: sett omdirigerings-URI til {url}/login/generic_oauth.",
   "apps.outlineTip": "Outline: sett omdirigerings-URI til {url}/auth/oidc.callback.",
+  "apps.portainerTip":
+    "Portainer: under Settings → Authentication → OAuth, lim inn issuer og klientopplysninger. Omdirigerings-URI er Portainer-rot-URL-en.",
+  "apps.giteaTip":
+    "Gitea: legg til en OAuth2-autentiseringskilde med navnet tenant-access slik at tilbakekallingsstien blir /user/oauth2/tenant-access/callback.",
+  "apps.bookstackTip":
+    "BookStack: aktiver OIDC og sett omdirigerings-URI til {url}/oidc/callback.",
   "apps.redirectTip":
     "Registrer appens tilbakekallings-URL under omdirigerings-URIer (se OpenID Connect-dokumentasjonen).",
 
@@ -603,12 +667,24 @@ const no: Record<TKey, string> = {
   "catalog.outline.title": "Outline",
   "catalog.outline.body": "Selskapswiki og dokumenter. Samme innlogging som dette dashbordet.",
   "catalog.outline.path": "Omdirigering: /auth/oidc.callback",
+  "catalog.portainer.title": "Portainer",
+  "catalog.portainer.body": "Docker- og Kubernetes-admin. Teamet logger inn med jobbkontoer.",
+  "catalog.portainer.path": "Omdirigering: / (Portainer-rot)",
+  "catalog.gitea.title": "Gitea",
+  "catalog.gitea.body": "Egenhostet Git. Gi OAuth-kilden navnet tenant-access.",
+  "catalog.gitea.path": "Omdirigering: /user/oauth2/tenant-access/callback",
+  "catalog.bookstack.title": "BookStack",
+  "catalog.bookstack.body": "Dokumentasjon og kunnskapsbase med OpenID Connect.",
+  "catalog.bookstack.path": "Omdirigering: /oidc/callback",
   "catalog.custom.title": "Egendefinert OpenID Connect",
   "catalog.custom.body": "Enhver app som støtter OpenID Connect. Du skriver inn omdirigerings-URIer selv.",
   "catalog.custom.path": "Du oppgir omdirigerings- og start-URLer",
   "catalog.emptyCta": "Koble til din første app",
   "catalog.showUrls": "Rediger omdirigerings-URLer",
   "catalog.hideUrls": "Skjul URL-felter",
+
+  "landing.invite": "{tenant} har invitert deg",
+  "landing.inviteHint": "Logg inn med en jobb-e-post på @{domain}.",
   "member.signedInAs": "Innlogget som {email}",
 
   "myapps.title": "Dine apper",

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.rls import set_tenant_rls
 from app.domain import normalize_workspace_domain
-from app.models import Tenant, User, UserRole
+from app.models import AppGrant, PendingAppGrant, Tenant, User, UserRole
 from app.models.user import IdentityProvider
 
 
@@ -37,6 +37,38 @@ def email_from_oidc_claims(claims: dict) -> str:
     if preferred and "@" in preferred:
         return preferred
     return ""
+
+
+async def _fulfill_pending_app_grants(session: AsyncSession, user: User) -> None:
+    """Turn pending email grants into real AppGrant rows on first login."""
+    pending = list(
+        (
+            await session.scalars(
+                select(PendingAppGrant).where(PendingAppGrant.email == user.email)
+            )
+        ).all()
+    )
+    if not pending:
+        return
+    existing_client_pks = set(
+        (
+            await session.scalars(
+                select(AppGrant.client_pk).where(AppGrant.user_id == user.id)
+            )
+        ).all()
+    )
+    for row in pending:
+        if row.client_pk not in existing_client_pks:
+            session.add(
+                AppGrant(
+                    tenant_id=user.tenant_id,
+                    client_pk=row.client_pk,
+                    user_id=user.id,
+                    granted_by=row.granted_by,
+                )
+            )
+            existing_client_pks.add(row.client_pk)
+        await session.delete(row)
 
 
 async def upsert_user_from_oidc(
@@ -96,6 +128,7 @@ async def upsert_user_from_oidc(
     if tenant.owner_user_id is None and user.role == UserRole.admin:
         tenant.owner_user_id = user.id
 
+    await _fulfill_pending_app_grants(session, user)
     return user
 
 

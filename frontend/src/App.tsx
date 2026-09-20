@@ -15,6 +15,8 @@ export type EntryState = {
   denial: AppDenial | null;
   /** An app is waiting for the user to sign in (parked authorize request). */
   continueApp: string | null;
+  /** Company invite token from ?invite= (shareable onboarding link). */
+  inviteToken: string | null;
 };
 
 function readEntryState(): EntryState {
@@ -23,8 +25,9 @@ function readEntryState(): EntryState {
   const app = params.get("app");
   const reason = params.get("reason");
   const continueApp = params.get("continue");
+  const inviteToken = params.get("invite");
 
-  for (const key of ["error", "app", "reason", "continue"]) params.delete(key);
+  for (const key of ["error", "app", "reason", "continue", "invite"]) params.delete(key);
   const clean = `${window.location.pathname}${params.size ? `?${params}` : ""}`;
   window.history.replaceState(null, "", clean);
 
@@ -32,6 +35,7 @@ function readEntryState(): EntryState {
     errorCode: errorCode === "app_access_denied" ? null : errorCode,
     denial: errorCode === "app_access_denied" && app ? { app, reason } : null,
     continueApp,
+    inviteToken,
   };
 }
 
@@ -73,6 +77,7 @@ export default function App() {
         initialErrorCode={entry.errorCode}
         denial={entry.denial}
         continueApp={entry.continueApp}
+        inviteToken={entry.inviteToken}
         initialTab={entry.errorCode === "no_tenant" ? "register" : "signin"}
       />
     );

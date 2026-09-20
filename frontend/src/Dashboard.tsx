@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { AuditEvent, listAuditEvents, listUsers, logoutUrl, Me, TenantUser } from "./api";
+import {
+  AuditEvent,
+  ensureCompanyInvite,
+  listAuditEvents,
+  listUsers,
+  logoutUrl,
+  Me,
+  rotateCompanyInvite,
+  TenantUser,
+} from "./api";
 import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
@@ -350,23 +359,28 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                   {t("people.count", { shown: filtered.length, total: stats.total })}
                 </p>
               </div>
-              <div className="segmented" role="group" aria-label={t("filter.label")}>
-                {(
-                  [
-                    ["all", t("filter.all")],
-                    ["admin", t("filter.admins")],
-                    ["user", t("filter.members")],
-                  ] as [RoleFilter, string][]
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={roleFilter === value ? "seg active" : "seg"}
-                    onClick={() => setRoleFilter(value)}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="people-toolbar">
+                {isAdmin ? (
+                  <InviteLinkControls domain={me.workspace_domain} />
+                ) : null}
+                <div className="segmented" role="group" aria-label={t("filter.label")}>
+                  {(
+                    [
+                      ["all", t("filter.all")],
+                      ["admin", t("filter.admins")],
+                      ["user", t("filter.members")],
+                    ] as [RoleFilter, string][]
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={roleFilter === value ? "seg active" : "seg"}
+                      onClick={() => setRoleFilter(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             {pendingPeople ? (
@@ -391,6 +405,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
         ) : view === "apps" ? (
           <AppsPanel
             tenantName={me.tenant_name}
+            workspaceDomain={me.workspace_domain}
             users={users}
             onChanged={() => {
               setTilesKey((k) => k + 1);
@@ -417,6 +432,78 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+function InviteLinkControls({ domain }: { domain: string }) {
+  const { lang, t } = useLang();
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  async function copyInvite() {
+    setBusy(true);
+    setError(null);
+    try {
+      const invite = await ensureCompanyInvite();
+      // Prefer current SPA origin so the link always lands on this dashboard.
+      const url = `${window.location.origin}/?invite=${invite.token}`;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch (err) {
+      setError(messageForApiError(err instanceof Error ? err.message : "generic", lang));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rotate() {
+    if (!window.confirm(t("people.inviteRotateConfirm"))) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const invite = await rotateCompanyInvite();
+      const url = `${window.location.origin}/?invite=${invite.token}`;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch (err) {
+      setError(messageForApiError(err instanceof Error ? err.message : "generic", lang));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="invite-controls">
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={() => void copyInvite()}
+        disabled={busy}
+      >
+        {busy ? t("people.inviteWorking") : copied ? t("people.inviteCopied") : t("people.invite")}
+      </button>
+      <button
+        type="button"
+        className="btn btn-ghost"
+        onClick={() => void rotate()}
+        disabled={busy}
+      >
+        {t("people.inviteRotate")}
+      </button>
+      <p className="hint invite-hint">{t("people.inviteHint", { domain })}</p>
+      {error ? (
+        <p className="banner error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

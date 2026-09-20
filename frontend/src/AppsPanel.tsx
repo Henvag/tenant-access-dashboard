@@ -26,6 +26,7 @@ import { AppTemplateId, templateById } from "./appCatalog";
 
 type Props = {
   tenantName: string;
+  workspaceDomain: string;
   users: TenantUser[] | null;
   /** Called after any change so the parent can refresh the audit feed. */
   onChanged?: () => void;
@@ -75,13 +76,16 @@ function setupTip(
     }
     if (/outline/i.test(app.name)) return t("apps.outlineTip", { url: origin });
     if (/grafana/i.test(app.name)) return t("apps.grafanaTip", { url: origin });
+    if (/portainer/i.test(app.name)) return t("apps.portainerTip", { url: origin });
+    if (/gitea/i.test(app.name)) return t("apps.giteaTip", { url: origin });
+    if (/bookstack/i.test(app.name)) return t("apps.bookstackTip", { url: origin });
     return t("apps.redirectTip", { url: origin });
   } catch {
     return null;
   }
 }
 
-export default function AppsPanel({ tenantName, users, onChanged }: Props) {
+export default function AppsPanel({ tenantName, workspaceDomain, users, onChanged }: Props) {
   const { lang, t } = useLang();
   const [apps, setApps] = useState<RegisteredApp[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -375,6 +379,7 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
           <AccessEditor
             app={dialog.app}
             users={users ?? []}
+            workspaceDomain={workspaceDomain}
             onCancel={() => setDialog(null)}
             onSaved={(count) => {
               upsert({ ...dialog.app, grant_count: count });
@@ -508,16 +513,20 @@ function AppForm({
 function AccessEditor({
   app,
   users,
+  workspaceDomain,
   onSaved,
   onCancel,
 }: {
   app: RegisteredApp;
   users: TenantUser[];
+  workspaceDomain: string;
   onSaved: (count: number) => void;
   onCancel: () => void;
 }) {
   const { lang, t } = useLang();
   const [selected, setSelected] = useState<Set<string> | null>(null);
+  const [pendingEmails, setPendingEmails] = useState<string[]>([]);
+  const [emailDraft, setEmailDraft] = useState("");
   const [query, setQuery] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -525,13 +534,17 @@ function AccessEditor({
   useEffect(() => {
     let cancelled = false;
     getAppGrants(app.id)
-      .then((ids) => {
-        if (!cancelled) setSelected(new Set(ids));
+      .then((grants) => {
+        if (!cancelled) {
+          setSelected(new Set(grants.user_ids));
+          setPendingEmails(grants.pending_emails);
+        }
       })
       .catch((err) => {
         if (!cancelled) {
           setError(messageForApiError(err instanceof Error ? err.message : "generic", lang));
           setSelected(new Set());
+          setPendingEmails([]);
         }
       });
     return () => {
@@ -560,18 +573,50 @@ function AccessEditor({
     });
   }
 
+  function addPendingEmail() {
+    const raw = emailDraft.trim().toLowerCase();
+    if (!raw) return;
+    setError(null);
+    if (!raw.includes("@")) {
+      setError(messageForApiError("invalid_email", lang));
+      return;
+    }
+    const domain = raw.split("@")[1] ?? "";
+    if (domain !== workspaceDomain) {
+      setError(messageForApiError("email_domain_mismatch", lang));
+      return;
+    }
+    const existingUser = users.find((u) => u.email === raw);
+    if (existingUser) {
+      setSelected((current) => new Set([...(current ?? []), existingUser.id]));
+      setEmailDraft("");
+      return;
+    }
+    if (!pendingEmails.includes(raw)) {
+      setPendingEmails((current) => [...current, raw].sort());
+    }
+    setEmailDraft("");
+  }
+
+  function removePendingEmail(email: string) {
+    setPendingEmails((current) => current.filter((e) => e !== email));
+  }
+
   async function save() {
     if (!selected) return;
     setPending(true);
     setError(null);
     try {
-      const ids = await setAppGrants(app.id, Array.from(selected));
-      onSaved(ids.length);
+      const result = await setAppGrants(app.id, Array.from(selected), pendingEmails);
+      onSaved(result.user_ids.length + result.pending_emails.length);
     } catch (err) {
       setError(messageForApiError(err instanceof Error ? err.message : "generic", lang));
       setPending(false);
     }
   }
+
+  const assignedCount = selected?.size ?? 0;
+  const pendingCount = pendingEmails.length;
 
   return (
     <div className="access-editor">
@@ -616,8 +661,59 @@ function AccessEditor({
           );
         })}
       </ul>
+
+      <div className="pending-emails">
+        <p className="pending-emails-title">{t("apps.pendingEmails")}</p>
+        <p className="hint">{t("apps.pendingEmailsHint", { domain: workspaceDomain })}</p>
+        {pendingEmails.length > 0 ? (
+          <ul className="pending-email-list">
+            {pendingEmails.map((email) => (
+              <li key={email}>
+                <span className="pill pill-xs">{t("apps.pendingBadge")}</span>
+                <span className="pending-email-text">{email}</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => removePendingEmail(email)}
+                  disabled={pending}
+                >
+                  {t("apps.delete")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="pending-email-add">
+          <input
+            type="email"
+            value={emailDraft}
+            onChange={(e) => setEmailDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addPendingEmail();
+              }
+            }}
+            placeholder={t("apps.pendingEmailPlaceholder", { domain: workspaceDomain })}
+            disabled={pending || selected === null}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={addPendingEmail}
+            disabled={pending || selected === null || !emailDraft.trim()}
+          >
+            {t("apps.addEmail")}
+          </button>
+        </div>
+      </div>
+
       <div className="modal-actions">
-        <span className="hint">{t("apps.grants", { count: selected?.size ?? 0 })}</span>
+        <span className="hint">
+          {pendingCount > 0
+            ? t("apps.grantsWithPending", { count: assignedCount, pending: pendingCount })
+            : t("apps.grants", { count: assignedCount })}
+        </span>
         <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={pending}>
           {t("apps.cancel")}
         </button>

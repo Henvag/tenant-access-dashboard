@@ -128,6 +128,64 @@ class AppGrant(Base):
     client: Mapped["OAuthClient"] = relationship(back_populates="grants")
 
 
+class PendingAppGrant(Base):
+    """App access reserved for an email that has not signed in yet.
+
+    Fulfilled into AppGrant on first matching login (same tenant + email).
+    """
+
+    __tablename__ = "pending_app_grants"
+    __table_args__ = (
+        UniqueConstraint("client_pk", "email", name="uq_pending_app_grants_client_email"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    tenant_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    client_pk: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("oauth_clients.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    email: Mapped[str] = mapped_column(String(320), index=True, nullable=False)
+    granted_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class CompanyInviteToken(Base):
+    """Public invite token → tenant. One active token per company; no secrets."""
+
+    __tablename__ = "company_invite_tokens"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    created_by: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class OAuthCode(Base):
     """Single-use authorization code. Stored hashed; expires after 60 seconds."""
 

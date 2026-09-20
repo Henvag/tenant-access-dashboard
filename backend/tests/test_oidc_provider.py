@@ -173,7 +173,8 @@ async def test_full_code_flow_with_grants(
         json={"user_ids": [str(member.id)]},
         cookies={"session": _session_cookie(admin)},
     )
-    assert granted.status_code == 200 and granted.json() == [str(member.id)]
+    assert granted.status_code == 200
+    assert granted.json() == {"user_ids": [str(member.id)], "pending_emails": []}
 
     # 3. Authorize succeeds with a code.
     ok = await client.get(
