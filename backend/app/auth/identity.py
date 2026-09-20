@@ -92,6 +92,10 @@ async def upsert_user_from_oidc(
         user.display_name = display_name
         user.last_login_at = now
 
+    # Heal tenants whose owner was never set (e.g. 007 backfill blocked by FORCE RLS).
+    if tenant.owner_user_id is None and user.role == UserRole.admin:
+        tenant.owner_user_id = user.id
+
     return user
 
 
