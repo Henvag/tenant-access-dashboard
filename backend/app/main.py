@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
+import os
+import re
 
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -63,6 +65,22 @@ async def health(response: Response):
     if not db_ok:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return body
+
+
+@app.get("/internal/outline-database-url")
+async def outline_database_url(authorization: str | None = Header(default=None)):
+    """Token-gated helper so Outline can reuse dashboard Postgres credentials
+    against a dedicated `outline` database (free tier = one Postgres instance)."""
+    token = os.environ.get("OUTLINE_DB_BOOTSTRAP_TOKEN", "")
+    if not token or authorization != f"Bearer {token}":
+        raise HTTPException(status_code=404, detail="Not found")
+    raw = os.environ.get("DATABASE_URL", "")
+    if not raw:
+        raise HTTPException(status_code=503, detail="DATABASE_URL unset")
+    rewritten = re.sub(r"/[^/?]+(\?|$)", r"/outline\1", raw, count=1)
+    rewritten = rewritten.replace("postgresql+asyncpg://", "postgres://", 1)
+    rewritten = rewritten.replace("postgresql://", "postgres://", 1)
+    return PlainTextResponse(rewritten)
 
 
 def _mount_frontend() -> None:

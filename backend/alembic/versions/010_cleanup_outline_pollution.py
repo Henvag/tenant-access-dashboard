@@ -38,6 +38,8 @@ def upgrade() -> None:
 
     op.execute(text(f"UPDATE tenants SET owner_user_id = NULL WHERE id = '{_TENANT}'"))
 
+    # FORCE RLS blocks inserts without app.tenant_id — same pattern as 008.
+    op.execute(text("ALTER TABLE oauth_clients NO FORCE ROW LEVEL SECURITY"))
     op.execute(
         text(
             f"""
@@ -68,6 +70,7 @@ def upgrade() -> None:
             """
         )
     )
+    op.execute(text("ALTER TABLE oauth_clients FORCE ROW LEVEL SECURITY"))
 
     # Separate database for Outline (same instance; free tier = one Postgres).
     with op.get_context().autocommit_block():
