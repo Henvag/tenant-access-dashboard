@@ -87,7 +87,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile.outline
     dockerContext: .
-    healthCheckPath: /
+    healthCheckPath: /_health
     envVars:
       - key: URL
         value: https://tenant-access-outline.onrender.com
@@ -130,8 +130,11 @@ services:
         value: openid profile email
       - key: OIDC_USERNAME_CLAIM
         value: email
+      # Free instances are ~512MB; keep a single worker and cap V8 heap.
       - key: WEB_CONCURRENCY
         value: "1"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=384"
       - key: ENABLE_UPDATES
         value: "false"
 

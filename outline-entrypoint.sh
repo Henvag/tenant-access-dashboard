@@ -29,4 +29,6 @@ if [ -n "${DATABASE_URL:-}" ]; then
   export DATABASE_URL
 fi
 
-exec docker-entrypoint.sh yarn start
+# Outline 1.x image CMD is `node build/server/index.js` (no yarn start).
+cd /opt/outline
+exec node build/server/index.js

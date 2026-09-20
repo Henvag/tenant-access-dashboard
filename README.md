@@ -214,13 +214,15 @@ Fair warning on free: the web service sleeps, and free Postgres ages out after 3
 
 ### Outline as a relying party
 
-Outline is a self-hosted Notion-like wiki. It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier — fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
+Outline is a self-hosted Notion-like wiki (image pinned in `Dockerfile.outline`). It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier — fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
 
 1. **Apps → New app**. Name `Outline`, redirect URI `https://tenant-access-outline.onrender.com/auth/oidc.callback`, launch URL `https://tenant-access-outline.onrender.com`, pick a policy.
 2. Paste client id / secret into Outline's `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` and redeploy.
 3. Open Outline → **Continue with Tenant Access**.
 
 Tokens include `preferred_username` (email) so Outline's default username claim works; we also set `OIDC_USERNAME_CLAIM=email` in the blueprint.
+
+**Members:** Outline creates a person from whoever is signed into the dashboard when OIDC finishes. To add a second email, sign out of both Outline and the dashboard, sign into the dashboard as that email, then launch Outline again. One Outline install is one shared workspace.
 
 Locally, any OIDC client works against `http://localhost:8000` (issuer, discovery, JWKS).
 
