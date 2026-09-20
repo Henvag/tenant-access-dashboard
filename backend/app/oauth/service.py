@@ -129,7 +129,7 @@ async def consume_code(
     code: str,
     client: OAuthClient,
     redirect_uri: str,
-    code_verifier: str,
+    code_verifier: str = "",
 ) -> OAuthCode | None:
     """Atomically mark a code used. Returns None for any mismatch (caller answers invalid_grant)."""
     row = await db.scalar(
@@ -138,12 +138,17 @@ async def consume_code(
     if row is None:
         return None
     now = datetime.now(UTC)
+    pkce_ok = (
+        True
+        if not row.code_challenge
+        else pkce_matches(code_verifier, row.code_challenge, row.code_challenge_method)
+    )
     if (
         row.client_pk != client.id
         or row.used_at is not None
         or row.expires_at < now
         or row.redirect_uri != redirect_uri
-        or not pkce_matches(code_verifier, row.code_challenge, row.code_challenge_method)
+        or not pkce_ok
     ):
         # Burn the code on any failed attempt so it cannot be retried.
         row.used_at = now

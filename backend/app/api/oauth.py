@@ -145,8 +145,15 @@ async def authorize(request: Request, db: AsyncSession = Depends(get_db)):
     if "openid" not in scope_set or not scope_set <= SUPPORTED_SCOPES:
         return _rp_error(redirect_uri, "invalid_scope", state, "supported: openid email profile")
     code_challenge = q.get("code_challenge", "")
-    if not code_challenge or q.get("code_challenge_method", "plain") != "S256":
-        return _rp_error(redirect_uri, "invalid_request", state, "PKCE with S256 is required")
+    code_challenge_method = q.get("code_challenge_method", "S256")
+    # Outline's passport-oauth2 plugin does not send PKCE. Confidential clients
+    # (all of ours use a client secret) may omit it; if a challenge is sent it
+    # must be S256.
+    if code_challenge and code_challenge_method != "S256":
+        return _rp_error(redirect_uri, "invalid_request", state, "PKCE method must be S256")
+    if not code_challenge:
+        code_challenge_method = ""
+
 
     identities = read_login_session(request.session)
     if identities is None:
@@ -202,7 +209,7 @@ async def authorize(request: Request, db: AsyncSession = Depends(get_db)):
         scope=" ".join(sorted(scope_set)),
         nonce=q.get("nonce"),
         code_challenge=code_challenge,
-        code_challenge_method="S256",
+        code_challenge_method=code_challenge_method,
     )
     await record_app_event(
         db,
@@ -290,8 +297,8 @@ async def token(
     if client is None or client.disabled or not verify_secret(secret, client.client_secret_hash):
         return _token_error("invalid_client", "unknown client or bad secret", 401)
 
-    if not code or not redirect_uri or not code_verifier:
-        return _token_error("invalid_request", "code, redirect_uri and code_verifier are required")
+    if not code or not redirect_uri:
+        return _token_error("invalid_request", "code and redirect_uri are required")
 
     row = await consume_code(
         db, code=code, client=client, redirect_uri=redirect_uri, code_verifier=code_verifier

@@ -22,7 +22,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 | Control | Where |
 | --- | --- |
 | FORCE RLS on `users`, `audit_events`, `oauth_clients`, `app_grants`, `oauth_codes` | Alembic migrations |
-| Provider: PKCE S256 required, codes hashed + single-use + 60 s TTL, client secrets hashed, exact redirect match | `app/oauth/service.py`, `api/oauth.py` |
+| Provider: PKCE S256 when sent (optional for confidential clients — Outline omits it), codes hashed + single-use + 60 s TTL, client secrets hashed, exact redirect match | `app/oauth/service.py`, `api/oauth.py` |
 | Provider: RS256 keys in Postgres, JWKS published, retired keys kept 24 h | `app/oauth/keys.py` |
 | App sign-ins and denials audited with the reason (`app_login`, `app_login_denied`) | `audit_events.details` |
 | OIDC redirect URI is server-configured (not user input) | `config.py` / Authlib |
@@ -44,7 +44,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 6. **Stale access** — owners and admins can disable users in People; login and existing sessions are rejected (`user_disabled`). The company **owner** (first user on the tenant) can promote/demote admins; promoted admins can only disable members. You can't disable yourself, the owner, or the last active admin.
 7. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.
 8. **Open redirect via `/oauth/authorize`** — `redirect_uri` must equal a registered URI byte-for-byte; unknown clients or URIs land on our own error page, never on the attacker's URL.
-9. **Code interception / replay** — PKCE is mandatory (no `plain`), codes are hashed at rest and burned on first use *or* first failed attempt; the token endpoint also needs the client secret.
+9. **Code interception / replay** — PKCE S256 is enforced when the RP sends a challenge (Grafana does); confidential clients that omit PKCE (Outline) still need the client secret. Codes are hashed at rest and burned on first use *or* first failed attempt.
 10. **Cross-tenant app access** — the token endpoint resolves `client_id → tenant_id` through `oauth_client_lookup` (public, no secrets) and sets RLS before reading anything else. A user from tenant B hitting tenant A's app is denied with `wrong_tenant` and audited under A.
 11. **Stale access to apps** — a disabled user is rejected at authorize, token and userinfo. Existing Grafana sessions live until Grafana's own session expires; for a hard cut I'd add a back-channel logout or shorten the RP session.
 12. **Signing key compromise** — rotate by inserting a new `signing_keys` row and setting `retired_at` on the old one; the old public key stays in JWKS for 24 h so in-flight tokens still verify, then disappears. Tokens live 1 h.

@@ -306,14 +306,15 @@ async def test_rejections(
     )
     assert bad.headers["location"].startswith(settings.public_origin + "/?error=app_invalid_redirect")
 
-    # Missing PKCE → error back to the RP.
+    # Missing PKCE is allowed for confidential clients (Outline does not send it).
     nopkce = await client.get(
         "/oauth/authorize",
         params={k: v for k, v in _authorize_params(app["client_id"], challenge).items() if k != "code_challenge"},
         cookies=cookie,
     )
-    q = parse_qs(urlsplit(nopkce.headers["location"]).query)
-    assert nopkce.headers["location"].startswith(REDIRECT) and q["error"] == ["invalid_request"]
+    assert nopkce.status_code == 302
+    assert "code=" in nopkce.headers["location"]
+    assert nopkce.headers["location"].startswith(REDIRECT)
 
     # Not signed in → parked and sent to landing with the app name.
     anon = await client.get("/oauth/authorize", params=_authorize_params(app["client_id"], challenge))
