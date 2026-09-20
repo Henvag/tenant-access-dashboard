@@ -4,7 +4,7 @@ import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
-import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial } from "./format";
+import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
@@ -229,7 +229,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
         {errorCode ? (
           <p className="banner error" role="alert">
-            {messageForApiError(errorCode, lang)}
+            {messageForAuthError(errorCode, lang) ?? messageForApiError(errorCode, lang)}
           </p>
         ) : null}
         {showDenial && denial ? (
