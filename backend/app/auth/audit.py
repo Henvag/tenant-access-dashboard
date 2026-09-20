@@ -4,17 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.identity import LoginError, workspace_domain_from_claims
 from app.auth.rls import set_tenant_rls
+from app.http_client import client_ip
 from app.models import AuditEvent, AuditEventType, IdentityProvider, Tenant, User, UserRole
 
 
 def _client_ip(request: Request) -> str | None:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()[:64] or None
-    if request.client and request.client.host:
-        return request.client.host[:64]
-    return None
-
+    return client_ip(request)
 
 def _user_agent(request: Request) -> str | None:
     raw = request.headers.get("user-agent")

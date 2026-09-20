@@ -129,6 +129,7 @@ frontend/        EN/NO i18n, dashboard, landing
 Dockerfile · docker-compose.yml · render.yaml · fly.toml
 infra/render/  Terraform twin of the Render Blueprint (optional)
 docs/ops.md    How I'd run this + threat notes
+docs/cloudflare.md  Optional Cloudflare DNS/proxy + auth rate limits
 .github/workflows/ci.yml
 ```
 
@@ -268,7 +269,7 @@ The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
 
 ### Ops & threat model
 
-How I think about sessions, RLS, secrets, cold starts, and what’s still missing (e.g. login rate limits): [`docs/ops.md`](docs/ops.md).
+How I think about sessions, RLS, secrets, cold starts, and what’s still missing: [`docs/ops.md`](docs/ops.md). Optional Cloudflare edge (custom domain, SSL, rate limits without a global bot wall): [`docs/cloudflare.md`](docs/cloudflare.md).
 
 ---
 
