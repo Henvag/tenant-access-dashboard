@@ -3,7 +3,7 @@ import { lookupPublicInvite, loginUrl, PublicInvite } from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
-import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug } from "./Icons";
+import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
 import companiesIsolatedMark from "./assets/companies-isolated.jpg";
