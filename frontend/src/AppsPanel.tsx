@@ -53,6 +53,17 @@ const POLICY_PILL: Record<AccessPolicy, string> = {
   assigned: "pill pill-warn",
 };
 
+function redirectTip(
+  name: string,
+  launchUrl: string,
+  t: (key: TKey, vars?: Record<string, string | number>) => string,
+): string {
+  const origin = new URL(launchUrl).origin;
+  if (/outline/i.test(name)) return t("apps.outlineTip", { url: origin });
+  if (/grafana/i.test(name)) return t("apps.grafanaTip", { url: origin });
+  return t("apps.redirectTip", { url: origin });
+}
+
 export default function AppsPanel({ tenantName, users, onChanged }: Props) {
   const { lang, t } = useLang();
   const [apps, setApps] = useState<RegisteredApp[] | null>(null);
@@ -329,9 +340,7 @@ export default function AppsPanel({ tenantName, users, onChanged }: Props) {
             </div>
           </div>
           {dialog.app.launch_url ? (
-            <p className="hint tip-box">
-              {t("apps.grafanaTip", { url: new URL(dialog.app.launch_url).origin })}
-            </p>
+            <p className="hint tip-box">{redirectTip(dialog.app.name, dialog.app.launch_url, t)}</p>
           ) : null}
           <div className="modal-actions">
             <button type="button" className="btn btn-primary" onClick={() => setDialog(null)}>

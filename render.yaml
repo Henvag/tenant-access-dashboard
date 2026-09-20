@@ -79,7 +79,72 @@ services:
       - key: GF_ANALYTICS_CHECK_FOR_UPDATES
         value: "false"
 
+  # Second relying party: Outline (Notion-like wiki). Needs its own Postgres + Redis.
+  # Register "Outline" under Apps with redirect …/auth/oidc.callback, then paste client id/secret.
+  - type: web
+    name: tenant-access-outline
+    runtime: image
+    plan: free
+    image:
+      url: docker.io/outlinewiki/outline:0.82.0
+    healthCheckPath: /
+    envVars:
+      - key: URL
+        value: https://tenant-access-outline.onrender.com
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: UTILS_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tenant-access-outline-db
+          property: connectionString
+      - key: PGSSLMODE
+        value: require
+      - key: REDIS_URL
+        fromService:
+          name: tenant-access-outline-redis
+          type: keyvalue
+          property: connectionString
+      - key: FILE_STORAGE
+        value: local
+      - key: FILE_STORAGE_LOCAL_ROOT_DIR
+        value: /var/lib/outline/data
+      - key: FILE_STORAGE_UPLOAD_MAX_SIZE
+        value: "26214400"
+      - key: OIDC_CLIENT_ID
+        sync: false
+      - key: OIDC_CLIENT_SECRET
+        sync: false
+      - key: OIDC_AUTH_URI
+        value: https://tenant-access-dashboard.onrender.com/oauth/authorize
+      - key: OIDC_TOKEN_URI
+        value: https://tenant-access-dashboard.onrender.com/oauth/token
+      - key: OIDC_USERINFO_URI
+        value: https://tenant-access-dashboard.onrender.com/oauth/userinfo
+      - key: OIDC_DISPLAY_NAME
+        value: Tenant Access
+      - key: OIDC_SCOPES
+        value: openid profile email
+      - key: OIDC_USERNAME_CLAIM
+        value: email
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: ENABLE_UPDATES
+        value: "false"
+
+  - type: keyvalue
+    name: tenant-access-outline-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
 databases:
   - name: tenant-access-db
+    plan: free
+    postgresMajorVersion: "16"
+  - name: tenant-access-outline-db
     plan: free
     postgresMajorVersion: "16"

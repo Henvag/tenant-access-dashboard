@@ -252,6 +252,8 @@ const en = {
   "apps.open": "Open",
   "apps.moreActions": "More actions",
   "apps.grafanaTip": "Grafana: set the redirect URI to {url}/login/generic_oauth.",
+  "apps.outlineTip": "Outline: set the redirect URI to {url}/auth/oidc.callback.",
+  "apps.redirectTip": "Register the app's callback URL under Redirect URIs (see its OIDC docs).",
 
   "myapps.title": "Your apps",
   "myapps.hint": "One click — this dashboard vouches for you.",
@@ -528,6 +530,8 @@ const no: Record<TKey, string> = {
   "apps.open": "Åpne",
   "apps.moreActions": "Flere handlinger",
   "apps.grafanaTip": "Grafana: sett omdirigerings-URI til {url}/login/generic_oauth.",
+  "apps.outlineTip": "Outline: sett omdirigerings-URI til {url}/auth/oidc.callback.",
+  "apps.redirectTip": "Registrer appens callback-URL under omdirigerings-URIer (se dens OIDC-dokumentasjon).",
 
   "myapps.title": "Dine apper",
   "myapps.hint": "Ett klikk – dette dashbordet går god for deg.",

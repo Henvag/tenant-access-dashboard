@@ -13,6 +13,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 | **Render** | https://tenant-access-dashboard.onrender.com | Primary demo / blueprint deploy. Free tier — cold start can take ~30 s |
 | **Fly.io** | https://tenant-access-dashboard.fly.dev | Same image on a second hosting model |
 | **Grafana** | https://tenant-access-grafana.onrender.com | Demo app that signs in *through* the dashboard (SSO + role mapping) |
+| **Outline** | https://tenant-access-outline.onrender.com | Notion-like wiki, same OIDC provider (second relying party) |
 
 ---
 
@@ -32,7 +33,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
 3. **Overview** is stats + recent activity. **People** is the directory — the company **owner** (first signer) can **Promote** / **Demote** and **Disable** access; promoted admins can disable members. **Audit** shows sign-ins, failures, and access/role changes.
 4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned people), copy the client id + secret. Everyone gets a **Your apps** launcher on the Overview.
-5. Open the Grafana demo → **Sign in with Tenant Access**. You land in Grafana as Admin (owner), Editor (admin) or Viewer (member). Try it as someone who isn't assigned — you get a clear denial and the admin sees it in **Audit**.
+5. Open the Grafana or Outline demo → **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is a Notion-style wiki using the same IdP. Try a user who isn't assigned — denial lands in **Audit**.
 6. Register a second company on a different domain and sign in there. You should only see that tenant — including its apps.
 
 There's an **EN / NO** language toggle if you want to poke at the UI.
@@ -211,7 +212,17 @@ Fair warning on free: the web service sleeps, and free Postgres ages out after 3
 2. Copy the client id + secret into the Grafana service's `GF_AUTH_GENERIC_OAUTH_CLIENT_ID` / `_CLIENT_SECRET` env vars and redeploy.
 3. Open Grafana → **Sign in with Tenant Access**. Role mapping is in the blueprint: `owner → Admin`, `admin → Editor`, `member → Viewer`.
 
-Locally, any OIDC client works against `http://localhost:8000` (issuer, discovery, JWKS). Run Grafana with `GF_AUTH_GENERIC_OAUTH_*` pointing at localhost and register `http://localhost:3000/login/generic_oauth` as the redirect.
+### Outline as a relying party
+
+Outline is a self-hosted Notion-like wiki. It needs **Postgres + Redis** (also in the blueprint), so it's heavier than Grafana on the free tier — fine for a demo; don't treat Outline's local file storage as durable (ephemeral disk).
+
+1. **Apps → New app**. Name `Outline`, redirect URI `https://tenant-access-outline.onrender.com/auth/oidc.callback`, launch URL `https://tenant-access-outline.onrender.com`, pick a policy.
+2. Paste client id / secret into Outline's `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` and redeploy.
+3. Open Outline → **Continue with Tenant Access**.
+
+Tokens include `preferred_username` (email) so Outline's default username claim works; we also set `OIDC_USERNAME_CLAIM=email` in the blueprint.
+
+Locally, any OIDC client works against `http://localhost:8000` (issuer, discovery, JWKS).
 
 ### Fly.io
 
@@ -259,4 +270,4 @@ I capped the scope so I could actually finish it. No fancy role hierarchy, no on
 
 The OIDC provider is intentionally a subset: authorization code + PKCE with confidential clients, RS256, no refresh tokens, no dynamic client registration, no consent screen (the admin's access policy *is* the consent). Enough for real apps like Grafana; not a drop-in Keycloak.
 
-What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and a live Grafana wired to it**, basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and live Grafana + Outline wired to it**, basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.

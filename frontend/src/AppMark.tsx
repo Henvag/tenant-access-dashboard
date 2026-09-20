@@ -1,8 +1,10 @@
 import grafanaLogo from "./assets/grafana.png";
+import outlineLogo from "./assets/outline.svg";
 import { IconPlug } from "./Icons";
 
 const KNOWN_LOGOS: { match: RegExp; src: string; alt: string }[] = [
   { match: /grafana/i, src: grafanaLogo, alt: "Grafana" },
+  { match: /outline/i, src: outlineLogo, alt: "Outline" },
 ];
 
 type Props = {

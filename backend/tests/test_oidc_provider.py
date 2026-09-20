@@ -210,6 +210,7 @@ async def test_full_code_flow_with_grants(
     assert id_claims["sub"] == str(member.id)
     assert id_claims["email"] == member.email
     assert id_claims["name"] == "Mia Member"
+    assert id_claims["preferred_username"] == member.email
     assert id_claims["role"] == "member"
     assert id_claims["nonce"] == "n-123"
     assert id_claims["tenant_id"] == str(tenant.id)
