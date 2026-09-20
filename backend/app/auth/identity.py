@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.rls import set_tenant_rls
+from app.billing.plans import limits_for_tenant
 from app.domain import normalize_workspace_domain
 from app.models import AppGrant, PendingAppGrant, Tenant, User, UserRole
 from app.models.user import IdentityProvider
@@ -102,6 +103,9 @@ async def upsert_user_from_oidc(
     now = datetime.now(UTC)
     if user is None:
         user_count = await session.scalar(select(func.count()).select_from(User)) or 0
+        max_users = limits_for_tenant(tenant).max_users
+        if user_count >= max_users:
+            raise LoginError("seat_limit_reached")
         user = User(
             tenant_id=tenant.id,
             email=email,

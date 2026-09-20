@@ -75,7 +75,7 @@ No context -> empty reads and rejected writes. CI runs the RLS tests as a normal
 ## Sign-in -> tenant
 
 ```
-Google or Entra (OIDC) ──id_token──▶ FastAPI ──▶ email domain ──▶ tenant
+Google or Entra (OIDC) ââid_tokenâââ¶ FastAPI âââ¶ email domain âââ¶ tenant
 ```
 
 Roughly:
@@ -93,10 +93,10 @@ Roles are deliberately just `admin` and `user` (plus the tenant **owner**, the f
 Consuming OIDC from Google is table stakes; the interesting half of an identity product is *issuing* identity to other apps. So the dashboard also speaks OIDC outward:
 
 ```
-Grafana ──/oauth/authorize──▶ dashboard  (session? tenant? disabled? policy?)
-        ◀─────code────────────           audit: app_login / app_login_denied
-Grafana ──/oauth/token (secret + PKCE)──▶ RS256 id_token + access_token
-Grafana ──/oauth/userinfo─────────────▶ email, name, role, tenant
+Grafana ââ/oauth/authorizeâââ¶ dashboard  (session? tenant? disabled? policy?)
+        ââââââcodeââââââââââââ           audit: app_login / app_login_denied
+Grafana ââ/oauth/token (secret + PKCE)âââ¶ RS256 id_token + access_token
+Grafana ââ/oauth/userinfoââââââââââââââ¶ email, name, role, tenant
 ```
 
 - **Discovery + JWKS** at `/.well-known/openid-configuration` and `/.well-known/jwks.json`. Signing keys are RSA-2048, stored in Postgres (both hosts have ephemeral disks), cached in memory, rotatable.
@@ -134,10 +134,11 @@ backend/
   alembic/
   tests/
 frontend/        EN/NO i18n, dashboard, landing
-Dockerfile · docker-compose.yml · render.yaml · fly.toml
+Dockerfile Â· docker-compose.yml Â· render.yaml Â· fly.toml
 infra/render/  Terraform twin of the Render Blueprint (optional)
 docs/ops.md    How I'd run this + threat notes
 docs/cloudflare.md  Optional Cloudflare DNS/proxy + auth rate limits
+docs/billing.md     Stripe + Vipps plans (Free / Team / Business)
 .github/workflows/ci.yml
 ```
 
@@ -277,7 +278,7 @@ The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
 
 ### Ops & threat model
 
-How I think about sessions, RLS, secrets, cold starts, and what's still missing: [`docs/ops.md`](docs/ops.md). Optional Cloudflare edge (custom domain, SSL, rate limits without a global bot wall): [`docs/cloudflare.md`](docs/cloudflare.md).
+How I think about sessions, RLS, secrets, cold starts, and what's still missing: [`docs/ops.md`](docs/ops.md). Optional Cloudflare edge (custom domain, SSL, rate limits without a global bot wall): [`docs/cloudflare.md`](docs/cloudflare.md). Monetization (Stripe card subscriptions + Vipps annual): [`docs/billing.md`](docs/billing.md).
 
 ---
 

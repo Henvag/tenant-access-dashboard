@@ -83,6 +83,7 @@ async def _prepare_database() -> None:
             await connection.execute(
                 text(f"GRANT USAGE ON TYPE oauth_access_policy TO {APP_ROLE}")
             )
+            await connection.execute(text(f"GRANT USAGE ON TYPE tenant_plan TO {APP_ROLE}"))
     finally:
         await admin_engine.dispose()
 

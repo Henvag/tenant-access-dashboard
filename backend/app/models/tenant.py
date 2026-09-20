@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+
+class TenantPlan(str, enum.Enum):
+    free = "free"
+    team = "team"
+    business = "business"
 
 
 class Tenant(Base):
@@ -35,6 +42,19 @@ class Tenant(Base):
         ),
         nullable=True,
         index=True,
+    )
+    plan: Mapped[TenantPlan] = mapped_column(
+        Enum(TenantPlan, name="tenant_plan", create_constraint=False),
+        nullable=False,
+        default=TenantPlan.free,
+        server_default="free",
+    )
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(
+        String(128), unique=True, index=True, nullable=True
+    )
+    plan_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
 
     users: Mapped[list["User"]] = relationship(

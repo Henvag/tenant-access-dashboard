@@ -24,6 +24,20 @@ services:
         sync: false
       - key: ENTRA_TENANT_ID
         value: common
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_TEAM_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_TEAM_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS_ANNUAL
+        sync: false
+      - key: STRIPE_VIPPS_ENABLED
+        value: "false"
 
   # Demo relying party: Grafana signs in through the dashboard (OIDC provider).
   # Register "Grafana" under Apps in the dashboard, then paste the client id/secret here.

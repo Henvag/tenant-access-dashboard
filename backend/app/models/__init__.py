@@ -9,7 +9,7 @@ from app.models.oauth import (
     PendingAppGrant,
     SigningKey,
 )
-from app.models.tenant import Tenant
+from app.models.tenant import Tenant, TenantPlan
 from app.models.user import IdentityProvider, User, UserRole
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     "PendingAppGrant",
     "SigningKey",
     "Tenant",
+    "TenantPlan",
     "User",
     "UserRole",
 ]

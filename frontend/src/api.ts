@@ -14,6 +14,9 @@ export type Me = {
   last_login_at: string | null;
   disabled: boolean;
   is_owner: boolean;
+  plan: "free" | "team" | "business";
+  max_apps: number;
+  max_users: number;
 };
 
 export type TenantUser = {
@@ -244,4 +247,49 @@ export function loginUrl(provider: "google" | "microsoft" = "google"): string {
 
 export function logoutUrl(): string {
   return `${API_BASE}/auth/logout`;
+}
+
+export type BillingPlan = {
+  id: "free" | "team" | "business";
+  max_users: number;
+  max_apps: number;
+  audit_retention_days: number;
+  price_monthly_nok: number | null;
+  price_annual_nok: number | null;
+};
+
+export type BillingStatus = {
+  plan: "free" | "team" | "business";
+  max_users: number;
+  max_apps: number;
+  audit_retention_days: number;
+  users_used: number;
+  apps_used: number;
+  plan_expires_at: string | null;
+  stripe_configured: boolean;
+  vipps_enabled: boolean;
+  has_stripe_customer: boolean;
+  can_manage: boolean;
+};
+
+export function listBillingPlans(): Promise<BillingPlan[]> {
+  return request<BillingPlan[]>("/billing/plans");
+}
+
+export function getBillingStatus(): Promise<BillingStatus> {
+  return request<BillingStatus>("/billing/status");
+}
+
+export function checkoutBilling(
+  plan: "team" | "business",
+  method: "card_monthly" | "vipps_annual",
+): Promise<{ url: string }> {
+  return request<{ url: string }>("/billing/checkout", {
+    method: "POST",
+    body: JSON.stringify({ plan, method }),
+  });
+}
+
+export function openBillingPortal(): Promise<{ url: string }> {
+  return request<{ url: string }>("/billing/portal", { method: "POST" });
 }

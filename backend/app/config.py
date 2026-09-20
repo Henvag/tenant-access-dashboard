@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     render_external_url: str = ""
     public_base_url: str = ""
 
+    # Stripe (subscriptions + optional Vipps annual one-shot). Empty = billing UI demo-only.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_team_monthly: str = ""
+    stripe_price_business_monthly: str = ""
+    stripe_price_team_annual: str = ""
+    stripe_price_business_annual: str = ""
+    # Vipps via Stripe Checkout (payment mode only; not subscription). Requires preview access.
+    stripe_vipps_enabled: bool = False
+
     @field_validator("database_url")
     @classmethod
     def to_asyncpg(cls, value: str) -> str:

@@ -13,11 +13,13 @@ import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
+import BillingPanel from "./BillingPanel";
 import BrandMark from "./BrandMark";
 import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
+  IconCreditCard,
   IconGrid,
   IconList,
   IconLogout,
@@ -31,10 +33,10 @@ import LanguageToggle from "./LanguageToggle";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 
-type View = "overview" | "people" | "apps" | "audit";
+type View = "overview" | "people" | "apps" | "audit" | "billing";
 type RoleFilter = "all" | "admin" | "user";
 
-const VIEWS: View[] = ["overview", "people", "apps", "audit"];
+const VIEWS: View[] = ["overview", "people", "apps", "audit", "billing"];
 
 function viewFromUrl(isAdmin: boolean): View {
   const raw = new URLSearchParams(window.location.search).get("view");
@@ -143,7 +145,9 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
         ? t("nav.people")
         : view === "apps"
           ? t("nav.apps")
-          : t("nav.audit");
+          : view === "billing"
+            ? t("nav.billing")
+            : t("nav.audit");
 
   return (
     <div className="app">
@@ -195,6 +199,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                 <IconList />
                 {t("nav.audit")}
                 {events ? <span className="nav-count">{events.length}</span> : null}
+              </button>
+              <button
+                type="button"
+                className={view === "billing" ? "nav-item active" : "nav-item"}
+                onClick={() => setView("billing")}
+              >
+                <IconCreditCard />
+                {t("nav.billing")}
               </button>
             </>
           ) : null}
@@ -412,6 +424,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               void listAuditEvents(50).then(setEvents).catch(() => undefined);
             }}
           />
+        ) : view === "billing" ? (
+          <BillingPanel isOwner={actorIsOwner} />
         ) : (
           <section className="card">
             <div className="card-head">

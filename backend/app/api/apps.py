@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, require_admin
 from app.auth.audit import record_app_event
 from app.db import get_db
+from app.billing.plans import limits_for_tenant
 from app.domain import normalize_workspace_domain
 from app.models import (
     AccessPolicy,
@@ -137,7 +138,8 @@ async def create_app(
     db: AsyncSession = Depends(get_db),
 ) -> AppCreatedOut:
     count = await db.scalar(select(func.count()).select_from(OAuthClient)) or 0
-    if count >= 25:
+    max_apps = limits_for_tenant(admin.tenant).max_apps if admin.tenant else 3
+    if count >= max_apps:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="app_limit_reached")
 
     secret = new_client_secret()

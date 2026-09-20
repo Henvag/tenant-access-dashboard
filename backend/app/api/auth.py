@@ -175,6 +175,9 @@ async def callback(
 
 @router.get("/me", response_model=MeOut)
 async def me(user: User = Depends(get_current_user)) -> MeOut:
+    from app.billing.plans import effective_plan_id, limits_for_tenant
+
+    limits = limits_for_tenant(user.tenant)
     return MeOut(
         id=user.id,
         email=user.email,
@@ -187,6 +190,9 @@ async def me(user: User = Depends(get_current_user)) -> MeOut:
         disabled=user.disabled,
         is_owner=user.tenant.owner_user_id is not None
         and user.id == user.tenant.owner_user_id,
+        plan=effective_plan_id(user.tenant).value,
+        max_apps=limits.max_apps,
+        max_users=limits.max_users,
     )
 
 

@@ -17,6 +17,9 @@ class MeOut(BaseModel):
     last_login_at: datetime | None
     disabled: bool = False
     is_owner: bool = False
+    plan: str = "free"
+    max_apps: int = 3
+    max_users: int = 10
 
 
 class TenantUserOut(BaseModel):
