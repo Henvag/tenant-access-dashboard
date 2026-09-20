@@ -3,9 +3,10 @@ import { lookupPublicInvite, loginUrl, PublicInvite } from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
-import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
+import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
+import companiesIsolatedMark from "./assets/companies-isolated.jpg";
 import idpPairMark from "./assets/google-microsoft.png";
 
 type Tab = "signin" | "register";
@@ -172,8 +173,8 @@ export default function Landing({
             </div>
           </li>
           <li>
-            <span className="feature-icon">
-              <IconShield />
+            <span className="feature-icon feature-icon-wide">
+              <img src={companiesIsolatedMark} alt="" width={26} height={26} />
             </span>
             <div>
               <strong>{t("feature.isolated.title")}</strong>
