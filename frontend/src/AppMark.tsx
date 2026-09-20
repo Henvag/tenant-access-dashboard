@@ -1,5 +1,5 @@
 import grafanaLogo from "./assets/grafana.png";
-import outlineLogo from "./assets/outline.svg";
+import outlineLogo from "./assets/outline.png";
 import { IconPlug } from "./Icons";
 
 const KNOWN_LOGOS: { match: RegExp; src: string; alt: string }[] = [

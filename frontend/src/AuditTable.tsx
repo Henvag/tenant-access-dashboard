@@ -67,7 +67,7 @@ const DENIAL_REASON_KEYS: Record<string, TKey> = {
 
 function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>) => string): Presentation {
   const code = event.error_code ?? undefined;
-  const app = event.details?.app ?? "—";
+  const app = event.details?.app ?? "\u2014";
   const by = event.details?.by ?? "";
 
   switch (event.event_type) {
@@ -86,7 +86,7 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         tone: "danger",
         reason: { text: reasonKey ? t(reasonKey) : app, tone: "danger" },
         sentence: `${t("audit.appLoginDeniedDetail", { app })}${
-          reasonKey ? ` — ${t(reasonKey)}` : ""
+          reasonKey ? ` \u2014 ${t(reasonKey)}` : ""
         }`,
         warn: true,
       };
@@ -265,7 +265,7 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                     {view.reason ? (
                       <span className={TONE_CLASS[view.reason.tone]}>{view.reason.text}</span>
                     ) : (
-                      <span className="muted">—</span>
+                      <span className="muted">{"\u2014"}</span>
                     )}
                   </td>
                   {!compact ? (
@@ -306,7 +306,7 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                         </div>
                         <div>
                           <dt>{t("audit.code")}</dt>
-                          <dd>{event.error_code ? <code>{event.error_code}</code> : "—"}</dd>
+                          <dd>{event.error_code ? <code>{event.error_code}</code> : "\u2014"}</dd>
                         </div>
                         <div>
                           <dt>{t("audit.idp")}</dt>
@@ -316,7 +316,7 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                         </div>
                         <div>
                           <dt>{t("audit.ip")}</dt>
-                          <dd className="mono">{event.ip_address || "—"}</dd>
+                          <dd className="mono">{event.ip_address || "\u2014"}</dd>
                         </div>
                         <div>
                           <dt>{t("audit.time")}</dt>
