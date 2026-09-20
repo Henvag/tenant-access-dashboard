@@ -1,12 +1,21 @@
 # Screenshots
 
-Referenced from the root `README.md`. Keep these filenames:
+Referenced from the root `README.md`.
 
-| File | What to capture |
+| File | What |
 | --- | --- |
-| `landing.png` | Signed-out landing page, **Sign in** tab visible |
-| `overview.png` | Admin dashboard, **Overview** view with stat cards and recent sign-ins |
-| `people.png` | Admin dashboard, **People** view with the table (ideally 2+ users) |
-| `norwegian.png` | Any dashboard view with the language toggle set to **NO** |
+| `landing.png` | Signed-out landing, **EN**, Sign in tab |
+| `norwegian.png` | Same landing with language set to **NO** |
+| `grafana-login.png` | Grafana demo → **Sign in with Tenant Access** |
+| `overview.png` | *(optional)* Admin Overview — needs a signed-in session |
+| `people.png` | *(optional)* People with invite controls — needs a signed-in session |
 
-Tips: browser window around 1440×900, hide bookmarks bar, PNG format. If a screenshot shows an email you do not want public, blur it before committing.
+Refresh the public ones:
+
+```bash
+npm install --no-save playwright@1.49.1
+npx playwright install chromium
+node scripts/capture-screenshots.mjs
+```
+
+Viewport: 1440×900. Blur emails before committing if you add authenticated shots.
