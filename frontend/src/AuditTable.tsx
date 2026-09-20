@@ -18,8 +18,34 @@ const ERROR_KEYS: Record<string, TKey> = {
   missing_claims: "auth.missing_claims",
   unverified_email: "auth.unverified_email",
   identity_conflict: "auth.identity_conflict",
+  user_disabled: "auth.user_disabled",
   oidc_failed: "auth.oidc_failed",
 };
+
+function eventLabelKey(eventType: AuditEvent["event_type"]): TKey {
+  switch (eventType) {
+    case "login_failed":
+      return "audit.loginFailed";
+    case "user_disabled":
+      return "audit.userDisabled";
+    case "user_enabled":
+      return "audit.userEnabled";
+    default:
+      return "audit.login";
+  }
+}
+
+function eventTone(eventType: AuditEvent["event_type"]): string {
+  switch (eventType) {
+    case "login_failed":
+    case "user_disabled":
+      return "role role-failed";
+    case "user_enabled":
+      return "role role-admin";
+    default:
+      return "role role-user";
+  }
+}
 
 export default function AuditTable({ events, emptyTitle, emptyBody, compact = false }: Props) {
   const { lang, t } = useLang();
@@ -61,7 +87,11 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                 : event.error_code
                   ? t("auth.generic", { code: event.error_code })
                   : t("audit.failedUnknown")
-              : "—";
+              : event.event_type === "user_disabled"
+                ? t("audit.userDisabledDetail")
+                : event.event_type === "user_enabled"
+                  ? t("audit.userEnabledDetail")
+                  : "—";
             return (
               <tr key={event.id}>
                 <td>
@@ -77,8 +107,8 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                 </td>
                 <td>
                   <div className="event-cell">
-                    <span className={failed ? "role role-failed" : "role role-user"}>
-                      {failed ? t("audit.loginFailed") : t("audit.login")}
+                    <span className={eventTone(event.event_type)}>
+                      {t(eventLabelKey(event.event_type))}
                     </span>
                     {failed ? (
                       <span className="audit-detail warn" title={detail}>
@@ -99,8 +129,19 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                 </td>
                 {!compact ? (
                   <td>
-                    <span className={failed ? "audit-detail warn" : "audit-detail muted"} title={detail}>
-                      {failed ? detail : t("audit.noDetail")}
+                    <span
+                      className={
+                        failed || event.event_type === "user_disabled"
+                          ? "audit-detail warn"
+                          : "audit-detail muted"
+                      }
+                      title={detail}
+                    >
+                      {failed ||
+                      event.event_type === "user_disabled" ||
+                      event.event_type === "user_enabled"
+                        ? detail
+                        : t("audit.noDetail")}
                     </span>
                   </td>
                 ) : null}

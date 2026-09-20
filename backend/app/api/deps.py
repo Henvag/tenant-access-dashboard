@@ -24,6 +24,9 @@ async def get_current_user(
     if user is None or user.tenant_id != tenant_id:
         request.session.clear()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="not_signed_in")
+    if user.disabled_at is not None:
+        request.session.clear()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user_disabled")
     return user
 
 

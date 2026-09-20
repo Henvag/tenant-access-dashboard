@@ -167,6 +167,7 @@ async def me(user: User = Depends(get_current_user)) -> MeOut:
         tenant_name=user.tenant.name,
         workspace_domain=user.tenant.workspace_domain,
         last_login_at=user.last_login_at,
+        disabled=user.disabled,
     )
 
 

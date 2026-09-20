@@ -15,6 +15,8 @@ from app.models.user import IdentityProvider
 class AuditEventType(str, enum.Enum):
     login = "login"
     login_failed = "login_failed"
+    user_disabled = "user_disabled"
+    user_enabled = "user_enabled"
 
 
 class AuditEvent(Base):

@@ -12,6 +12,7 @@ export type Me = {
   tenant_name: string;
   workspace_domain: string;
   last_login_at: string | null;
+  disabled: boolean;
 };
 
 export type TenantUser = {
@@ -20,6 +21,7 @@ export type TenantUser = {
   display_name: string | null;
   role: UserRole;
   last_login_at: string | null;
+  disabled: boolean;
 };
 
 export type Tenant = {
@@ -66,7 +68,7 @@ export type AuditEvent = {
   id: string;
   email: string;
   display_name: string | null;
-  event_type: "login" | "login_failed";
+  event_type: "login" | "login_failed" | "user_disabled" | "user_enabled";
   idp: "google" | "microsoft";
   error_code: string | null;
   ip_address: string | null;
@@ -79,6 +81,13 @@ export function getMe(): Promise<Me> {
 
 export function listUsers(): Promise<TenantUser[]> {
   return request<TenantUser[]>("/users");
+}
+
+export function setUserDisabled(userId: string, disabled: boolean): Promise<TenantUser> {
+  return request<TenantUser>(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ disabled }),
+  });
 }
 
 export function listAuditEvents(limit = 50): Promise<AuditEvent[]> {

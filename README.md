@@ -29,7 +29,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 1. Open either link → **Register company** with your email domain (`gmail.com` or `outlook.com` works fine for a personal demo).
 2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
-3. **Overview** is stats + recent activity. **People** is the directory. **Audit** shows successful and failed sign-ins (which IdP, when, and why it failed if it did).
+3. **Overview** is stats + recent activity. **People** is the directory — as admin you can **Disable** / **Enable** someone's access (they can't sign in while disabled). **Audit** shows sign-ins, failures, and access changes.
 4. Register a second company on a different domain and sign in there. You should only see that tenant.
 
 There's an **EN / NO** language toggle if you want to poke at the UI.
@@ -223,4 +223,4 @@ How I think about sessions, RLS, secrets, cold starts, and what’s still missin
 
 I capped the scope so I could actually finish it. No fancy role hierarchy, no on-prem AD, no login rate limiting yet.
 
-What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures), basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures and access changes), admin disable/re-enable, basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.

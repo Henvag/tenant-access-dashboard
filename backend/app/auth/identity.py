@@ -82,6 +82,8 @@ async def upsert_user_from_oidc(
         session.add(user)
         await session.flush()
     else:
+        if user.disabled_at is not None:
+            raise LoginError("user_disabled")
         user.email = email
         user.idp = idp
         user.oidc_sub = oidc_sub

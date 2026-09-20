@@ -84,3 +84,27 @@ async def record_login_failure(
     session.add(event)
     await session.flush()
     return event
+
+
+async def record_user_access_change(
+    session: AsyncSession,
+    *,
+    actor: User,
+    target: User,
+    disabled: bool,
+    request: Request,
+) -> AuditEvent:
+    """Append user_disabled / user_enabled. Caller must already have RLS set."""
+    event = AuditEvent(
+        tenant_id=target.tenant_id,
+        user_id=target.id,
+        email=target.email,
+        event_type=AuditEventType.user_disabled if disabled else AuditEventType.user_enabled,
+        idp=actor.idp,
+        error_code=None,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    session.add(event)
+    await session.flush()
+    return event

@@ -956,6 +956,43 @@ input:focus {
   color: #b42318;
 }
 
+.status-pill {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #fde8e8;
+  color: #b42318;
+  vertical-align: middle;
+}
+
+.row-disabled td {
+  opacity: 0.72;
+}
+
+.btn-table {
+  padding: 0.28rem 0.65rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.btn-table.danger {
+  color: #b42318;
+}
+
+.btn-table.danger:hover:not(:disabled) {
+  background: #fde8e8;
+}
+
+.dot-label.tone-bad {
+  color: #b42318;
+}
+
+.dot-label.tone-bad i {
+  background: #b42318;
+}
+
 .audit-detail {
   display: inline-block;
   max-width: 16rem;

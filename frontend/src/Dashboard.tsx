@@ -302,6 +302,13 @@ export default function Dashboard({ me }: Props) {
               <UserTable
                 users={filtered}
                 currentUserId={me.id}
+                canManage={isAdmin}
+                onUserUpdated={(updated) => {
+                  setUsers((current) =>
+                    (current ?? []).map((u) => (u.id === updated.id ? updated : u)),
+                  );
+                  void listAuditEvents(50).then(setEvents).catch(() => undefined);
+                }}
                 emptyTitle={isFiltering ? t("people.noMatches") : t("people.emptyTitle")}
                 emptyBody={isFiltering ? t("people.noMatchesBody") : t("people.emptyBody")}
               />

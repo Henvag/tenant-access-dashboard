@@ -7,6 +7,7 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   missing_claims: "auth.missing_claims",
   unverified_email: "auth.unverified_email",
   identity_conflict: "auth.identity_conflict",
+  user_disabled: "auth.user_disabled",
   oidc_failed: "auth.oidc_failed",
 };
 
@@ -17,6 +18,10 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   domain_invalid: "error.domain_invalid",
   not_signed_in: "error.not_signed_in",
   admin_required: "error.admin_required",
+  user_not_found: "error.user_not_found",
+  cannot_disable_self: "error.cannot_disable_self",
+  cannot_disable_last_admin: "error.cannot_disable_last_admin",
+  user_disabled: "error.user_disabled",
   load_people: "error.load_people",
   ...AUTH_ERROR_KEYS,
 };

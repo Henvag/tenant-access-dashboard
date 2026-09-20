@@ -24,7 +24,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 | OIDC redirect URI is server-configured (not user input) | `config.py` / Authlib |
 | CORS allowlist + credentials only for our origins | `main.py` |
 | Secure cookies in production | `SessionMiddleware` (`https_only`) |
-| Failed + successful sign-ins audited per tenant | `audit_events` |
+| Failed + successful sign-ins audited per tenant; access disable/enable audited | `audit_events` |
 | JSON logs + `X-Request-ID` | observability middleware |
 | `/health` checks DB (used by Render/Fly probes) | `GET /health` |
 | Secrets via env / platform secret stores, not git | Render Blueprint, Fly secrets, `.env` gitignored |
@@ -37,7 +37,8 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 3. **Session theft** — HttpOnly + Secure + HTTPS-only hosts. Still vulnerable to XSS in our own origin; keep the SPA dependency surface small and avoid `eval`-style patterns.
 4. **Credential stuffing / login spam** — **not rate-limited yet**. I'd put a reverse-proxy or app-level limit on `/auth/login/*` and `/auth/callback` before calling this production-grade.
 5. **Identity conflict** (same email+IdP, different `sub`) — we reject and audit rather than silently merge. That's intentional.
-6. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.
+6. **Stale access** — admins can disable a user in People; login and existing sessions are rejected (`user_disabled`). You can't disable yourself or the last active admin.
+7. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.
 
 ## Ops habits
 
