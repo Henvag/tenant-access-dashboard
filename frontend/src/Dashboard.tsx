@@ -431,7 +431,12 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             <div className="card-head">
               <div>
                 <h2>{t("audit.title")}</h2>
-                <p className="hint">{t("audit.hint", { count: events?.length ?? 0 })}</p>
+                <p className="hint">
+                  {t("audit.hint", {
+                    count: events?.length ?? 0,
+                    days: me.audit_retention_days ?? 14,
+                  })}
+                </p>
               </div>
             </div>
             {pendingAudit ? (

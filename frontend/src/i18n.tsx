@@ -109,7 +109,7 @@ const en = {
   "people.demoteConfirm": "Demote {email} to member? They will lose admin access.",
 
   "audit.title": "Audit log",
-  "audit.hint": "{count} events · only your company",
+  "audit.hint": "{count} events · last {days} days · only your company",
   "audit.event": "Event",
   "audit.idp": "Sign-in provider",
   "audit.detail": "Detail",
@@ -506,7 +506,7 @@ const no: Record<TKey, string> = {
   "people.demoteConfirm": "Nedgradere {email} til medlem? De mister administratortilgang.",
 
   "audit.title": "Revisjonslogg",
-  "audit.hint": "{count} hendelser · bare ditt selskap",
+  "audit.hint": "{count} hendelser · siste {days} dager · bare ditt selskap",
   "audit.event": "Hendelse",
   "audit.idp": "Innloggingsleverandør",
   "audit.detail": "Detalj",

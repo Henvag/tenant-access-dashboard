@@ -47,6 +47,7 @@ Leave secrets empty locally to exercise the Billing screen without charging.
 - **Vipps annual** → Checkout `mode=payment` with `payment_method_types` including `vipps`;
   webhook sets `plan_expires_at` to now + 365 days (no recurring Vipps charge).
 - Expired prepaid plans fall back to Free until renewed.
+- The audit log only returns events inside the plan's retention window. Older rows stay in the database and reappear after an upgrade.
 
 ## Local webhook testing
 

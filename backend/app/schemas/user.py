@@ -20,6 +20,7 @@ class MeOut(BaseModel):
     plan: str = "free"
     max_apps: int = 3
     max_users: int = 10
+    audit_retention_days: int = 14
 
 
 class TenantUserOut(BaseModel):

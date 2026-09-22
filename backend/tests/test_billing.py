@@ -190,3 +190,20 @@ def test_effective_plan_expired_prepaid() -> None:
         stripe_subscription_id = None
 
     assert effective_plan_id(Fake()) == PlanId.free
+
+
+def test_retention_cutoff_follows_plan() -> None:
+    from datetime import UTC, datetime
+
+    from app.billing.plans import retention_cutoff
+
+    moment = datetime(2026, 9, 23, tzinfo=UTC)
+
+    class Fake:
+        def __init__(self, plan: TenantPlan) -> None:
+            self.plan = plan
+            self.plan_expires_at = None
+            self.stripe_subscription_id = "sub_123" if plan != TenantPlan.free else None
+
+    assert retention_cutoff(Fake(TenantPlan.free), now=moment) == datetime(2026, 9, 9, tzinfo=UTC)
+    assert retention_cutoff(Fake(TenantPlan.team), now=moment) == datetime(2026, 6, 25, tzinfo=UTC)

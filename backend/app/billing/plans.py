@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Protocol
 
@@ -68,3 +68,10 @@ def effective_plan_id(tenant: _TenantPlanLike) -> PlanId:
 
 def limits_for_tenant(tenant: _TenantPlanLike) -> PlanLimits:
     return limits_for(effective_plan_id(tenant))
+
+
+def retention_cutoff(tenant: _TenantPlanLike, *, now: datetime | None = None) -> datetime:
+    """Oldest audit timestamp still visible on this plan. Older rows stay stored."""
+    moment = now or datetime.now(UTC)
+    days = limits_for_tenant(tenant).audit_retention_days
+    return moment - timedelta(days=days)

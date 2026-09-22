@@ -17,6 +17,7 @@ export type Me = {
   plan: "free" | "team" | "business";
   max_apps: number;
   max_users: number;
+  audit_retention_days: number;
 };
 
 export type TenantUser = {
