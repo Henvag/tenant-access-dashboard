@@ -35,6 +35,10 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 | --- | --- |
 | ![Outline](docs/screenshots/outline.png) | ![Norwegian](docs/screenshots/norwegian.png) |
 
+| Billing (Team) |
+| --- |
+| ![Billing](docs/screenshots/billing.png) |
+
 ## Try it
 
 1. Open either link. **Register company** with your email domain (`gmail.com` or `outlook.com` works for a personal demo).
@@ -43,6 +47,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned), copy the client id and secret. Everyone gets a **Your apps** launcher on Overview.
 5. Open Grafana or Outline and choose **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is the wiki. Try a user who is not assigned; the denial shows up in **Audit**.
 6. Register a second company on another domain and sign in there. You should only see that tenant, including its apps.
+7. **Billing** (owner): Free, Team, and Business, with seat and app limits. Card checkout goes through Stripe.
 
 There is an **EN / NO** language toggle if you want to check the UI.
 
