@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { lookupPublicInvite, loginUrl, PublicInvite } from "./api";
+import { lookupPublicInvite, loginUrl, PublicInvite, API_BASE } from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
@@ -92,7 +92,17 @@ export default function Landing({
 
           {invite ? (
             <div className="banner info" role="status">
-              <IconShield width={16} height={16} />
+              {invite.has_logo ? (
+                <img
+                  className="invite-logo"
+                  src={`${API_BASE}/public/invites/${encodeURIComponent(inviteToken || "")}/logo`}
+                  alt=""
+                  width={28}
+                  height={28}
+                />
+              ) : (
+                <IconShield width={16} height={16} />
+              )}
               <div>
                 <strong>{t("landing.invite", { tenant: invite.tenant_name })}</strong>
                 <p className="banner-sub">

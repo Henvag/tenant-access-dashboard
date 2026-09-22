@@ -65,6 +65,7 @@ def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
         client_id=client.client_id,
         redirect_uris=list(client.redirect_uris),
         launch_url=client.launch_url,
+        backchannel_logout_uri=client.backchannel_logout_uri,
         access_policy=client.access_policy,
         disabled=client.disabled,
         created_at=client.created_at,
@@ -150,6 +151,7 @@ async def create_app(
         client_secret_hash=hash_secret(secret),
         redirect_uris=payload.redirect_uris,
         launch_url=payload.launch_url,
+        backchannel_logout_uri=payload.backchannel_logout_uri,
         access_policy=payload.access_policy,
         created_by=admin.id,
     )
@@ -187,6 +189,10 @@ async def patch_app(
         client.launch_url = None
     elif payload.launch_url is not None:
         client.launch_url = payload.launch_url
+    if payload.clear_backchannel_logout_uri:
+        client.backchannel_logout_uri = None
+    elif payload.backchannel_logout_uri is not None:
+        client.backchannel_logout_uri = payload.backchannel_logout_uri
     if payload.access_policy is not None:
         client.access_policy = payload.access_policy
     if payload.disabled is not None:

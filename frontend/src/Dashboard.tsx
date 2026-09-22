@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AuditEvent,
+  createAgent,
+  deleteAgent,
   ensureCompanyInvite,
+  fetchCompanyLogo,
+  listAgents,
   listAuditEvents,
   listUsers,
   logoutUrl,
   Me,
   rotateCompanyInvite,
+  TeamAgent,
+  uploadCompanyLogo,
+  clearCompanyLogo,
   TenantUser,
 } from "./api";
 import AppsPanel from "./AppsPanel";
@@ -15,7 +22,7 @@ import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
 import BillingPanel from "./BillingPanel";
 import BrandMark from "./BrandMark";
-import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError, planNearLimit } from "./format";
+import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForDashboardError, planNearLimit } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
@@ -72,6 +79,11 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
   const [loadingAudit, setLoadingAudit] = useState(isAdmin);
   const [errorCode, setErrorCode] = useState<string | null>(entryError);
+  const [agents, setAgents] = useState<TeamAgent[] | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [agentName, setAgentName] = useState("");
+  const [agentLink, setAgentLink] = useState("");
+  const [agentError, setAgentError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
@@ -108,6 +120,41 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    listAgents()
+      .then((rows) => {
+        if (!cancelled) setAgents(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAgents([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!me.has_logo) {
+      setLogoUrl(null);
+      return;
+    }
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    fetchCompanyLogo().then((url) => {
+      if (cancelled) {
+        if (url) URL.revokeObjectURL(url);
+        return;
+      }
+      objectUrl = url;
+      setLogoUrl(url);
+    });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [me.has_logo]);
 
   const stats = useMemo(() => {
     const list = users ?? [];
@@ -159,8 +206,57 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
         <div className="tenant-chip">
           <span className="tenant-chip-label">{t("sidebar.tenant")}</span>
-          <strong>{me.tenant_name}</strong>
-          <span className="tenant-chip-domain">@{me.workspace_domain}</span>
+          <div className="tenant-brand">
+            {logoUrl ? (
+              <img className="tenant-logo" src={logoUrl} alt="" width={28} height={28} />
+            ) : null}
+            <div>
+              <strong>{me.tenant_name}</strong>
+              <span className="tenant-chip-domain">@{me.workspace_domain}</span>
+            </div>
+          </div>
+          {actorIsOwner ? (
+            <label className="tenant-logo-btn">
+              {t("logo.change")}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  void uploadCompanyLogo(file)
+                    .then(() => fetchCompanyLogo())
+                    .then((url) => {
+                      setLogoUrl((current) => {
+                        if (current) URL.revokeObjectURL(current);
+                        return url;
+                      });
+                    })
+                    .catch((err) => {
+                      setErrorCode(err instanceof Error ? err.message : "logo_type");
+                    });
+                }}
+              />
+            </label>
+          ) : null}
+          {actorIsOwner && logoUrl ? (
+            <button
+              type="button"
+              className="link tenant-logo-clear"
+              onClick={() => {
+                void clearCompanyLogo().then(() => {
+                  setLogoUrl((current) => {
+                    if (current) URL.revokeObjectURL(current);
+                    return null;
+                  });
+                });
+              }}
+            >
+              {t("logo.clear")}
+            </button>
+          ) : null}
         </div>
 
         <nav className="nav" aria-label={t("nav.label")}>
@@ -211,6 +307,72 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             </>
           ) : null}
         </nav>
+
+        {(isAdmin || (agents && agents.length > 0)) ? (
+        <div className="side-agents">
+          <p className="side-agents-label">{t("agents.title")}</p>
+          {(agents ?? []).map((agent) => (
+            <div key={agent.id} className="side-agent">
+              <a href={agent.url} target="_blank" rel="noreferrer">
+                {agent.name}
+              </a>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  className="side-agent-remove"
+                  aria-label={t("agents.remove")}
+                  onClick={() => {
+                    void deleteAgent(agent.id).then(() => {
+                      setAgents((current) => (current ?? []).filter((row) => row.id !== agent.id));
+                    });
+                  }}
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+          ))}
+          {isAdmin ? (
+            <form
+              className="side-agent-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setAgentError(null);
+                void createAgent(agentName.trim(), agentLink.trim())
+                  .then((created) => {
+                    setAgents((current) => [...(current ?? []), created]);
+                    setAgentName("");
+                    setAgentLink("");
+                  })
+                  .catch((err) => {
+                    setAgentError(err instanceof Error ? err.message : "agent_limit_reached");
+                  });
+              }}
+            >
+              <input
+                value={agentName}
+                onChange={(event) => setAgentName(event.target.value)}
+                placeholder={t("agents.name")}
+                maxLength={80}
+                required
+              />
+              <input
+                value={agentLink}
+                onChange={(event) => setAgentLink(event.target.value)}
+                placeholder={t("agents.url")}
+                type="url"
+                required
+              />
+              <button type="submit" className="btn btn-ghost btn-sm">
+                {t("agents.add")}
+              </button>
+              {agentError ? (
+                <p className="side-agent-error">{messageForApiError(agentError, lang)}</p>
+              ) : null}
+            </form>
+          ) : null}
+        </div>
+        ) : null}
 
         <div className="sidebar-foot">
           <div className="me">
@@ -273,7 +435,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
         {errorCode ? (
           <p className="banner error" role="alert">
-            {messageForAuthError(errorCode, lang) ?? messageForApiError(errorCode, lang)}
+            {messageForDashboardError(errorCode, lang)}
           </p>
         ) : null}
         {showDenial && denial ? (

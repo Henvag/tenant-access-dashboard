@@ -48,7 +48,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 8. **Open redirect via `/oauth/authorize`** — `redirect_uri` must equal a registered URI byte-for-byte; unknown clients or URIs land on our own error page, never on the attacker's URL.
 9. **Code interception / replay** — PKCE S256 is enforced when the RP sends a challenge (Grafana does); confidential clients that omit PKCE (Outline) still need the client secret. Codes are hashed at rest and burned on first use *or* first failed attempt.
 10. **Cross-tenant app access** — the token endpoint resolves `client_id → tenant_id` through `oauth_client_lookup` (public, no secrets) and sets RLS before reading anything else. A user from tenant B hitting tenant A's app is denied with `wrong_tenant` and audited under A.
-11. **Stale access to apps** — a disabled user is rejected at authorize, token and userinfo. Existing Grafana sessions live until Grafana's own session expires; for a hard cut I'd add a back-channel logout or shorten the RP session.
+11. **Stale access to apps** — a disabled user is rejected at authorize, token and userinfo. Apps that registered a back-channel logout URL receive a logout token when the person is disabled. Apps that did not, including the Grafana demo, keep their own session until it expires.
 12. **Signing key compromise** — rotate by inserting a new `signing_keys` row and setting `retired_at` on the old one; the old public key stays in JWKS for 24 h so in-flight tokens still verify, then disappears. Tokens live 1 h.
 
 ## Ops habits

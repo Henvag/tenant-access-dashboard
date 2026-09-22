@@ -88,6 +88,7 @@ async def record_user_access_change(
     target: User,
     disabled: bool,
     request: Request,
+    details: dict | None = None,
 ) -> AuditEvent:
     """Append user_disabled / user_enabled. Caller must already have RLS set."""
     event = AuditEvent(
@@ -99,6 +100,7 @@ async def record_user_access_change(
         error_code=None,
         ip_address=_client_ip(request),
         user_agent=_user_agent(request),
+        details=details,
     )
     session.add(event)
     await session.flush()

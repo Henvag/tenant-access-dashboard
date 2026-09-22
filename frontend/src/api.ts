@@ -18,6 +18,7 @@ export type Me = {
   max_apps: number;
   max_users: number;
   audit_retention_days: number;
+  has_logo: boolean;
 };
 
 export type TenantUser = {
@@ -103,6 +104,7 @@ export type RegisteredApp = {
   client_id: string;
   redirect_uris: string[];
   launch_url: string | null;
+  backchannel_logout_uri: string | null;
   access_policy: AccessPolicy;
   disabled: boolean;
   created_at: string;
@@ -122,6 +124,7 @@ export type AppInput = {
   name: string;
   redirect_uris: string[];
   launch_url: string | null;
+  backchannel_logout_uri?: string | null;
   access_policy: AccessPolicy;
 };
 
@@ -142,7 +145,11 @@ export function createApp(input: AppInput): Promise<RegisteredAppWithSecret> {
 
 export function patchApp(
   appId: string,
-  patch: Partial<AppInput> & { disabled?: boolean; clear_launch_url?: boolean },
+  patch: Partial<AppInput> & {
+    disabled?: boolean;
+    clear_launch_url?: boolean;
+    clear_backchannel_logout_uri?: boolean;
+  },
 ): Promise<RegisteredApp> {
   return request<RegisteredApp>(`/apps/${appId}`, {
     method: "PATCH",
@@ -182,6 +189,7 @@ export type CompanyInvite = {
 export type PublicInvite = {
   tenant_name: string;
   workspace_domain: string;
+  has_logo: boolean;
 };
 
 export type AppGrants = {
@@ -293,4 +301,51 @@ export function checkoutBilling(
 
 export function openBillingPortal(): Promise<{ url: string }> {
   return request<{ url: string }>("/billing/portal", { method: "POST" });
+}
+
+export type TeamAgent = {
+  id: string;
+  name: string;
+  url: string;
+  position: number;
+};
+
+export function listAgents(): Promise<TeamAgent[]> {
+  return request<TeamAgent[]>("/agents");
+}
+
+export function createAgent(name: string, url: string): Promise<TeamAgent> {
+  return request<TeamAgent>("/agents", {
+    method: "POST",
+    body: JSON.stringify({ name, url }),
+  });
+}
+
+export function deleteAgent(id: string): Promise<void> {
+  return request<void>(`/agents/${id}`, { method: "DELETE" });
+}
+
+export async function uploadCompanyLogo(file: File): Promise<void> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch(`${API_BASE}/company/logo`, {
+    method: "PUT",
+    credentials: "include",
+    body,
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as { detail?: string };
+    throw new Error(typeof data.detail === "string" ? data.detail : `request_failed:${response.status}`);
+  }
+}
+
+export function clearCompanyLogo(): Promise<void> {
+  return request<void>("/company/logo", { method: "DELETE" });
+}
+
+export async function fetchCompanyLogo(): Promise<string | null> {
+  const response = await fetch(`${API_BASE}/company/logo`, { credentials: "include" });
+  if (!response.ok) return null;
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
 }

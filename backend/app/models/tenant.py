@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -56,6 +56,8 @@ class Tenant(Base):
     plan_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    logo_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    logo_media_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     users: Mapped[list["User"]] = relationship(
         back_populates="tenant",

@@ -194,6 +194,7 @@ async def me(user: User = Depends(get_current_user)) -> MeOut:
         max_apps=limits.max_apps,
         max_users=limits.max_users,
         audit_retention_days=limits.audit_retention_days,
+        has_logo=bool(user.tenant.logo_bytes),
     )
 
 

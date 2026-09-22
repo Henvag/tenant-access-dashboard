@@ -9,6 +9,7 @@ from app.api.deps import require_admin
 from app.auth.audit import record_role_change, record_user_access_change
 from app.db import get_db
 from app.models import Tenant, User, UserRole
+from app.oauth.logout import notify_disabled_user
 from app.schemas.user import TenantUserOut, UserPatch
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -115,8 +116,11 @@ async def _apply_disabled(
                     detail="cannot_disable_last_admin",
                 )
         target.disabled_at = datetime.now(UTC)
+        logout = await notify_disabled_user(db, target)
+        details = {"logout_notified": logout["notified"], "logout_failed": logout["failed"]}
     else:
         target.disabled_at = None
+        details = None
 
     await record_user_access_change(
         db,
@@ -124,6 +128,7 @@ async def _apply_disabled(
         target=target,
         disabled=disabled,
         request=request,
+        details=details,
     )
 
 

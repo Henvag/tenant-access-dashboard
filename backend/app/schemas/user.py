@@ -21,6 +21,7 @@ class MeOut(BaseModel):
     max_apps: int = 3
     max_users: int = 10
     audit_retention_days: int = 14
+    has_logo: bool = False
 
 
 class TenantUserOut(BaseModel):

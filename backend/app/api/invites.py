@@ -26,6 +26,7 @@ class CompanyInviteOut(BaseModel):
 class PublicInviteOut(BaseModel):
     tenant_name: str
     workspace_domain: str
+    has_logo: bool = False
 
 
 def _invite_url(request: Request, token: str) -> str:
@@ -126,4 +127,5 @@ async def lookup_public_invite(
     return PublicInviteOut(
         tenant_name=tenant.name,
         workspace_domain=tenant.workspace_domain,
+        has_logo=bool(tenant.logo_bytes),
     )

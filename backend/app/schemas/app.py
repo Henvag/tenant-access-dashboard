@@ -25,6 +25,7 @@ class AppOut(BaseModel):
     client_id: str
     redirect_uris: list[str]
     launch_url: str | None
+    backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy
     disabled: bool
     created_at: datetime
@@ -64,10 +65,20 @@ def _clean_launch(value: str | None) -> str | None:
     return _check_url(value)
 
 
+def _clean_logout(value: str | None) -> str | None:
+    cleaned = _clean_launch(value)
+    if cleaned is None:
+        return None
+    if not cleaned.startswith("https://"):
+        raise ValueError("logout URL must be https")
+    return cleaned
+
+
 class AppCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     redirect_uris: list[str] = Field(min_length=1, max_length=10)
     launch_url: str | None = None
+    backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy = AccessPolicy.everyone
 
     @field_validator("name")
@@ -85,15 +96,22 @@ class AppCreate(BaseModel):
     def _launch(cls, value: str | None) -> str | None:
         return _clean_launch(value)
 
+    @field_validator("backchannel_logout_uri")
+    @classmethod
+    def _logout(cls, value: str | None) -> str | None:
+        return _clean_logout(value)
+
 
 class AppPatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     redirect_uris: list[str] | None = Field(default=None, min_length=1, max_length=10)
     launch_url: str | None = None
+    backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy | None = None
     disabled: bool | None = None
-    # Distinguish "not sent" from "clear it" for launch_url.
+    # Distinguish "not sent" from "clear it".
     clear_launch_url: bool = False
+    clear_backchannel_logout_uri: bool = False
 
     @field_validator("name")
     @classmethod
@@ -109,6 +127,11 @@ class AppPatch(BaseModel):
     @classmethod
     def _launch(cls, value: str | None) -> str | None:
         return _clean_launch(value)
+
+    @field_validator("backchannel_logout_uri")
+    @classmethod
+    def _logout(cls, value: str | None) -> str | None:
+        return _clean_logout(value)
 
 
 class GrantsIn(BaseModel):

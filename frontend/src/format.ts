@@ -52,6 +52,11 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   load_people: "error.load_people",
   app_not_found: "error.app_not_found",
   app_limit_reached: "error.app_limit_reached",
+  logo_type: "error.logo_type",
+  logo_too_large: "error.logo_too_large",
+  agent_limit_reached: "error.agent_limit_reached",
+  agent_not_found: "error.agent_not_found",
+  https_url_required: "error.https_url_required",
   seat_limit_reached: "error.seat_limit_reached",
   stripe_unconfigured: "error.stripe_unconfigured",
   vipps_unconfigured: "error.vipps_unconfigured",
@@ -73,6 +78,13 @@ export function messageForAuthError(code: string | null, lang: Lang): string | n
   return key ? translate(lang, key) : translate(lang, "auth.generic", { code });
 }
 
+export function messageForDashboardError(code: string, lang: Lang): string {
+  if (API_ERROR_KEYS[code] || code.startsWith("request_failed:")) {
+    return messageForApiError(code, lang);
+  }
+  return messageForAuthError(code, lang) ?? messageForApiError(code, lang);
+}
+
 export function messageForApiError(codeOrMessage: string, lang: Lang): string {
   const key = API_ERROR_KEYS[codeOrMessage];
   if (key) return translate(lang, key);
@@ -81,7 +93,9 @@ export function messageForApiError(codeOrMessage: string, lang: Lang): string {
     return translate(lang, "error.request_failed", { status: failed[1] });
   }
   // Pydantic may return "Value error, domain_invalid"
-  const match = codeOrMessage.match(/\b(tenant_exists|name_required|domain_url|domain_invalid)\b/);
+  const match = codeOrMessage.match(
+    /\b(tenant_exists|name_required|domain_url|domain_invalid|https_url_required|logo_type|logo_too_large|agent_limit_reached)\b/,
+  );
   if (match) {
     const mapped = API_ERROR_KEYS[match[1]];
     if (mapped) return translate(lang, mapped);

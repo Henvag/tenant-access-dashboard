@@ -61,6 +61,7 @@ class OAuthClient(Base):
         nullable=False,
         default=AccessPolicy.everyone,
     )
+    backchannel_logout_uri: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),

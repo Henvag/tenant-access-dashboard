@@ -1,3 +1,4 @@
+from app.models.agent import TeamAgent
 from app.models.audit import AuditEvent, AuditEventType
 from app.models.oauth import (
     AccessPolicy,
@@ -24,6 +25,7 @@ __all__ = [
     "OAuthCode",
     "PendingAppGrant",
     "SigningKey",
+    "TeamAgent",
     "Tenant",
     "TenantPlan",
     "User",

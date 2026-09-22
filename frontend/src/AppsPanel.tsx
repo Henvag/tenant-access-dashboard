@@ -351,6 +351,7 @@ export default function AppsPanel({
               const updated = await patchApp(dialog.app.id, {
                 ...input,
                 clear_launch_url: input.launch_url === null,
+                clear_backchannel_logout_uri: !input.backchannel_logout_uri,
               });
               upsert(updated);
               setDialog(null);
@@ -438,6 +439,7 @@ function AppForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [redirects, setRedirects] = useState(initial?.redirect_uris.join("\n") ?? "");
   const [launchUrl, setLaunchUrl] = useState(initial?.launch_url ?? "");
+  const [logoutUrl, setLogoutUrl] = useState(initial?.backchannel_logout_uri ?? "");
   const [policy, setPolicy] = useState<AccessPolicy>(initial?.access_policy ?? "everyone");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -454,6 +456,7 @@ function AppForm({
           .map((line) => line.trim())
           .filter(Boolean),
         launch_url: launchUrl.trim() || null,
+        backchannel_logout_uri: logoutUrl.trim() || null,
         access_policy: policy,
       });
     } catch (err) {
@@ -500,6 +503,16 @@ function AppForm({
           type="url"
         />
         <small>{t("apps.launchUrlHint")}</small>
+      </label>
+      <label className="field">
+        <span>{t("apps.logoutUrl")}</span>
+        <input
+          value={logoutUrl}
+          onChange={(e) => setLogoutUrl(e.target.value)}
+          placeholder="https://grafana.example.com/logout/backchannel"
+          type="url"
+        />
+        <small>{t("apps.logoutUrlHint")}</small>
       </label>
       <fieldset className="field policy-field">
         <legend>{t("apps.policy")}</legend>

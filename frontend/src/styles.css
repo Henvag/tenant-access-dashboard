@@ -644,6 +644,7 @@ input:focus {
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar .brand {
@@ -677,6 +678,106 @@ input:focus {
 .tenant-chip-domain {
   color: var(--side-muted);
   font-size: 0.85rem;
+}
+
+.tenant-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.tenant-logo,
+.invite-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #fff;
+  flex: 0 0 auto;
+}
+
+.tenant-logo-btn {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--side-muted);
+  cursor: pointer;
+}
+
+.tenant-logo-btn:hover,
+.tenant-logo-clear {
+  color: var(--side-ink);
+}
+
+.side-agents {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.side-agents-label {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--side-muted);
+}
+
+.side-agent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.25rem 0.15rem;
+}
+
+.side-agent a {
+  color: var(--side-ink);
+  text-decoration: none;
+  font-size: 0.88rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-agent-remove {
+  background: none;
+  border: 0;
+  color: var(--side-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.side-agent-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.side-agent-form input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--side-line);
+  color: var(--side-ink);
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.side-agent-error {
+  margin: 0;
+  color: #f3b4ae;
+  font-size: 0.75rem;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8rem;
 }
 
 .nav {
