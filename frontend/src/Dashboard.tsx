@@ -15,7 +15,7 @@ import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
 import BillingPanel from "./BillingPanel";
 import BrandMark from "./BrandMark";
-import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError } from "./format";
+import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForAuthError, planNearLimit } from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
@@ -370,6 +370,17 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                 <p className="hint">
                   {t("people.count", { shown: filtered.length, total: stats.total })}
                 </p>
+                <p className="hint">
+                  {t("people.usage", { used: stats.total, max: me.max_users })}
+                  {planNearLimit(stats.total, me.max_users) ? (
+                    <>
+                      {" · "}
+                      <button type="button" className="link" onClick={() => setView("billing")}>
+                        {t("plan.upgrade")}
+                      </button>
+                    </>
+                  ) : null}
+                </p>
               </div>
               <div className="people-toolbar">
                 {isAdmin ? (
@@ -419,6 +430,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             tenantName={me.tenant_name}
             workspaceDomain={me.workspace_domain}
             users={users}
+            maxApps={me.max_apps}
+            onUpgrade={() => setView("billing")}
             onChanged={() => {
               setTilesKey((k) => k + 1);
               void listAuditEvents(50).then(setEvents).catch(() => undefined);

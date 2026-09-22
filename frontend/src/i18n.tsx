@@ -83,6 +83,8 @@ const en = {
 
   "people.title": "Everyone in {tenant}",
   "people.count": "{shown} of {total} shown · only your company",
+  "people.usage": "{used} / {max} people on this plan",
+  "plan.upgrade": "Upgrade",
   "filter.label": "Filter by role",
   "filter.all": "All",
   "filter.admins": "Admins",
@@ -226,6 +228,7 @@ const en = {
   "nav.billing": "Billing",
   "apps.title": "Apps",
   "apps.hint": "Company tools that sign in through {tenant}. This dashboard is their identity provider.",
+  "apps.usage": "{used} / {max} apps on this plan",
   "apps.story": "Connect tools your team already uses. People open them with Google or Microsoft.",
   "apps.new": "New app",
   "apps.newTitle": "Register an app",
@@ -480,6 +483,8 @@ const no: Record<TKey, string> = {
 
   "people.title": "Alle i {tenant}",
   "people.count": "{shown} av {total} vises · bare ditt selskap",
+  "people.usage": "{used} / {max} personer på denne planen",
+  "plan.upgrade": "Oppgrader",
   "filter.label": "Filtrer etter rolle",
   "filter.all": "Alle",
   "filter.admins": "Administratorer",
@@ -623,6 +628,7 @@ const no: Record<TKey, string> = {
   "nav.billing": "Fakturering",
   "apps.title": "Apper",
   "apps.hint": "Selskapsverktøy som logger inn via {tenant}. Dette dashbordet er identitetsleverandøren deres.",
+  "apps.usage": "{used} / {max} apper på denne planen",
   "apps.story": "Koble til verktøy teamet allerede bruker. Folk åpner dem med Google eller Microsoft.",
   "apps.new": "Ny app",
   "apps.newTitle": "Registrer en app",

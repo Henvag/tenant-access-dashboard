@@ -89,6 +89,11 @@ export function messageForApiError(codeOrMessage: string, lang: Lang): string {
   return codeOrMessage || translate(lang, "error.generic");
 }
 
+export function planNearLimit(used: number, max: number): boolean {
+  if (max <= 0) return false;
+  return used >= max || used / max >= 0.8;
+}
+
 export function formatTimestamp(value: string | null, lang: Lang): string {
   if (!value) return translate(lang, "time.never");
   const date = new Date(value);

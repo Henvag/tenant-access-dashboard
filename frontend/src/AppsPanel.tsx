@@ -15,7 +15,7 @@ import {
 } from "./api";
 import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
-import { messageForApiError } from "./format";
+import { messageForApiError, planNearLimit } from "./format";
 import { TKey, useLang } from "./i18n";
 import AppMark from "./AppMark";
 import { IconExternal, IconKey, IconPlus, IconSearch } from "./Icons";
@@ -28,6 +28,8 @@ type Props = {
   tenantName: string;
   workspaceDomain: string;
   users: TenantUser[] | null;
+  maxApps: number;
+  onUpgrade?: () => void;
   /** Called after any change so the parent can refresh the audit feed. */
   onChanged?: () => void;
 };
@@ -85,13 +87,22 @@ function setupTip(
   }
 }
 
-export default function AppsPanel({ tenantName, workspaceDomain, users, onChanged }: Props) {
+export default function AppsPanel({
+  tenantName,
+  workspaceDomain,
+  users,
+  maxApps,
+  onUpgrade,
+  onChanged,
+}: Props) {
   const { lang, t } = useLang();
   const [apps, setApps] = useState<RegisteredApp[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const issuer = issuerUrl();
+  const appCount = apps?.length ?? 0;
+  const atAppLimit = apps !== null && appCount >= maxApps;
 
   async function load() {
     try {
@@ -181,8 +192,26 @@ export default function AppsPanel({ tenantName, workspaceDomain, users, onChange
             <h2>{t("apps.title")}</h2>
             <p className="hint">{t("apps.story")}</p>
             <p className="hint">{t("apps.hint", { tenant: tenantName })}</p>
+            {apps !== null ? (
+              <p className="hint">
+                {t("apps.usage", { used: appCount, max: maxApps })}
+                {planNearLimit(appCount, maxApps) && onUpgrade ? (
+                  <>
+                    {" · "}
+                    <button type="button" className="link" onClick={onUpgrade}>
+                      {t("plan.upgrade")}
+                    </button>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => setDialog({ kind: "new" })}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={atAppLimit}
+            onClick={() => setDialog({ kind: "new" })}
+          >
             <IconPlus width={16} height={16} />
             {t("apps.new")}
           </button>
