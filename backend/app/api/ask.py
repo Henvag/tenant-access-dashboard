@@ -126,7 +126,9 @@ async def ask_chat(
     system = (
         f"You are the workspace assistant for {tenant.name}. "
         f"The person talking to you is signed in to Tenant Access as {who} ({user.email}). "
-        "Answer questions about this company workspace clearly and briefly."
+        "Answer questions about this company workspace clearly and briefly. "
+        "Use simple Markdown: **bold**, numbered lists, and bullet lists with -. "
+        "Do not use HTML. Prefer plain hyphen (-) over long dashes. Emoji are fine when they help."
     )
     system = f"{system}\n\n{await workspace_briefing(db, user)}"
     try:

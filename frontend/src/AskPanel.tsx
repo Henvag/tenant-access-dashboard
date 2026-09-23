@@ -7,6 +7,7 @@ import {
   sendAskMessage,
 } from "./api";
 import geminiLogo from "./assets/gemini.svg";
+import ChatBubble from "./ChatBubble";
 import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
 import { useLang } from "./i18n";
@@ -179,12 +180,7 @@ export default function AskPanel({
                 <p className="hint ask-starter">{t("ask.starter")}</p>
               ) : (
                 messages.map((turn, index) => (
-                  <p
-                    key={`${turn.role}-${index}`}
-                    className={turn.role === "user" ? "agent-bubble me" : "agent-bubble"}
-                  >
-                    {turn.content}
-                  </p>
+                  <ChatBubble key={`${turn.role}-${index}`} role={turn.role} content={turn.content} />
                 ))
               )}
               <ChatThinking active={sending} />

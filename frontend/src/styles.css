@@ -921,11 +921,101 @@ input:focus {
   border-radius: 12px;
   background: var(--accent-soft);
   white-space: pre-wrap;
+  font-family: var(--font-sans), "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  overflow-wrap: anywhere;
 }
 
 .agent-bubble.me {
   align-self: flex-end;
   background: #f4f1ea;
+}
+
+.agent-bubble.md {
+  white-space: normal;
+}
+
+.agent-bubble.md > :first-child {
+  margin-top: 0;
+}
+
+.agent-bubble.md > :last-child {
+  margin-bottom: 0;
+}
+
+.agent-bubble.md p {
+  margin: 0 0 0.55rem;
+  line-height: 1.5;
+}
+
+.agent-bubble.md p:last-child {
+  margin-bottom: 0;
+}
+
+.agent-bubble.md .md-heading {
+  margin: 0 0 0.45rem;
+  font-weight: 650;
+  font-family: var(--font-display);
+  line-height: 1.35;
+}
+
+.agent-bubble.md ul,
+.agent-bubble.md ol {
+  margin: 0 0 0.55rem;
+  padding-left: 1.25rem;
+}
+
+.agent-bubble.md li {
+  margin: 0.2rem 0;
+  line-height: 1.45;
+}
+
+.agent-bubble.md li > p {
+  margin: 0;
+}
+
+.agent-bubble.md strong {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.agent-bubble.md em {
+  font-style: italic;
+}
+
+.agent-bubble.md code {
+  font-family: ui-monospace, Cascadia Code, Consolas, monospace;
+  font-size: 0.88em;
+  background: rgba(12, 18, 34, 0.06);
+  padding: 0.08em 0.35em;
+  border-radius: 5px;
+}
+
+.agent-bubble.md pre {
+  margin: 0 0 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(12, 18, 34, 0.06);
+  overflow-x: auto;
+}
+
+.agent-bubble.md pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.agent-bubble.md a {
+  color: var(--accent-strong);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.agent-bubble.md blockquote {
+  margin: 0 0 0.55rem;
+  padding: 0.15rem 0 0.15rem 0.75rem;
+  border-left: 3px solid var(--accent);
+  color: var(--ink-2);
 }
 
 .agent-bubble.thinking {

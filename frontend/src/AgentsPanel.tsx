@@ -10,6 +10,7 @@ import {
 } from "./api";
 import chatgptLogo from "./assets/chatgpt.png";
 import claudeLogo from "./assets/claude.png";
+import ChatBubble from "./ChatBubble";
 import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
 import { TKey, useLang } from "./i18n";
@@ -271,9 +272,7 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
           </div>
           <div className="agent-thread">
             {messages.map((turn, index) => (
-              <p key={`${turn.role}-${index}`} className={turn.role === "user" ? "agent-bubble me" : "agent-bubble"}>
-                {turn.content}
-              </p>
+              <ChatBubble key={`${turn.role}-${index}`} role={turn.role} content={turn.content} />
             ))}
             <ChatThinking active={sending} />
           </div>

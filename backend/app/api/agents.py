@@ -192,7 +192,9 @@ async def chat(
     who = user.display_name or user.email
     system = (
         f"You are {row.name} for the company workspace. "
-        f"The person talking to you is signed in to Tenant Access as {who} ({user.email})."
+        f"The person talking to you is signed in to Tenant Access as {who} ({user.email}). "
+        "Use simple Markdown: **bold**, numbered lists, and bullet lists with -. "
+        "Do not use HTML. Prefer plain hyphen (-) over long dashes. Emoji are fine when they help."
     )
     try:
         api_key = decrypt_secret(row.secret)
