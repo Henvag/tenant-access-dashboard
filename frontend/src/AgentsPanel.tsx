@@ -21,12 +21,12 @@ type ChatTurn = { role: "user" | "assistant"; content: string };
 
 const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {
   openai: [
-    { id: "gpt-4o-mini", label: "GPT-4o mini" },
-    { id: "gpt-4o", label: "GPT-4o" },
+    { id: "gpt-6-astra", label: "GPT-6 Astra" },
+    { id: "gpt-6-sol", label: "GPT-6 Sol" },
   ],
   anthropic: [
-    { id: "claude-haiku-4-5", label: "Claude Haiku" },
-    { id: "claude-sonnet-5", label: "Claude Sonnet" },
+    { id: "claude-fable-5-1", label: "Claude Fable 5.1" },
+    { id: "claude-opus-5", label: "Claude Opus 5" },
   ],
 };
 

@@ -22,16 +22,16 @@ def test_agent_requires_a_known_provider_and_model() -> None:
     created = AgentIn(
         name="  Support  ",
         provider="openai",
-        model="gpt-4o-mini",
+        model="gpt-6-astra",
         api_key="sk-test-key-1234",
     )
     assert created.name == "Support"
     assert created.provider == "openai"
-    assert created.model == "gpt-4o-mini"
+    assert created.model == "gpt-6-astra"
     with pytest.raises(ValidationError):
-        AgentIn(name="Docs", provider="other", model="gpt-4o-mini", api_key="sk-test-key-1234")
+        AgentIn(name="Docs", provider="other", model="gpt-6-astra", api_key="sk-test-key-1234")
     with pytest.raises(ValidationError):
-        AgentIn(name="Docs", provider="openai", model="gpt-5-pro", api_key="sk-test-key-1234")
+        AgentIn(name="Docs", provider="openai", model="gpt-4o", api_key="sk-test-key-1234")
 
 
 def test_api_key_round_trip_keeps_only_a_hint() -> None:
@@ -43,10 +43,10 @@ def test_api_key_round_trip_keeps_only_a_hint() -> None:
 
 def test_provider_payloads_name_the_signed_in_company_account() -> None:
     messages = [{"role": "user", "content": "Hello"}]
-    openai = openai_payload("gpt-4o-mini", "signed in as ada", messages)
+    openai = openai_payload("gpt-6-astra", "signed in as ada", messages)
     assert openai["messages"][0]["role"] == "system"
     assert openai["messages"][1]["content"] == "Hello"
-    anthropic = anthropic_payload("claude-haiku-4-5", "signed in as ada", messages)
+    anthropic = anthropic_payload("claude-fable-5-1", "signed in as ada", messages)
     assert anthropic["system"] == "signed in as ada"
     assert anthropic["messages"][0]["role"] == "user"
 

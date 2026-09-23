@@ -9,11 +9,11 @@ import httpx
 Provider = Literal["openai", "anthropic"]
 
 MODELS: dict[str, tuple[str, ...]] = {
-    "openai": ("gpt-4o-mini", "gpt-4o"),
-    "anthropic": ("claude-haiku-4-5", "claude-sonnet-5"),
+    "openai": ("gpt-6-astra", "gpt-6-sol"),
+    "anthropic": ("claude-fable-5-1", "claude-opus-5"),
 }
 
-DEFAULT_MODEL = {"openai": "gpt-4o-mini", "anthropic": "claude-haiku-4-5"}
+DEFAULT_MODEL = {"openai": "gpt-6-astra", "anthropic": "claude-fable-5-1"}
 
 
 def provider_label(provider: str) -> str:
@@ -28,7 +28,7 @@ def openai_payload(model: str, system: str, messages: list[dict[str, str]]) -> d
     return {
         "model": model,
         "messages": [{"role": "system", "content": system}, *messages],
-        "max_tokens": 1024,
+        "max_tokens": 4096,
     }
 
 
@@ -37,7 +37,7 @@ def anthropic_payload(model: str, system: str, messages: list[dict[str, str]]) -
         "model": model,
         "system": system,
         "messages": _alternating(messages),
-        "max_tokens": 1024,
+        "max_tokens": 4096,
     }
 
 
