@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,6 +58,10 @@ class Tenant(Base):
     )
     logo_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     logo_media_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Free Gemini workspace Ask. Separate from paid Agents (ChatGPT / Claude).
+    ask_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ask_key_hint: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    ask_model: Mapped[str | None] = mapped_column(String(80), nullable=True)
 
     users: Mapped[list["User"]] = relationship(
         back_populates="tenant",

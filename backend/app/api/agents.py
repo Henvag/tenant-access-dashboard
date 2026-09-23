@@ -1,4 +1,7 @@
-"""Company AI agents. Sign-in is the Tenant Access session; the provider bills the company."""
+"""Company AI agents. Sign-in is the Tenant Access session; the provider bills the company.
+
+Paid ChatGPT and Claude only. Free Gemini workspace Q&A lives under /ask.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +13,6 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.context import workspace_briefing
 from app.agents.providers import DEFAULT_MODEL, MODELS, complete
 from app.agents.secrets import decrypt_secret, encrypt_secret, key_hint
 from app.api.deps import get_current_user, require_admin
@@ -20,6 +22,8 @@ from app.models import AccessPolicy, TeamAgent, User, UserRole
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 MAX_AGENTS = 20
+# Ask owns Gemini. Agents are company-billed keys only.
+AGENT_PROVIDERS = ("openai", "anthropic")
 
 
 class AgentOut(BaseModel):
@@ -29,7 +33,6 @@ class AgentOut(BaseModel):
     model: str
     key_hint: str
     access_policy: AccessPolicy
-    workspace_context: bool
     position: int
 
 
@@ -40,7 +43,6 @@ class AgentIn(BaseModel):
     model: str = Field(default="", validate_default=True)
     api_key: str = Field(min_length=8, max_length=400)
     access_policy: AccessPolicy = AccessPolicy.everyone
-    workspace_context: bool = False
 
     @field_validator("name")
     @classmethod
@@ -54,7 +56,7 @@ class AgentIn(BaseModel):
     @classmethod
     def _provider(cls, value: str) -> str:
         cleaned = value.strip().lower()
-        if cleaned not in MODELS:
+        if cleaned not in AGENT_PROVIDERS:
             raise ValueError("unknown_provider")
         return cleaned
 
@@ -114,7 +116,6 @@ def _out(row: TeamAgent) -> AgentOut:
         model=row.model,
         key_hint=row.key_hint,
         access_policy=row.access_policy,
-        workspace_context=row.workspace_context,
         position=row.position,
     )
 
@@ -153,7 +154,7 @@ async def create_agent(
         secret=encrypt_secret(body.api_key),
         key_hint=key_hint(body.api_key),
         access_policy=body.access_policy,
-        workspace_context=body.workspace_context,
+        workspace_context=False,
         position=int(count),
     )
     db.add(row)
@@ -193,8 +194,6 @@ async def chat(
         f"You are {row.name} for the company workspace. "
         f"The person talking to you is signed in to Tenant Access as {who} ({user.email})."
     )
-    if row.workspace_context:
-        system = f"{system}\n\n{await workspace_briefing(db, user)}"
     try:
         api_key = decrypt_secret(row.secret)
         content = await complete(

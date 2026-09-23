@@ -1,4 +1,4 @@
-"""Rules for company AI agents, logos, and logout tokens."""
+"""Rules for company AI agents, logos, logout tokens, and workspace Ask."""
 
 from types import SimpleNamespace
 from uuid import uuid4
@@ -13,6 +13,7 @@ from app.agents.context import workspace_briefing
 from app.agents.providers import anthropic_payload, google_payload, openai_payload
 from app.agents.secrets import decrypt_secret, encrypt_secret, key_hint
 from app.api.agents import AgentIn
+from app.api.ask import AskConfigIn
 from app.api.company import _accept_logo
 from app.models import UserRole
 from app.oauth.keys import _generate
@@ -34,10 +35,16 @@ def test_agent_requires_a_known_provider_and_model() -> None:
         AgentIn(name="Docs", provider="other", model="gpt-6-astra", api_key="sk-test-key-1234")
     with pytest.raises(ValidationError):
         AgentIn(name="Docs", provider="openai", model="gpt-4o", api_key="sk-test-key-1234")
-    gemini = AgentIn(name="Helper", provider="google", api_key="AIza-test-key-1234", workspace_context=True)
-    assert gemini.model == "gemini-3.8-flash"
-    assert gemini.workspace_context is True
-    assert AgentIn(name="Helper", provider="google", api_key="AIza-test-key-1234").workspace_context is False
+    # Gemini belongs under Ask, not Agents.
+    with pytest.raises(ValidationError):
+        AgentIn(name="Helper", provider="google", api_key="AIza-test-key-1234")
+
+
+def test_ask_config_defaults_to_gemini_flash() -> None:
+    configured = AskConfigIn(api_key="AIza-test-key-1234")
+    assert configured.model == "gemini-3.8-flash"
+    with pytest.raises(ValidationError):
+        AskConfigIn(api_key="AIza-test-key-1234", model="gpt-6-astra")
 
 
 def test_api_key_round_trip_keeps_only_a_hint() -> None:
@@ -145,4 +152,3 @@ def test_logout_token_carries_the_backchannel_event() -> None:
     assert decoded.claims["sub"] == str(user.id)
     assert decoded.claims["events"][_LOGOUT_EVENT] == {}
     assert "nonce" not in decoded.claims
-

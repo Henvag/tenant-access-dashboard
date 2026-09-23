@@ -162,6 +162,14 @@ export function IconSparkle(props: IconProps) {
   );
 }
 
+export function IconAsk(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.2 8.2 0 0 1-3.7-.8L3 21l1.9-5.6a8.3 8.3 0 0 1-1-3.9A8.4 8.4 0 0 1 12.5 3a8.4 8.4 0 0 1 8.5 8.5z" />
+    </svg>
+  );
+}
+
 export function IconOrg(props: IconProps) {
   return (
     <svg {...base(props)}>

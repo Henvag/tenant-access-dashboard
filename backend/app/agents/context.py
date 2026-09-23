@@ -33,8 +33,9 @@ under Apps. Tenant Access is their identity provider. Each app has an access pol
 admins only, or assigned people. People open their apps from the Overview tab.
 - Invite link: admins copy it from People. Anyone with the link signs in with a matching work \
 email and joins the workspace.
-- Agents: this tab. Admins add ChatGPT, Claude, or Gemini with the company's own API key. \
-Messages are billed to that key, not to the person chatting.
+- Ask: a free Gemini assistant that answers questions about this workspace. An admin pastes one \
+Google AI Studio key under Ask. It is not billed like ChatGPT or Claude.
+- Agents: company ChatGPT or Claude keys. Messages are billed to that key, not to the person chatting.
 - Plans: Free, Team, and Business differ in how many people and apps a workspace can have and \
 how long the audit log is kept. Billing is under the Billing tab (owner only).
 """

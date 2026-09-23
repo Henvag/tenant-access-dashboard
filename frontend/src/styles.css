@@ -859,14 +859,45 @@ input:focus {
   vertical-align: 2px;
 }
 
-.agent-form .check-row {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  align-items: flex-start;
+.ask-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.5rem;
 }
 
-.agent-form .check-row input {
-  margin-top: 0.2rem;
+.ask-setup h3 {
+  margin: 0;
+}
+
+.ask-setup > p {
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+  max-width: 42rem;
+}
+
+.ask-mark {
+  width: 36px;
+  height: 36px;
+}
+
+.ask-admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.ask-chat {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.ask-starter {
+  margin: 0.5rem 0 1rem;
 }
 
 .agent-chat {

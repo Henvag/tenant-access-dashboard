@@ -19,6 +19,7 @@ export type Me = {
   max_users: number;
   audit_retention_days: number;
   has_logo: boolean;
+  has_ask: boolean;
 };
 
 export type TenantUser = {
@@ -304,7 +305,7 @@ export function openBillingPortal(): Promise<{ url: string }> {
   return request<{ url: string }>("/billing/portal", { method: "POST" });
 }
 
-export type AgentProvider = "openai" | "anthropic" | "google";
+export type AgentProvider = "openai" | "anthropic";
 
 export type TeamAgent = {
   id: string;
@@ -313,8 +314,6 @@ export type TeamAgent = {
   model: string;
   key_hint: string;
   access_policy: AccessPolicy;
-  /** Each message carries a briefing about this workspace, limited to what the asker may see. */
-  workspace_context: boolean;
   position: number;
 };
 
@@ -324,7 +323,6 @@ export type AgentInput = {
   model: string;
   api_key: string;
   access_policy: "everyone" | "admins";
-  workspace_context: boolean;
 };
 
 export function listAgents(): Promise<TeamAgent[]> {
@@ -347,6 +345,36 @@ export function sendAgentMessage(
   messages: { role: "user" | "assistant"; content: string }[],
 ): Promise<{ content: string }> {
   return request<{ content: string }>(`/agents/${id}/chat`, {
+    method: "POST",
+    body: JSON.stringify({ messages }),
+  });
+}
+
+export type AskStatus = {
+  configured: boolean;
+  model: string | null;
+  key_hint: string | null;
+};
+
+export function getAskStatus(): Promise<AskStatus> {
+  return request<AskStatus>("/ask");
+}
+
+export function configureAsk(input: { api_key: string; model: string }): Promise<AskStatus> {
+  return request<AskStatus>("/ask", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function clearAsk(): Promise<void> {
+  return request<void>("/ask", { method: "DELETE" });
+}
+
+export function sendAskMessage(
+  messages: { role: "user" | "assistant"; content: string }[],
+): Promise<{ content: string }> {
+  return request<{ content: string }>("/ask/chat", {
     method: "POST",
     body: JSON.stringify({ messages }),
   });

@@ -61,6 +61,7 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   model_not_allowed: "error.model_not_allowed",
   agent_key_required: "error.agent_key_required",
   agent_chat_failed: "error.agent_chat_failed",
+  ask_not_configured: "error.ask_not_configured",
   policy_not_supported: "error.policy_not_supported",
   seat_limit_reached: "error.seat_limit_reached",
   stripe_unconfigured: "error.stripe_unconfigured",
