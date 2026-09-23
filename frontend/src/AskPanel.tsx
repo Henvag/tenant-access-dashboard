@@ -7,6 +7,7 @@ import {
   sendAskMessage,
 } from "./api";
 import geminiLogo from "./assets/gemini.svg";
+import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
 import { useLang } from "./i18n";
 
@@ -174,7 +175,7 @@ export default function AskPanel({
           ) : null}
           <div className="agent-chat ask-chat">
             <div className="agent-thread">
-              {messages.length === 0 ? (
+              {messages.length === 0 && !sending ? (
                 <p className="hint ask-starter">{t("ask.starter")}</p>
               ) : (
                 messages.map((turn, index) => (
@@ -186,6 +187,7 @@ export default function AskPanel({
                   </p>
                 ))
               )}
+              <ChatThinking active={sending} />
             </div>
             <form className="agent-compose" onSubmit={(event) => void onSend(event)}>
               <input

@@ -10,6 +10,7 @@ import {
 } from "./api";
 import chatgptLogo from "./assets/chatgpt.png";
 import claudeLogo from "./assets/claude.png";
+import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
 import { TKey, useLang } from "./i18n";
 import { IconSparkle } from "./Icons";
@@ -274,6 +275,7 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
                 {turn.content}
               </p>
             ))}
+            <ChatThinking active={sending} />
           </div>
           <form className="agent-compose" onSubmit={(event) => void onSend(event)}>
             <input
