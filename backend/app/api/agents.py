@@ -151,9 +151,10 @@ async def create_agent(
         position=int(count),
     )
     db.add(row)
+    await db.flush()
+    out = _out(row)
     await db.commit()
-    await db.refresh(row)
-    return _out(row)
+    return out
 
 
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
