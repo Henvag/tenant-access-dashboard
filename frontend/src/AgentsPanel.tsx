@@ -10,8 +10,10 @@ import {
 } from "./api";
 import chatgptLogo from "./assets/chatgpt.png";
 import claudeLogo from "./assets/claude.png";
+import ChatBubble from "./ChatBubble";
+import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
-import { useLang } from "./i18n";
+import { TKey, useLang } from "./i18n";
 import { IconSparkle } from "./Icons";
 
 type Props = {
@@ -21,9 +23,18 @@ type Props = {
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
+const LOGOS: Record<AgentProvider, string> = {
+  openai: chatgptLogo,
+  anthropic: claudeLogo,
+};
+
+const PROVIDER_LABEL: Record<AgentProvider, TKey> = {
+  openai: "agents.provider.openai",
+  anthropic: "agents.provider.anthropic",
+};
+
 function ProviderMark({ provider }: { provider: AgentProvider }) {
-  const src = provider === "openai" ? chatgptLogo : claudeLogo;
-  return <img className="agent-logo" src={src} alt="" />;
+  return <img className="agent-logo" src={LOGOS[provider] ?? chatgptLogo} alt="" />;
 }
 
 const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {
@@ -210,9 +221,7 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
               <div className="agent-row-text">
                 <strong>{agent.name}</strong>
                 <span>
-                  {agent.provider === "openai"
-                    ? t("agents.provider.openai")
-                    : t("agents.provider.anthropic")}
+                  {t(PROVIDER_LABEL[agent.provider] ?? "agents.provider.openai")}
                   {" · "}
                   {agent.model}
                   {isAdmin ? ` · ${t("agents.keyEnds", { hint: agent.key_hint })}` : ""}
@@ -255,9 +264,7 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
               <p className="org-kicker">{t("agents.current")}</p>
               <strong>{t("agents.sendingTo", { name: active.name })}</strong>
               <span>
-                {active.provider === "openai"
-                  ? t("agents.provider.openai")
-                  : t("agents.provider.anthropic")}
+                {t(PROVIDER_LABEL[active.provider] ?? "agents.provider.openai")}
                 {" · "}
                 {active.model}
               </span>
@@ -265,10 +272,9 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
           </div>
           <div className="agent-thread">
             {messages.map((turn, index) => (
-              <p key={`${turn.role}-${index}`} className={turn.role === "user" ? "agent-bubble me" : "agent-bubble"}>
-                {turn.content}
-              </p>
+              <ChatBubble key={`${turn.role}-${index}`} role={turn.role} content={turn.content} />
             ))}
+            <ChatThinking active={sending} />
           </div>
           <form className="agent-compose" onSubmit={(event) => void onSend(event)}>
             <input

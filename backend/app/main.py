@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.apps import router as apps_router
 from app.api.agents import router as agents_router
+from app.api.ask import router as ask_router
 from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
 from app.api.billing import router as billing_router
@@ -56,6 +57,7 @@ app.include_router(users_router)
 app.include_router(audit_router)
 app.include_router(apps_router)
 app.include_router(agents_router)
+app.include_router(ask_router)
 app.include_router(company_router)
 app.include_router(invites_router)
 app.include_router(billing_router)

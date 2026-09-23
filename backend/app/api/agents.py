@@ -1,4 +1,7 @@
-"""Company AI agents. Sign-in is the Tenant Access session; the provider bills the company."""
+"""Company AI agents. Sign-in is the Tenant Access session; the provider bills the company.
+
+Paid ChatGPT and Claude only. Free Gemini workspace Q&A lives under /ask.
+"""
 
 from __future__ import annotations
 
@@ -19,6 +22,8 @@ from app.models import AccessPolicy, TeamAgent, User, UserRole
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 MAX_AGENTS = 20
+# Ask owns Gemini. Agents are company-billed keys only.
+AGENT_PROVIDERS = ("openai", "anthropic")
 
 
 class AgentOut(BaseModel):
@@ -34,7 +39,8 @@ class AgentOut(BaseModel):
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     provider: str
-    model: str = ""
+    # validate_default so an omitted model still resolves to the provider default.
+    model: str = Field(default="", validate_default=True)
     api_key: str = Field(min_length=8, max_length=400)
     access_policy: AccessPolicy = AccessPolicy.everyone
 
@@ -50,7 +56,7 @@ class AgentIn(BaseModel):
     @classmethod
     def _provider(cls, value: str) -> str:
         cleaned = value.strip().lower()
-        if cleaned not in MODELS:
+        if cleaned not in AGENT_PROVIDERS:
             raise ValueError("unknown_provider")
         return cleaned
 
@@ -148,6 +154,7 @@ async def create_agent(
         secret=encrypt_secret(body.api_key),
         key_hint=key_hint(body.api_key),
         access_policy=body.access_policy,
+        workspace_context=False,
         position=int(count),
     )
     db.add(row)
@@ -185,7 +192,9 @@ async def chat(
     who = user.display_name or user.email
     system = (
         f"You are {row.name} for the company workspace. "
-        f"The person talking to you is signed in to Tenant Access as {who} ({user.email})."
+        f"The person talking to you is signed in to Tenant Access as {who} ({user.email}). "
+        "Use simple Markdown: **bold**, numbered lists, and bullet lists with -. "
+        "Do not use HTML. Prefer plain hyphen (-) over long dashes. Emoji are fine when they help."
     )
     try:
         api_key = decrypt_secret(row.secret)

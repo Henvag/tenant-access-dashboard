@@ -13,6 +13,7 @@ import {
 import AgentsPanel from "./AgentsPanel";
 import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
+import AskPanel from "./AskPanel";
 import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
 import BillingPanel from "./BillingPanel";
@@ -21,6 +22,7 @@ import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageFo
 import { useLang } from "./i18n";
 import {
   IconActivity,
+  IconAsk,
   IconCreditCard,
   IconGrid,
   IconList,
@@ -38,16 +40,16 @@ import OrganizationPanel from "./OrganizationPanel";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 
-type View = "overview" | "people" | "apps" | "agents" | "organization" | "audit" | "billing";
+type View = "overview" | "ask" | "people" | "apps" | "agents" | "organization" | "audit" | "billing";
 type RoleFilter = "all" | "admin" | "user";
 
-const VIEWS: View[] = ["overview", "people", "apps", "agents", "organization", "audit", "billing"];
+const VIEWS: View[] = ["overview", "ask", "people", "apps", "agents", "organization", "audit", "billing"];
 
 function viewFromUrl(isAdmin: boolean): View {
   const raw = new URLSearchParams(window.location.search).get("view");
   if (!raw || !VIEWS.includes(raw as View)) return "overview";
   const next = raw as View;
-  if (!isAdmin && next !== "overview" && next !== "agents") return "overview";
+  if (!isAdmin && next !== "overview" && next !== "ask" && next !== "agents") return "overview";
   return next;
 }
 
@@ -78,6 +80,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   const [loadingAudit, setLoadingAudit] = useState(isAdmin);
   const [errorCode, setErrorCode] = useState<string | null>(entryError);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [askConfigured, setAskConfigured] = useState(me.has_ask);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
@@ -168,17 +171,19 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   const title =
     view === "overview"
       ? t("nav.overview")
-      : view === "people"
-        ? t("nav.people")
-        : view === "apps"
-        ? t("nav.apps")
-        : view === "agents"
-          ? t("nav.agents")
-          : view === "organization"
-            ? t("nav.organization")
-            : view === "billing"
-              ? t("nav.billing")
-              : t("nav.audit");
+      : view === "ask"
+        ? t("nav.ask")
+        : view === "people"
+          ? t("nav.people")
+          : view === "apps"
+            ? t("nav.apps")
+            : view === "agents"
+              ? t("nav.agents")
+              : view === "organization"
+                ? t("nav.organization")
+                : view === "billing"
+                  ? t("nav.billing")
+                  : t("nav.audit");
 
   return (
     <div className="app">
@@ -209,6 +214,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           >
             <IconGrid />
             {t("nav.overview")}
+          </button>
+          <button
+            type="button"
+            className={view === "ask" ? "nav-item active" : "nav-item"}
+            onClick={() => setView("ask")}
+          >
+            <IconAsk />
+            {t("nav.ask")}
           </button>
           <button
             type="button"
@@ -339,7 +352,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           </p>
         ) : null}
 
-        {view === "agents" ? (
+        {view === "ask" ? (
+          <AskPanel
+            isAdmin={isAdmin}
+            tenantName={me.tenant_name}
+            initialConfigured={askConfigured}
+            onConfiguredChange={setAskConfigured}
+          />
+        ) : view === "agents" ? (
           <AgentsPanel isAdmin={isAdmin} tenantName={me.tenant_name} />
         ) : view === "organization" ? (
           <OrganizationPanel

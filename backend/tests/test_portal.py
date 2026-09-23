@@ -1,4 +1,4 @@
-"""Rules for company AI agents, logos, and logout tokens."""
+"""Rules for company AI agents, logos, logout tokens, and workspace Ask."""
 
 from types import SimpleNamespace
 from uuid import uuid4
@@ -9,10 +9,13 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 from pydantic import ValidationError
 
-from app.agents.providers import anthropic_payload, openai_payload
+from app.agents.context import workspace_briefing
+from app.agents.providers import anthropic_payload, google_payload, openai_payload
 from app.agents.secrets import decrypt_secret, encrypt_secret, key_hint
 from app.api.agents import AgentIn
+from app.api.ask import AskConfigIn
 from app.api.company import _accept_logo
+from app.models import UserRole
 from app.oauth.keys import _generate
 from app.oauth.logout import _LOGOUT_EVENT, _logout_token
 from app.schemas.app import _clean_logout
@@ -32,6 +35,16 @@ def test_agent_requires_a_known_provider_and_model() -> None:
         AgentIn(name="Docs", provider="other", model="gpt-6-astra", api_key="sk-test-key-1234")
     with pytest.raises(ValidationError):
         AgentIn(name="Docs", provider="openai", model="gpt-4o", api_key="sk-test-key-1234")
+    # Gemini belongs under Ask, not Agents.
+    with pytest.raises(ValidationError):
+        AgentIn(name="Helper", provider="google", api_key="AIza-test-key-1234")
+
+
+def test_ask_config_defaults_to_gemini_flash() -> None:
+    configured = AskConfigIn(api_key="AIza-test-key-1234")
+    assert configured.model == "gemini-3.8-flash"
+    with pytest.raises(ValidationError):
+        AskConfigIn(api_key="AIza-test-key-1234", model="gpt-6-astra")
 
 
 def test_api_key_round_trip_keeps_only_a_hint() -> None:
@@ -49,6 +62,66 @@ def test_provider_payloads_name_the_signed_in_company_account() -> None:
     anthropic = anthropic_payload("claude-fable-5-1", "signed in as ada", messages)
     assert anthropic["system"] == "signed in as ada"
     assert anthropic["messages"][0]["role"] == "user"
+    thread = [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi"},
+        {"role": "user", "content": "Who am I?"},
+    ]
+    google = google_payload("signed in as ada", thread)
+    assert google["system_instruction"]["parts"][0]["text"] == "signed in as ada"
+    assert [turn["role"] for turn in google["contents"]] == ["user", "model", "user"]
+    assert google["contents"][1]["parts"][0]["text"] == "Hi"
+    assert "model" not in google
+
+
+class _Scalars:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def all(self):
+        return self._rows
+
+
+class _FakeDb:
+    """Answers count queries with 0 and row queries with nothing."""
+
+    async def scalar(self, _statement):
+        return 0
+
+    async def scalars(self, _statement):
+        return _Scalars([])
+
+
+@pytest.mark.asyncio
+async def test_member_briefing_has_their_account_but_not_the_people_list() -> None:
+    tenant = SimpleNamespace(
+        name="Acme",
+        workspace_domain="acme.com",
+        owner_user_id=uuid4(),
+        plan="free",
+        plan_expires_at=None,
+        stripe_subscription_id=None,
+    )
+    member = SimpleNamespace(
+        id=uuid4(),
+        email="bob@acme.com",
+        display_name="Bob",
+        role=UserRole.user,
+        last_login_at=None,
+        tenant=tenant,
+    )
+    text = await workspace_briefing(_FakeDb(), member)
+    assert "Acme" in text and "@acme.com" in text
+    assert "bob@acme.com" in text and "role user" in text
+    assert "Apps they can open:" in text
+    assert "People (up to" not in text
+    assert "Recent activity" not in text
+
+    admin = SimpleNamespace(**{**member.__dict__, "role": UserRole.admin, "id": tenant.owner_user_id})
+    admin_text = await workspace_briefing(_FakeDb(), admin)
+    assert "role owner" in admin_text
+    assert "People (up to" in admin_text
+    assert "Recent activity" in admin_text
 
 
 def test_logo_rejects_script_and_oversized_files() -> None:
@@ -79,4 +152,3 @@ def test_logout_token_carries_the_backchannel_event() -> None:
     assert decoded.claims["sub"] == str(user.id)
     assert decoded.claims["events"][_LOGOUT_EVENT] == {}
     assert "nonce" not in decoded.claims
-
