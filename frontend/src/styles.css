@@ -906,6 +906,9 @@ input:focus {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -947,6 +950,7 @@ input:focus {
 
 .sidebar-foot {
   margin-top: auto;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -2554,8 +2558,10 @@ a.tile:active {
   .nav {
     order: 2;
     flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
     gap: 0.3rem;
+    overflow: visible;
   }
 
   .nav-item {

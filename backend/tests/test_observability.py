@@ -65,6 +65,7 @@ async def test_health_ok_when_database_up(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "database": "ok"}
     assert "X-Request-ID" in response.headers
+    assert response.headers["cache-control"] == "no-store"
 
 
 @pytest.mark.asyncio

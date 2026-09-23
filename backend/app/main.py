@@ -100,9 +100,14 @@ def _mount_frontend() -> None:
     if assets.is_dir():
         app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
+    # The document points at a hashed bundle. If the browser reuses an older
+    # index.html after the IdP redirect, the shell is missing nav added since
+    # that copy was cached. A reload then fetches the new document.
+    index_headers = {"Cache-Control": "no-store"}
+
     @app.get("/")
     async def spa_root():
-        return FileResponse(index)
+        return FileResponse(index, headers=index_headers)
 
     @app.get("/{full_path:path}")
     async def spa_fallback(full_path: str):
@@ -110,10 +115,10 @@ def _mount_frontend() -> None:
         try:
             candidate.relative_to(STATIC_DIR.resolve())
         except ValueError:
-            return FileResponse(index)
+            return FileResponse(index, headers=index_headers)
         if candidate.is_file():
             return FileResponse(candidate)
-        return FileResponse(index)
+        return FileResponse(index, headers=index_headers)
 
 
 _mount_frontend()

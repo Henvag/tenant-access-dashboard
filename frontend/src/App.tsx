@@ -50,15 +50,30 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    getMe()
-      .then((me) => {
-        if (!cancelled) setSession({ status: "ready", me });
-      })
-      .catch(() => {
-        if (!cancelled) setSession({ status: "anonymous" });
-      });
+
+    function loadSession() {
+      getMe()
+        .then((me) => {
+          if (!cancelled) setSession({ status: "ready", me });
+        })
+        .catch(() => {
+          if (!cancelled) setSession({ status: "anonymous" });
+        });
+    }
+
+    loadSession();
+
+    // The IdP round-trip can restore this document from the back-forward
+    // cache without re-running the effect. The login cookie is already set,
+    // so load the session instead of leaving the pre-login shell up.
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) loadSession();
+    }
+
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       cancelled = true;
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 
