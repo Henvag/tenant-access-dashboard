@@ -100,10 +100,10 @@ def _mount_frontend() -> None:
     if assets.is_dir():
         app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
-    # The document points at a hashed bundle. If the browser reuses an older
-    # index.html after the IdP redirect, the shell is missing nav added since
-    # that copy was cached. A reload then fetches the new document.
-    index_headers = {"Cache-Control": "no-store"}
+    # no-cache stores the latest document and forces the next visit to
+    # revalidate it. no-store left the previously cached index.html in place,
+    # so sign-in kept opening that older shell.
+    index_headers = {"Cache-Control": "no-cache, must-revalidate"}
 
     @app.get("/")
     async def spa_root():

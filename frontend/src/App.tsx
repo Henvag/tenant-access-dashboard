@@ -27,7 +27,7 @@ function readEntryState(): EntryState {
   const continueApp = params.get("continue");
   const inviteToken = params.get("invite");
 
-  for (const key of ["error", "app", "reason", "continue", "invite"]) params.delete(key);
+  for (const key of ["error", "app", "reason", "continue", "invite", "_"]) params.delete(key);
   const clean = `${window.location.pathname}${params.size ? `?${params}` : ""}`;
   window.history.replaceState(null, "", clean);
 
@@ -63,11 +63,10 @@ export default function App() {
 
     loadSession();
 
-    // The IdP round-trip can restore this document from the back-forward
-    // cache without re-running the effect. The login cookie is already set,
-    // so load the session instead of leaving the pre-login shell up.
+    // Restoring the pre-login document keeps its old script, which does not
+    // have the current nav. Reload so the tabs come from the current build.
     function onPageShow(event: PageTransitionEvent) {
-      if (event.persisted) loadSession();
+      if (event.persisted) window.location.reload();
     }
 
     window.addEventListener("pageshow", onPageShow);

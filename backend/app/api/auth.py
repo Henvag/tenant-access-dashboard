@@ -1,3 +1,4 @@
+from time import time
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -35,10 +36,15 @@ def _microsoft_claims_options() -> dict:
 
 
 def _frontend_redirect(*, error: str | None = None) -> RedirectResponse:
-    query = urlencode({"error": error}) if error else ""
-    location = settings.public_origin + "/"
-    if query:
-        location = f"{location}?{query}"
+    # A normal navigation back to "/" can reuse a cached index.html from
+    # before Agents and Organization existed. A refresh bypasses that cache,
+    # which is why the tabs appear only then. A unique query is a new
+    # document, so the browser has to load the current shell.
+    params: dict[str, str] = {}
+    if error:
+        params["error"] = error
+    params["_"] = str(int(time()))
+    location = f"{settings.public_origin}/?{urlencode(params)}"
     return RedirectResponse(location, status_code=status.HTTP_302_FOUND)
 
 
