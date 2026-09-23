@@ -49,6 +49,7 @@ def upgrade() -> None:
                    'https://tenant-access-grafana.onrender.com',
                    'everyone'::oauth_access_policy, NULL
             WHERE NOT EXISTS (SELECT 1 FROM oauth_clients WHERE client_id = '{_GRAFANA_ID}')
+              AND EXISTS (SELECT 1 FROM tenants WHERE id = '{_TENANT}')
             """
         )
     )
@@ -64,6 +65,7 @@ def upgrade() -> None:
                    'https://tenant-access-outline.onrender.com',
                    'everyone'::oauth_access_policy, NULL
             WHERE NOT EXISTS (SELECT 1 FROM oauth_clients WHERE client_id = '{_OUTLINE_ID}')
+              AND EXISTS (SELECT 1 FROM tenants WHERE id = '{_TENANT}')
             """
         )
     )
