@@ -162,34 +162,6 @@ export function IconSparkle(props: IconProps) {
   );
 }
 
-export function IconChatGpt(props: IconProps) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden {...props}>
-      <rect width="24" height="24" rx="6" fill="#10a37f" />
-      <g fill="none" stroke="#fff" strokeWidth="1.35">
-        <circle cx="12" cy="7.6" r="2.7" />
-        <circle cx="15.8" cy="9.8" r="2.7" />
-        <circle cx="15.8" cy="14.2" r="2.7" />
-        <circle cx="12" cy="16.4" r="2.7" />
-        <circle cx="8.2" cy="14.2" r="2.7" />
-        <circle cx="8.2" cy="9.8" r="2.7" />
-      </g>
-    </svg>
-  );
-}
-
-export function IconClaude(props: IconProps) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden {...props}>
-      <rect width="24" height="24" rx="6" fill="#cc785c" />
-      <path
-        fill="#fff"
-        d="M12 4.4 13.1 9.4 17.6 6.4 14.8 10.6 19.6 12 14.8 13.4 17.6 17.6 13.1 14.6 12 19.6 10.9 14.6 6.4 17.6 9.2 13.4 4.4 12 9.2 10.6 6.4 6.4 10.9 9.4 12 4.4z"
-      />
-    </svg>
-  );
-}
-
 export function IconOrg(props: IconProps) {
   return (
     <svg {...base(props)}>

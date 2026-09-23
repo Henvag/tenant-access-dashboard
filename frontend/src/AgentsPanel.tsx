@@ -8,9 +8,11 @@ import {
   listAgents,
   sendAgentMessage,
 } from "./api";
+import chatgptLogo from "./assets/chatgpt.png";
+import claudeLogo from "./assets/claude.png";
 import { messageForApiError } from "./format";
 import { useLang } from "./i18n";
-import { IconClaude, IconChatGpt, IconSparkle } from "./Icons";
+import { IconSparkle } from "./Icons";
 
 type Props = {
   isAdmin: boolean;
@@ -20,11 +22,8 @@ type Props = {
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
 function ProviderMark({ provider }: { provider: AgentProvider }) {
-  return provider === "openai" ? (
-    <IconChatGpt className="agent-logo" />
-  ) : (
-    <IconClaude className="agent-logo" />
-  );
+  const src = provider === "openai" ? chatgptLogo : claudeLogo;
+  return <img className="agent-logo" src={src} alt="" />;
 }
 
 const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {

@@ -829,6 +829,7 @@ input:focus {
 .agent-logo {
   width: 28px;
   height: 28px;
+  object-fit: contain;
   flex: 0 0 auto;
 }
 
