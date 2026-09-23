@@ -304,7 +304,7 @@ export function openBillingPortal(): Promise<{ url: string }> {
   return request<{ url: string }>("/billing/portal", { method: "POST" });
 }
 
-export type AgentProvider = "openai" | "anthropic";
+export type AgentProvider = "openai" | "anthropic" | "google";
 
 export type TeamAgent = {
   id: string;
@@ -313,6 +313,8 @@ export type TeamAgent = {
   model: string;
   key_hint: string;
   access_policy: AccessPolicy;
+  /** Each message carries a briefing about this workspace, limited to what the asker may see. */
+  workspace_context: boolean;
   position: number;
 };
 
@@ -322,6 +324,7 @@ export type AgentInput = {
   model: string;
   api_key: string;
   access_policy: "everyone" | "admins";
+  workspace_context: boolean;
 };
 
 export function listAgents(): Promise<TeamAgent[]> {

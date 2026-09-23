@@ -10,8 +10,9 @@ import {
 } from "./api";
 import chatgptLogo from "./assets/chatgpt.png";
 import claudeLogo from "./assets/claude.png";
+import geminiLogo from "./assets/gemini.svg";
 import { messageForApiError } from "./format";
-import { useLang } from "./i18n";
+import { TKey, useLang } from "./i18n";
 import { IconSparkle } from "./Icons";
 
 type Props = {
@@ -21,9 +22,20 @@ type Props = {
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
+const LOGOS: Record<AgentProvider, string> = {
+  openai: chatgptLogo,
+  anthropic: claudeLogo,
+  google: geminiLogo,
+};
+
+const PROVIDER_LABEL: Record<AgentProvider, TKey> = {
+  openai: "agents.provider.openai",
+  anthropic: "agents.provider.anthropic",
+  google: "agents.provider.google",
+};
+
 function ProviderMark({ provider }: { provider: AgentProvider }) {
-  const src = provider === "openai" ? chatgptLogo : claudeLogo;
-  return <img className="agent-logo" src={src} alt="" />;
+  return <img className="agent-logo" src={LOGOS[provider] ?? chatgptLogo} alt="" />;
 }
 
 const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {
@@ -34,6 +46,10 @@ const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {
   anthropic: [
     { id: "claude-fable-5-1", label: "Claude Fable 5.1" },
     { id: "claude-opus-5", label: "Claude Opus 5" },
+  ],
+  google: [
+    { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
+    { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite" },
   ],
 };
 
@@ -51,6 +67,7 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
   const [model, setModel] = useState(MODELS.openai[0].id);
   const [apiKey, setApiKey] = useState("");
   const [policy, setPolicy] = useState<AgentInput["access_policy"]>("everyone");
+  const [knowsWorkspace, setKnowsWorkspace] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,10 +105,12 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
         model,
         api_key: apiKey.trim(),
         access_policy: policy,
+        workspace_context: knowsWorkspace,
       });
       setAgents((current) => [...(current ?? []), created]);
       setName("");
       setApiKey("");
+      setKnowsWorkspace(false);
       setShowForm(false);
       openAgent(created);
     } catch (err) {
@@ -150,11 +169,17 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
                 const next = event.target.value as AgentProvider;
                 setProvider(next);
                 setModel(MODELS[next][0].id);
+                if (next === "google") {
+                  setKnowsWorkspace(true);
+                  if (!name.trim()) setName(t("agents.workspaceName"));
+                }
               }}
             >
               <option value="openai">{t("agents.provider.openai")}</option>
               <option value="anthropic">{t("agents.provider.anthropic")}</option>
+              <option value="google">{t("agents.provider.google")}</option>
             </select>
+            {provider === "google" ? <small>{t("agents.geminiFree")}</small> : null}
           </label>
           <label className="field">
             <span>{t("agents.model")}</span>
@@ -187,6 +212,18 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
             />
             <small>{t("agents.keyHint")}</small>
           </label>
+          <label className="check-row agent-form-key">
+            <input
+              type="checkbox"
+              checked={knowsWorkspace}
+              onChange={(event) => setKnowsWorkspace(event.target.checked)}
+            />
+            <span>
+              <strong>{t("agents.workspace")}</strong>
+              <br />
+              <small className="hint">{t("agents.workspaceHint")}</small>
+            </span>
+          </label>
           <button type="submit" className="btn btn-primary">
             {t("agents.add")}
           </button>
@@ -208,11 +245,14 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
             >
               <ProviderMark provider={agent.provider} />
               <div className="agent-row-text">
-                <strong>{agent.name}</strong>
+                <strong>
+                  {agent.name}
+                  {agent.workspace_context ? (
+                    <span className="pill pill-xs pill-accent agent-pill">{t("agents.workspaceBadge")}</span>
+                  ) : null}
+                </strong>
                 <span>
-                  {agent.provider === "openai"
-                    ? t("agents.provider.openai")
-                    : t("agents.provider.anthropic")}
+                  {t(PROVIDER_LABEL[agent.provider] ?? "agents.provider.openai")}
                   {" · "}
                   {agent.model}
                   {isAdmin ? ` · ${t("agents.keyEnds", { hint: agent.key_hint })}` : ""}
@@ -255,11 +295,10 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
               <p className="org-kicker">{t("agents.current")}</p>
               <strong>{t("agents.sendingTo", { name: active.name })}</strong>
               <span>
-                {active.provider === "openai"
-                  ? t("agents.provider.openai")
-                  : t("agents.provider.anthropic")}
+                {t(PROVIDER_LABEL[active.provider] ?? "agents.provider.openai")}
                 {" · "}
                 {active.model}
+                {active.workspace_context ? ` · ${t("agents.workspaceBadge")}` : ""}
               </span>
             </div>
           </div>
@@ -274,7 +313,9 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder={t("agents.chatPlaceholder")}
+              placeholder={
+                active.workspace_context ? t("agents.workspacePlaceholder") : t("agents.chatPlaceholder")
+              }
               maxLength={8000}
               disabled={sending}
             />
