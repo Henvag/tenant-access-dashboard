@@ -6,6 +6,7 @@ import { useLang } from "./i18n";
 import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
 import SignupForm from "./SignupForm";
+import appsSharedLoginMark from "./assets/apps-shared-login.png";
 import companiesIsolatedMark from "./assets/companies-isolated.jpg";
 import idpPairMark from "./assets/google-microsoft.png";
 
@@ -175,7 +176,7 @@ export default function Landing({
         <ul className="feature-list">
           <li>
             <span className="feature-icon feature-icon-wide">
-              <img src={idpPairMark} alt="" width={26} height={26} />
+              <img src={idpPairMark} alt="" width={36} height={36} />
             </span>
             <div>
               <strong>{t("feature.google.title")}</strong>
@@ -184,7 +185,7 @@ export default function Landing({
           </li>
           <li>
             <span className="feature-icon feature-icon-wide">
-              <img src={companiesIsolatedMark} alt="" width={26} height={26} />
+              <img src={companiesIsolatedMark} alt="" width={36} height={36} />
             </span>
             <div>
               <strong>{t("feature.isolated.title")}</strong>
@@ -193,7 +194,7 @@ export default function Landing({
           </li>
           <li>
             <span className="feature-icon">
-              <IconLock />
+              <IconLock width={24} height={24} />
             </span>
             <div>
               <strong>{t("feature.roles.title")}</strong>
@@ -201,8 +202,8 @@ export default function Landing({
             </div>
           </li>
           <li>
-            <span className="feature-icon">
-              <IconPlug />
+            <span className="feature-icon feature-icon-wide">
+              <img src={appsSharedLoginMark} alt="" width={36} height={36} />
             </span>
             <div>
               <strong>{t("feature.apps.title")}</strong>

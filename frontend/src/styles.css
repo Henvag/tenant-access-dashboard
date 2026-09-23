@@ -514,9 +514,9 @@ input:focus {
 }
 
 .feature-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   background: var(--surface);
@@ -527,9 +527,9 @@ input:focus {
 }
 
 .feature-icon-wide {
-  width: 34px;
-  height: 34px;
-  padding: 4px;
+  width: 46px;
+  height: 46px;
+  padding: 5px;
 }
 
 .feature-icon-wide img {
