@@ -11,15 +11,15 @@ Provider = Literal["openai", "anthropic", "google"]
 MODELS: dict[str, tuple[str, ...]] = {
     "openai": ("gpt-6-astra", "gpt-6-sol"),
     "anthropic": ("claude-fable-5-1", "claude-opus-5"),
-    # Both have a free tier on Google AI Studio keys. Google says new projects
-    # should use these two.
-    "google": ("gemini-3.8-flash", "gemini-3.5-flash-lite"),
+    # Flash-Lite has the free-tier headroom (about 500 requests/day). Full Flash
+    # is smarter but typically only about 20 free requests/day.
+    "google": ("gemini-3.5-flash-lite", "gemini-3.8-flash"),
 }
 
 DEFAULT_MODEL = {
     "openai": "gpt-6-astra",
     "anthropic": "claude-fable-5-1",
-    "google": "gemini-3.8-flash",
+    "google": "gemini-3.5-flash-lite",
 }
 
 MAX_OUTPUT_TOKENS = 4096

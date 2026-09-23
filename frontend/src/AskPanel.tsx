@@ -22,8 +22,8 @@ type Props = {
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
 const ASK_MODELS = [
-  { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
-  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite" },
+  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite (about 500 free/day)" },
+  { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash (about 20 free/day)" },
 ];
 
 export default function AskPanel({

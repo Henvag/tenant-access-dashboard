@@ -239,7 +239,7 @@ const en = {
   "ask.emptyTitle": "Ask is not set up yet",
   "ask.emptyBody": "An admin needs to add a free Gemini key before you can ask about this workspace.",
   "ask.emptyBodyAdmin":
-    "Paste a free key from aistudio.google.com. Free-tier requests are rate limited and Google may use them to improve its models.",
+    "Paste a free key from aistudio.google.com. Ask defaults to Gemini 3.5 Flash-Lite (about 500 free requests per day). Free-tier traffic is rate limited and Google may use it to improve its models.",
   "ask.model": "Model",
   "ask.key": "Gemini API key",
   "ask.keyHint": "Stored for this workspace and not shown again. This is separate from paid Agents.",
@@ -709,7 +709,7 @@ const no: Record<TKey, string> = {
   "ask.emptyTitle": "Spør er ikke satt opp ennå",
   "ask.emptyBody": "En administrator må legge til en gratis Gemini-nøkkel før du kan spørre om arbeidsområdet.",
   "ask.emptyBodyAdmin":
-    "Lim inn en gratis nøkkel fra aistudio.google.com. Gratisforespørsler er begrenset, og Google kan bruke dem til å forbedre modellene sine.",
+    "Lim inn en gratis nøkkel fra aistudio.google.com. Spør bruker Gemini 3.5 Flash-Lite som standard (omtrent 500 gratis forespørsler per dag). Gratis trafikk er begrenset, og Google kan bruke den til å forbedre modellene sine.",
   "ask.model": "Modell",
   "ask.key": "Gemini API-nøkkel",
   "ask.keyHint": "Lagres for dette arbeidsområdet og vises ikke igjen. Dette er atskilt fra betalte Agenter.",

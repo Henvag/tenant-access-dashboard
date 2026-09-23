@@ -42,7 +42,7 @@ def test_agent_requires_a_known_provider_and_model() -> None:
 
 def test_ask_config_defaults_to_gemini_flash() -> None:
     configured = AskConfigIn(api_key="AIza-test-key-1234")
-    assert configured.model == "gemini-3.8-flash"
+    assert configured.model == "gemini-3.5-flash-lite"
     with pytest.raises(ValidationError):
         AskConfigIn(api_key="AIza-test-key-1234", model="gpt-6-astra")
 
