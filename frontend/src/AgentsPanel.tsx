@@ -10,7 +10,7 @@ import {
 } from "./api";
 import { messageForApiError } from "./format";
 import { useLang } from "./i18n";
-import { IconSparkle } from "./Icons";
+import { IconClaude, IconChatGpt, IconSparkle } from "./Icons";
 
 type Props = {
   isAdmin: boolean;
@@ -18,6 +18,14 @@ type Props = {
 };
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
+
+function ProviderMark({ provider }: { provider: AgentProvider }) {
+  return provider === "openai" ? (
+    <IconChatGpt className="agent-logo" />
+  ) : (
+    <IconClaude className="agent-logo" />
+  );
+}
 
 const MODELS: Record<AgentProvider, { id: string; label: string }[]> = {
   openai: [
@@ -194,8 +202,12 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
       ) : (
         <ul className="agent-list">
           {(agents ?? []).map((agent) => (
-            <li key={agent.id} className={agent.id === activeId ? "agent-row active" : "agent-row"}>
-              <IconSparkle />
+            <li
+              key={agent.id}
+              className={agent.id === activeId ? "agent-row active" : "agent-row"}
+              aria-current={agent.id === activeId ? "true" : undefined}
+            >
+              <ProviderMark provider={agent.provider} />
               <div className="agent-row-text">
                 <strong>{agent.name}</strong>
                 <span>
@@ -207,9 +219,13 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
                   {isAdmin ? ` · ${t("agents.keyEnds", { hint: agent.key_hint })}` : ""}
                 </span>
               </div>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => openAgent(agent)}>
-                {t("agents.open")}
-              </button>
+              {agent.id === activeId ? (
+                <span className="pill pill-accent">{t("agents.current")}</span>
+              ) : (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => openAgent(agent)}>
+                  {t("agents.open")}
+                </button>
+              )}
               {isAdmin ? (
                 <button
                   type="button"
@@ -234,6 +250,20 @@ export default function AgentsPanel({ isAdmin, tenantName }: Props) {
 
       {active ? (
         <div className="agent-chat">
+          <div className="agent-chat-head">
+            <ProviderMark provider={active.provider} />
+            <div>
+              <p className="org-kicker">{t("agents.current")}</p>
+              <strong>{t("agents.sendingTo", { name: active.name })}</strong>
+              <span>
+                {active.provider === "openai"
+                  ? t("agents.provider.openai")
+                  : t("agents.provider.anthropic")}
+                {" · "}
+                {active.model}
+              </span>
+            </div>
+          </div>
           <div className="agent-thread">
             {messages.map((turn, index) => (
               <p key={`${turn.role}-${index}`} className={turn.role === "user" ? "agent-bubble me" : "agent-bubble"}>

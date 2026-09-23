@@ -250,6 +250,8 @@ const en = {
   "agents.keyHint": "Paste the company's key. It is stored for this workspace and is not shown again.",
   "agents.policy": "Who can use it",
   "agents.open": "Open",
+  "agents.current": "Answers here",
+  "agents.sendingTo": "Messages go to {name}",
   "agents.remove": "Remove agent",
   "agents.emptyTitle": "No agents yet",
   "agents.emptyBody":
@@ -695,6 +697,8 @@ const no: Record<TKey, string> = {
   "agents.keyHint": "Lim inn selskapets nøkkel. Den lagres for dette arbeidsområdet og vises ikke igjen.",
   "agents.policy": "Hvem kan bruke den",
   "agents.open": "Åpne",
+  "agents.current": "Svarer her",
+  "agents.sendingTo": "Meldinger går til {name}",
   "agents.remove": "Fjern agent",
   "agents.emptyTitle": "Ingen agenter ennå",
   "agents.emptyBody":

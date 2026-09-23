@@ -807,6 +807,38 @@ input:focus {
 
 .agent-row.active {
   border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.agent-chat-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.agent-chat-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.agent-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.agent-chat-head strong {
+  font-size: 1.05rem;
+}
+
+.agent-chat-head span {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .agent-row-text {
