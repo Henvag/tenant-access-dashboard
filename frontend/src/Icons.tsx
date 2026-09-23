@@ -153,6 +153,25 @@ export function IconMore(props: IconProps) {
   );
 }
 
+export function IconSparkle(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3.2 13.5 8.2 18.5 9.7 13.5 11.2 12 16.2 10.5 11.2 5.5 9.7 10.5 8.2 12 3.2z" />
+      <path d="M18 14.2 18.7 16.3 20.8 17 18.7 17.7 18 19.8 17.3 17.7 15.2 17 17.3 16.3 18 14.2z" />
+    </svg>
+  );
+}
+
+export function IconOrg(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <circle cx="12" cy="10" r="2.5" />
+      <path d="M7.5 18.5c.8-2.2 2.4-3.3 4.5-3.3s3.7 1.1 4.5 3.3" />
+    </svg>
+  );
+}
+
 export function IconPlug(props: IconProps) {
   return (
     <svg {...base(props)}>

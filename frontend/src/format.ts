@@ -57,6 +57,11 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   agent_limit_reached: "error.agent_limit_reached",
   agent_not_found: "error.agent_not_found",
   https_url_required: "error.https_url_required",
+  unknown_provider: "error.unknown_provider",
+  model_not_allowed: "error.model_not_allowed",
+  agent_key_required: "error.agent_key_required",
+  agent_chat_failed: "error.agent_chat_failed",
+  policy_not_supported: "error.policy_not_supported",
   seat_limit_reached: "error.seat_limit_reached",
   stripe_unconfigured: "error.stripe_unconfigured",
   vipps_unconfigured: "error.vipps_unconfigured",
@@ -94,7 +99,7 @@ export function messageForApiError(codeOrMessage: string, lang: Lang): string {
   }
   // Pydantic may return "Value error, domain_invalid"
   const match = codeOrMessage.match(
-    /\b(tenant_exists|name_required|domain_url|domain_invalid|https_url_required|logo_type|logo_too_large|agent_limit_reached)\b/,
+    /\b(tenant_exists|name_required|domain_url|domain_invalid|https_url_required|logo_type|logo_too_large|agent_limit_reached|unknown_provider|model_not_allowed|agent_key_required|policy_not_supported)\b/,
   );
   if (match) {
     const mapped = API_ERROR_KEYS[match[1]];

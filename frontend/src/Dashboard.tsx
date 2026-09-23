@@ -1,21 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AuditEvent,
-  createAgent,
-  deleteAgent,
   ensureCompanyInvite,
   fetchCompanyLogo,
-  listAgents,
   listAuditEvents,
   listUsers,
   logoutUrl,
   Me,
   rotateCompanyInvite,
-  TeamAgent,
-  uploadCompanyLogo,
-  clearCompanyLogo,
   TenantUser,
 } from "./api";
+import AgentsPanel from "./AgentsPanel";
 import AppsPanel from "./AppsPanel";
 import AppTiles from "./AppTiles";
 import AuditTable from "./AuditTable";
@@ -30,26 +25,29 @@ import {
   IconGrid,
   IconList,
   IconLogout,
+  IconOrg,
   IconPlug,
   IconRefresh,
   IconSearch,
   IconShield,
+  IconSparkle,
   IconUsers,
 } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
+import OrganizationPanel from "./OrganizationPanel";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 
-type View = "overview" | "people" | "apps" | "audit" | "billing";
+type View = "overview" | "people" | "apps" | "agents" | "organization" | "audit" | "billing";
 type RoleFilter = "all" | "admin" | "user";
 
-const VIEWS: View[] = ["overview", "people", "apps", "audit", "billing"];
+const VIEWS: View[] = ["overview", "people", "apps", "agents", "organization", "audit", "billing"];
 
 function viewFromUrl(isAdmin: boolean): View {
   const raw = new URLSearchParams(window.location.search).get("view");
   if (!raw || !VIEWS.includes(raw as View)) return "overview";
   const next = raw as View;
-  if (!isAdmin && next !== "overview") return "overview";
+  if (!isAdmin && next !== "overview" && next !== "agents") return "overview";
   return next;
 }
 
@@ -79,11 +77,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
   const [loadingUsers, setLoadingUsers] = useState(isAdmin);
   const [loadingAudit, setLoadingAudit] = useState(isAdmin);
   const [errorCode, setErrorCode] = useState<string | null>(entryError);
-  const [agents, setAgents] = useState<TeamAgent[] | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [agentName, setAgentName] = useState("");
-  const [agentLink, setAgentLink] = useState("");
-  const [agentError, setAgentError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
@@ -119,20 +113,6 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
 
   useEffect(() => {
     void refresh();
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    listAgents()
-      .then((rows) => {
-        if (!cancelled) setAgents(rows);
-      })
-      .catch(() => {
-        if (!cancelled) setAgents([]);
-      });
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {
@@ -191,10 +171,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
       : view === "people"
         ? t("nav.people")
         : view === "apps"
-          ? t("nav.apps")
-          : view === "billing"
-            ? t("nav.billing")
-            : t("nav.audit");
+        ? t("nav.apps")
+        : view === "agents"
+          ? t("nav.agents")
+          : view === "organization"
+            ? t("nav.organization")
+            : view === "billing"
+              ? t("nav.billing")
+              : t("nav.audit");
 
   return (
     <div className="app">
@@ -215,48 +199,6 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               <span className="tenant-chip-domain">@{me.workspace_domain}</span>
             </div>
           </div>
-          {actorIsOwner ? (
-            <label className="tenant-logo-btn">
-              {t("logo.change")}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                hidden
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (!file) return;
-                  void uploadCompanyLogo(file)
-                    .then(() => fetchCompanyLogo())
-                    .then((url) => {
-                      setLogoUrl((current) => {
-                        if (current) URL.revokeObjectURL(current);
-                        return url;
-                      });
-                    })
-                    .catch((err) => {
-                      setErrorCode(err instanceof Error ? err.message : "logo_type");
-                    });
-                }}
-              />
-            </label>
-          ) : null}
-          {actorIsOwner && logoUrl ? (
-            <button
-              type="button"
-              className="link tenant-logo-clear"
-              onClick={() => {
-                void clearCompanyLogo().then(() => {
-                  setLogoUrl((current) => {
-                    if (current) URL.revokeObjectURL(current);
-                    return null;
-                  });
-                });
-              }}
-            >
-              {t("logo.clear")}
-            </button>
-          ) : null}
         </div>
 
         <nav className="nav" aria-label={t("nav.label")}>
@@ -267,6 +209,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           >
             <IconGrid />
             {t("nav.overview")}
+          </button>
+          <button
+            type="button"
+            className={view === "agents" ? "nav-item active" : "nav-item"}
+            onClick={() => setView("agents")}
+          >
+            <IconSparkle />
+            {t("nav.agents")}
           </button>
           {isAdmin ? (
             <>
@@ -289,6 +239,14 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               </button>
               <button
                 type="button"
+                className={view === "organization" ? "nav-item active" : "nav-item"}
+                onClick={() => setView("organization")}
+              >
+                <IconOrg />
+                {t("nav.organization")}
+              </button>
+              <button
+                type="button"
                 className={view === "audit" ? "nav-item active" : "nav-item"}
                 onClick={() => setView("audit")}
               >
@@ -307,72 +265,6 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             </>
           ) : null}
         </nav>
-
-        {(isAdmin || (agents && agents.length > 0)) ? (
-        <div className="side-agents">
-          <p className="side-agents-label">{t("agents.title")}</p>
-          {(agents ?? []).map((agent) => (
-            <div key={agent.id} className="side-agent">
-              <a href={agent.url} target="_blank" rel="noreferrer">
-                {agent.name}
-              </a>
-              {isAdmin ? (
-                <button
-                  type="button"
-                  className="side-agent-remove"
-                  aria-label={t("agents.remove")}
-                  onClick={() => {
-                    void deleteAgent(agent.id).then(() => {
-                      setAgents((current) => (current ?? []).filter((row) => row.id !== agent.id));
-                    });
-                  }}
-                >
-                  ×
-                </button>
-              ) : null}
-            </div>
-          ))}
-          {isAdmin ? (
-            <form
-              className="side-agent-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setAgentError(null);
-                void createAgent(agentName.trim(), agentLink.trim())
-                  .then((created) => {
-                    setAgents((current) => [...(current ?? []), created]);
-                    setAgentName("");
-                    setAgentLink("");
-                  })
-                  .catch((err) => {
-                    setAgentError(err instanceof Error ? err.message : "agent_limit_reached");
-                  });
-              }}
-            >
-              <input
-                value={agentName}
-                onChange={(event) => setAgentName(event.target.value)}
-                placeholder={t("agents.name")}
-                maxLength={80}
-                required
-              />
-              <input
-                value={agentLink}
-                onChange={(event) => setAgentLink(event.target.value)}
-                placeholder={t("agents.url")}
-                type="url"
-                required
-              />
-              <button type="submit" className="btn btn-ghost btn-sm">
-                {t("agents.add")}
-              </button>
-              {agentError ? (
-                <p className="side-agent-error">{messageForApiError(agentError, lang)}</p>
-              ) : null}
-            </form>
-          ) : null}
-        </div>
-        ) : null}
 
         <div className="sidebar-foot">
           <div className="me">
@@ -447,7 +339,22 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           </p>
         ) : null}
 
-        {!isAdmin ? (
+        {view === "agents" ? (
+          <AgentsPanel isAdmin={isAdmin} tenantName={me.tenant_name} />
+        ) : view === "organization" ? (
+          <OrganizationPanel
+            isOwner={actorIsOwner}
+            name={me.tenant_name}
+            domain={me.workspace_domain}
+            logoUrl={logoUrl}
+            onLogo={(url) => {
+              setLogoUrl((current) => {
+                if (current && current !== url) URL.revokeObjectURL(current);
+                return url;
+              });
+            }}
+          />
+        ) : !isAdmin ? (
           <>
             <AppTiles refreshKey={tilesKey} signedInEmail={me.email} />
             <section className="panel">

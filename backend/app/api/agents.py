@@ -1,18 +1,20 @@
-"""Shared agent links in the sidebar. Separate from OIDC apps."""
+"""Company AI agents. Sign-in is the Tenant Access session; the provider bills the company."""
 
 from __future__ import annotations
 
-from urllib.parse import urlsplit
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.providers import DEFAULT_MODEL, MODELS, complete
+from app.agents.secrets import decrypt_secret, encrypt_secret, key_hint
 from app.api.deps import get_current_user, require_admin
 from app.db import get_db
-from app.models import TeamAgent, User
+from app.models import AccessPolicy, TeamAgent, User, UserRole
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -22,13 +24,19 @@ MAX_AGENTS = 20
 class AgentOut(BaseModel):
     id: UUID
     name: str
-    url: str
+    provider: str
+    model: str
+    key_hint: str
+    access_policy: AccessPolicy
     position: int
 
 
 class AgentIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    url: str = Field(min_length=1, max_length=2048)
+    provider: str
+    model: str = ""
+    api_key: str = Field(min_length=8, max_length=400)
+    access_policy: AccessPolicy = AccessPolicy.everyone
 
     @field_validator("name")
     @classmethod
@@ -38,29 +46,89 @@ class AgentIn(BaseModel):
             raise ValueError("name is required")
         return cleaned
 
-    @field_validator("url")
+    @field_validator("provider")
     @classmethod
-    def _url(cls, value: str) -> str:
-        cleaned = value.strip()
-        parts = urlsplit(cleaned)
-        if parts.scheme != "https" or not parts.netloc or parts.fragment:
-            raise ValueError("https_url_required")
+    def _provider(cls, value: str) -> str:
+        cleaned = value.strip().lower()
+        if cleaned not in MODELS:
+            raise ValueError("unknown_provider")
         return cleaned
+
+    @field_validator("model")
+    @classmethod
+    def _model(cls, value: str, info) -> str:
+        provider = info.data.get("provider")
+        allowed = MODELS.get(provider or "", ())
+        cleaned = value.strip()
+        if not cleaned:
+            return DEFAULT_MODEL.get(provider or "", "")
+        if cleaned not in allowed:
+            raise ValueError("model_not_allowed")
+        return cleaned
+
+    @field_validator("api_key")
+    @classmethod
+    def _key(cls, value: str) -> str:
+        cleaned = value.strip()
+        if len(cleaned) < 8:
+            raise ValueError("agent_key_required")
+        return cleaned
+
+    @field_validator("access_policy")
+    @classmethod
+    def _policy(cls, value: AccessPolicy) -> AccessPolicy:
+        if value == AccessPolicy.assigned:
+            raise ValueError("policy_not_supported")
+        return value
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str = Field(min_length=1, max_length=8000)
+
+    @field_validator("role")
+    @classmethod
+    def _role(cls, value: str) -> str:
+        if value not in {"user", "assistant"}:
+            raise ValueError("role_not_allowed")
+        return value
+
+
+class ChatIn(BaseModel):
+    messages: list[ChatMessage] = Field(min_length=1, max_length=30)
+
+
+class ChatOut(BaseModel):
+    content: str
 
 
 def _out(row: TeamAgent) -> AgentOut:
-    return AgentOut(id=row.id, name=row.name, url=row.url, position=row.position)
+    return AgentOut(
+        id=row.id,
+        name=row.name,
+        provider=row.provider,
+        model=row.model,
+        key_hint=row.key_hint,
+        access_policy=row.access_policy,
+        position=row.position,
+    )
+
+
+def _visible(row: TeamAgent, user: User) -> bool:
+    if row.access_policy == AccessPolicy.everyone:
+        return True
+    return user.role == UserRole.admin
 
 
 @router.get("", response_model=list[AgentOut])
 async def list_agents(
-    _user: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[AgentOut]:
     rows = (
         await db.scalars(select(TeamAgent).order_by(TeamAgent.position, TeamAgent.created_at))
     ).all()
-    return [_out(row) for row in rows]
+    return [_out(row) for row in rows if _visible(row, user)]
 
 
 @router.post("", response_model=AgentOut, status_code=status.HTTP_201_CREATED)
@@ -75,28 +143,16 @@ async def create_agent(
     row = TeamAgent(
         tenant_id=admin.tenant_id,
         name=body.name,
-        url=body.url,
+        provider=body.provider,
+        model=body.model,
+        secret=encrypt_secret(body.api_key),
+        key_hint=key_hint(body.api_key),
+        access_policy=body.access_policy,
         position=int(count),
     )
     db.add(row)
     await db.commit()
     await db.refresh(row)
-    return _out(row)
-
-
-@router.patch("/{agent_id}", response_model=AgentOut)
-async def patch_agent(
-    agent_id: UUID,
-    body: AgentIn,
-    _admin: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
-) -> AgentOut:
-    row = await db.get(TeamAgent, agent_id)
-    if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent_not_found")
-    row.name = body.name
-    row.url = body.url
-    await db.commit()
     return _out(row)
 
 
@@ -111,3 +167,38 @@ async def delete_agent(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent_not_found")
     await db.delete(row)
     await db.commit()
+
+
+@router.post("/{agent_id}/chat", response_model=ChatOut)
+async def chat(
+    agent_id: UUID,
+    body: ChatIn,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ChatOut:
+    row = await db.get(TeamAgent, agent_id)
+    if row is None or not _visible(row, user):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent_not_found")
+    if body.messages[-1].role != "user":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="agent_chat_failed")
+    who = user.display_name or user.email
+    system = (
+        f"You are {row.name} for the company workspace. "
+        f"The person talking to you is signed in to Tenant Access as {who} ({user.email})."
+    )
+    try:
+        api_key = decrypt_secret(row.secret)
+        content = await complete(
+            provider=row.provider,
+            model=row.model,
+            api_key=api_key,
+            system=system,
+            messages=[{"role": item.role, "content": item.content} for item in body.messages],
+        )
+    except (httpx.HTTPError, ValueError, KeyError, IndexError):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="agent_chat_failed"
+        ) from None
+    if not content.strip():
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="agent_chat_failed")
+    return ChatOut(content=content)

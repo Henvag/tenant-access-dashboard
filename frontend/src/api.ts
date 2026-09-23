@@ -303,26 +303,49 @@ export function openBillingPortal(): Promise<{ url: string }> {
   return request<{ url: string }>("/billing/portal", { method: "POST" });
 }
 
+export type AgentProvider = "openai" | "anthropic";
+
 export type TeamAgent = {
   id: string;
   name: string;
-  url: string;
+  provider: AgentProvider;
+  model: string;
+  key_hint: string;
+  access_policy: AccessPolicy;
   position: number;
+};
+
+export type AgentInput = {
+  name: string;
+  provider: AgentProvider;
+  model: string;
+  api_key: string;
+  access_policy: "everyone" | "admins";
 };
 
 export function listAgents(): Promise<TeamAgent[]> {
   return request<TeamAgent[]>("/agents");
 }
 
-export function createAgent(name: string, url: string): Promise<TeamAgent> {
+export function createAgent(input: AgentInput): Promise<TeamAgent> {
   return request<TeamAgent>("/agents", {
     method: "POST",
-    body: JSON.stringify({ name, url }),
+    body: JSON.stringify(input),
   });
 }
 
 export function deleteAgent(id: string): Promise<void> {
   return request<void>(`/agents/${id}`, { method: "DELETE" });
+}
+
+export function sendAgentMessage(
+  id: string,
+  messages: { role: "user" | "assistant"; content: string }[],
+): Promise<{ content: string }> {
+  return request<{ content: string }>(`/agents/${id}/chat`, {
+    method: "POST",
+    body: JSON.stringify({ messages }),
+  });
 }
 
 export async function uploadCompanyLogo(file: File): Promise<void> {
