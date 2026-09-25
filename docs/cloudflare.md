@@ -16,6 +16,27 @@ What you get: Active zone, Universal SSL, real visitor IPs in audit (`CF-Connect
 optional rate limits on `/auth/*`. What you skip by default: the “Verifying you are human”
 interstitial on every visit (breaks OAuth redirects if misapplied).
 
+## Cutover checklist
+
+Do these in order. Keep `*.onrender.com` working until step 6.
+
+1. **Pick a hostname** (example: `access.airychen.com`). Grafana / Outline can stay on
+   `*.onrender.com` for the free demo.
+2. **Render custom domain** — [dashboard service](https://dashboard.render.com/web/srv-dam9q3bm8hqs73d1np90) →
+   **Settings → Custom Domains** → add the hostname. Hobby workspaces allow a small number of custom domains.
+3. **Cloudflare DNS (grey cloud first)** — see [section 3](#3-cloudflare-dns-verify-first-then-proxy).
+4. **Render Verify** — wait until the certificate is **Issued**.
+5. **IdP redirect URIs** — add the new callback next to the existing onrender one (do not remove yet):
+   - Google: `https://<host>/auth/callback` (+ authorized origin `https://<host>`)
+   - Entra: same redirect URI
+6. **Flip the app to the new origin**
+   - Set `PUBLIC_BASE_URL=https://<host>` on the dashboard service (restart / redeploy).
+   - Point Grafana + Outline OIDC URLs at the same host (`/oauth/authorize`, `/oauth/token`, `/oauth/userinfo`).
+   - Orange-cloud the CNAME.
+7. **Smoke test** — open `https://<host>`, Google + Microsoft sign-in, Ask, Grafana SSO, Outline SSO.
+8. **Optional** — rate-limit `/auth/*` ([section 5](#5-rate-limits-recommended--not-a-global-challenge-page)). Update README live links.
+9. **Later** — drop the old onrender redirect URIs from Google/Entra once you no longer need them.
+
 ## 1. Pick a hostname
 
 Example: `access.airychen.com` → dashboard (keep `*.onrender.com` working until cutover).
@@ -55,9 +76,11 @@ After the custom domain is live:
 | Render env | Set `PUBLIC_BASE_URL=https://access.airychen.com` (or your host). Redeploy / restart so OIDC redirect + issuer use it. |
 | Google OAuth client | Add `https://access…/auth/callback` (keep the old onrender callback until you drop it). |
 | Microsoft Entra app | Same for the Entra redirect URI. |
-| Registered apps (Grafana, Outline, …) | Issuer / auth / token / userinfo URLs must use the public origin people actually open. |
+| Grafana / Outline | Auth / token / userinfo URLs must use the same public origin (`PUBLIC_BASE_URL`). App home URLs can stay on `*.onrender.com`. |
 
 `start.sh` still runs migrations; no schema change for Cloudflare itself.
+
+CORS already allows both `PUBLIC_BASE_URL` and `RENDER_EXTERNAL_URL` during the cutover window.
 
 ## 5. Rate limits (recommended) — not a global challenge page
 

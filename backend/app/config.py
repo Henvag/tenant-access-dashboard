@@ -60,7 +60,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
+        # Keep both the custom domain and the Render URL during a Cloudflare cutover.
         origins = {self.frontend_origin.rstrip("/"), self.public_origin}
+        if self.is_production:
+            if self.public_base_url:
+                origins.add(self.public_base_url.rstrip("/"))
+            if self.render_external_url:
+                origins.add(self.render_external_url.rstrip("/"))
         return [origin for origin in origins if origin]
 
 
