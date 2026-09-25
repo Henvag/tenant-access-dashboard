@@ -9,7 +9,7 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 from pydantic import ValidationError
 
-from app.agents.context import workspace_briefing
+from app.agents.context import topics_for, workspace_briefing
 from app.agents.providers import anthropic_payload, google_payload, openai_payload
 from app.agents.secrets import decrypt_secret, encrypt_secret, key_hint
 from app.api.agents import AgentIn
@@ -116,12 +116,54 @@ async def test_member_briefing_has_their_account_but_not_the_people_list() -> No
     assert "Apps they can open:" in text
     assert "People (up to" not in text
     assert "Recent activity" not in text
+    assert "?view=overview" in text
+    assert "?view=people" not in text
 
     admin = SimpleNamespace(**{**member.__dict__, "role": UserRole.admin, "id": tenant.owner_user_id})
     admin_text = await workspace_briefing(_FakeDb(), admin)
     assert "role owner" in admin_text
     assert "People (up to" in admin_text
     assert "Recent activity" in admin_text
+    assert "?view=billing" in admin_text
+
+
+def test_topics_for_maps_question_words() -> None:
+    assert "people" in topics_for("Who is the owner?", is_admin=True)
+    assert "billing" in topics_for("What plan are we on?", is_admin=False)
+    assert "activity" in topics_for("What happened recently?", is_admin=True)
+    assert "apps" in topics_for("Which apps can I open?", is_admin=False)
+    # Empty question keeps the full role set.
+    assert topics_for("", is_admin=True) >= {"product", "people", "apps", "activity", "billing"}
+    assert "people" not in topics_for("", is_admin=False)
+
+
+@pytest.mark.asyncio
+async def test_question_aware_briefing_skips_heavy_sections() -> None:
+    tenant = SimpleNamespace(
+        name="Acme",
+        workspace_domain="acme.com",
+        owner_user_id=uuid4(),
+        plan="free",
+        plan_expires_at=None,
+        stripe_subscription_id=None,
+    )
+    admin = SimpleNamespace(
+        id=tenant.owner_user_id,
+        email="ada@acme.com",
+        display_name="Ada",
+        role=UserRole.admin,
+        last_login_at=None,
+        tenant=tenant,
+    )
+    apps_only = await workspace_briefing(_FakeDb(), admin, "Which apps can I open?")
+    assert "Apps they can open:" in apps_only
+    assert "People (up to" not in apps_only
+    assert "Recent activity" not in apps_only
+    assert "Headroom:" not in apps_only
+
+    people_q = await workspace_briefing(_FakeDb(), admin, "Who is the owner?")
+    assert "People (up to" in people_q
+    assert "Recent activity" not in people_q
 
 
 def test_logo_rejects_script_and_oversized_files() -> None:

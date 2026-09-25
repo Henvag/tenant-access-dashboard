@@ -89,6 +89,18 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
     setViewInUrl(next);
   }
 
+  useEffect(() => {
+    function onNavigate(event: Event) {
+      const view = (event as CustomEvent<{ view?: string }>).detail?.view;
+      if (!view || !VIEWS.includes(view as View)) return;
+      const next = view as View;
+      if (!isAdmin && next !== "overview" && next !== "ask" && next !== "agents") return;
+      setView(next);
+    }
+    window.addEventListener("tenant-access:navigate", onNavigate);
+    return () => window.removeEventListener("tenant-access:navigate", onNavigate);
+  }, [isAdmin]);
+
   // Prefer the people list for ownership: /auth/me can be stale if the page
   // was opened before the owner migration and only People was refreshed.
   const actorIsOwner =

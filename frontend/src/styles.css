@@ -896,8 +896,50 @@ input:focus {
   margin-top: 0;
 }
 
+.ask-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.35rem 0 0.5rem;
+}
+
 .ask-starter {
-  margin: 0.5rem 0 1rem;
+  margin: 0;
+}
+
+.ask-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ask-chips-inline {
+  margin: 0 0 0.65rem;
+}
+
+.ask-chip {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent) 12%);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.25;
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.55rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ask-chip:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--surface) 78%, var(--accent) 22%);
+}
+
+.ask-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .agent-chat {

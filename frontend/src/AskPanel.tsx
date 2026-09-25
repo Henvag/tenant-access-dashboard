@@ -10,7 +10,7 @@ import geminiLogo from "./assets/gemini.svg";
 import ChatBubble from "./ChatBubble";
 import ChatThinking from "./ChatThinking";
 import { messageForApiError } from "./format";
-import { useLang } from "./i18n";
+import { TKey, useLang } from "./i18n";
 
 type Props = {
   isAdmin: boolean;
@@ -24,6 +24,19 @@ type ChatTurn = { role: "user" | "assistant"; content: string };
 const ASK_MODELS = [
   { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite (about 500 free/day)" },
   { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash (about 20 free/day)" },
+];
+
+const SUGGESTIONS_ADMIN: TKey[] = [
+  "ask.chip.owner",
+  "ask.chip.apps",
+  "ask.chip.upgrade",
+  "ask.chip.recent",
+];
+
+const SUGGESTIONS_MEMBER: TKey[] = [
+  "ask.chip.whoami",
+  "ask.chip.apps",
+  "ask.chip.openApps",
 ];
 
 export default function AskPanel({
@@ -63,6 +76,7 @@ export default function AskPanel({
   }, [onConfiguredChange]);
 
   const configured = status?.configured ?? initialConfigured;
+  const chips = isAdmin ? SUGGESTIONS_ADMIN : SUGGESTIONS_MEMBER;
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -94,10 +108,11 @@ export default function AskPanel({
     }
   }
 
-  async function onSend(event: FormEvent) {
-    event.preventDefault();
-    if (!configured || !draft.trim() || sending) return;
-    const next: ChatTurn[] = [...messages, { role: "user", content: draft.trim() }];
+  async function sendText(text: string) {
+    const cleaned = text.trim();
+    if (!configured || !cleaned || sending) return;
+    const prior = messages;
+    const next: ChatTurn[] = [...prior, { role: "user", content: cleaned }];
     setMessages(next);
     setDraft("");
     setSending(true);
@@ -106,12 +121,17 @@ export default function AskPanel({
       const reply = await sendAskMessage(next);
       setMessages([...next, { role: "assistant", content: reply.content }]);
     } catch (err) {
-      setMessages(messages);
-      setDraft(next[next.length - 1]?.content ?? "");
+      setMessages(prior);
+      setDraft(cleaned);
       setError(err instanceof Error ? err.message : "agent_chat_failed");
     } finally {
       setSending(false);
     }
+  }
+
+  async function onSend(event: FormEvent) {
+    event.preventDefault();
+    await sendText(draft);
   }
 
   return (
@@ -124,7 +144,11 @@ export default function AskPanel({
         <img className="agent-logo ask-mark" src={geminiLogo} alt="" width={28} height={28} />
       </div>
 
-      {error ? <p className="banner error">{messageForApiError(error, lang)}</p> : null}
+      {error ? (
+        <p className={`banner ${error === "ask_rate_limited" ? "info" : "error"}`} role="alert">
+          {messageForApiError(error, lang)}
+        </p>
+      ) : null}
 
       {!configured ? (
         <div className="ask-setup">
@@ -177,7 +201,22 @@ export default function AskPanel({
           <div className="agent-chat ask-chat">
             <div className="agent-thread">
               {messages.length === 0 && !sending ? (
-                <p className="hint ask-starter">{t("ask.starter")}</p>
+                <div className="ask-empty">
+                  <p className="hint ask-starter">{t("ask.starter")}</p>
+                  <div className="ask-chips" role="group" aria-label={t("ask.chipsLabel")}>
+                    {chips.map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className="ask-chip"
+                        disabled={sending}
+                        onClick={() => void sendText(t(key))}
+                      >
+                        {t(key)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 messages.map((turn, index) => (
                   <ChatBubble key={`${turn.role}-${index}`} role={turn.role} content={turn.content} />
@@ -185,6 +224,20 @@ export default function AskPanel({
               )}
               <ChatThinking active={sending} />
             </div>
+            {messages.length > 0 && !sending ? (
+              <div className="ask-chips ask-chips-inline" role="group" aria-label={t("ask.chipsLabel")}>
+                {chips.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="ask-chip"
+                    onClick={() => void sendText(t(key))}
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <form className="agent-compose" onSubmit={(event) => void onSend(event)}>
               <input
                 value={draft}

@@ -123,14 +123,16 @@ async def ask_chat(
     if body.messages[-1].role != "user":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="agent_chat_failed")
     who = user.display_name or user.email
+    question = body.messages[-1].content
     system = (
         f"You are the workspace assistant for {tenant.name}. "
         f"The person talking to you is signed in to Tenant Access as {who} ({user.email}). "
         "Answer questions about this company workspace clearly and briefly. "
         "Use simple Markdown: **bold**, numbered lists, and bullet lists with -. "
-        "Do not use HTML. Prefer plain hyphen (-) over long dashes. Emoji are fine when they help."
+        "Do not use HTML. Prefer plain hyphen (-) over long dashes. Emoji are fine when they help. "
+        "When you mention a tab, link it like [Billing](?view=billing)."
     )
-    system = f"{system}\n\n{await workspace_briefing(db, user)}"
+    system = f"{system}\n\n{await workspace_briefing(db, user, question)}"
     try:
         content = await complete(
             provider="google",
@@ -139,6 +141,14 @@ async def ask_chat(
             system=system,
             messages=[{"role": item.role, "content": item.content} for item in body.messages],
         )
+    except httpx.HTTPStatusError as exc:
+        if exc.response is not None and exc.response.status_code == 429:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="ask_rate_limited"
+            ) from None
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="agent_chat_failed"
+        ) from None
     except (httpx.HTTPError, ValueError, KeyError, IndexError):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail="agent_chat_failed"
