@@ -10,7 +10,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 | | URL | Role |
 | --- | --- | --- |
-| **Render** | https://tenant-access-dashboard.onrender.com | Primary demo / blueprint deploy. Free tier (cold start can take ~30 s) |
+| **Render** | https://tenantaccess.me | Primary demo (Cloudflare → Render). Free tier cold start can take ~30 s. Fallback: https://tenant-access-dashboard.onrender.com |
 | **Fly.io** | https://tenant-access-dashboard.fly.dev | Same image on a second hosting model |
 | **Grafana** | https://tenant-access-grafana.onrender.com | Demo app that signs in *through* the dashboard (SSO + role mapping) |
 | **Outline** | https://tenant-access-outline.onrender.com | Notion-like wiki, same OIDC provider (second relying party) |
