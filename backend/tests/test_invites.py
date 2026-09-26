@@ -61,6 +61,7 @@ async def _seed(
         assert t is not None
         t.owner_user_id = admin.id
         await session.commit()
+        await set_tenant_rls(session, tenant.id)
         await session.refresh(admin)
     return tenant, admin
 
@@ -106,6 +107,7 @@ async def test_company_invite_create_lookup_rotate(
     assert public.json() == {
         "tenant_name": tenant.name,
         "workspace_domain": tenant.workspace_domain,
+        "has_logo": False,
     }
 
     rotated = await client.post("/invites/company/rotate", cookies=cookie)

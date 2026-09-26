@@ -60,6 +60,7 @@ async def _seed(
         assert t is not None
         t.owner_user_id = admin.id
         await session.commit()
+        await set_tenant_rls(session, tenant.id)
         await session.refresh(admin)
     return tenant, admin
 
