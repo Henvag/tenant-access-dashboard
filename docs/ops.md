@@ -54,7 +54,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 ## Ops habits
 
 - **Migrations** run on container start (`start.sh` / Alembic). Treat schema changes as part of the deploy.
-- **Backups** — use the host's Postgres backups (Render snapshots / paid plan). Free Postgres expires; don't treat it as durable without an upgrade path.
+- **Database** — free Neon Postgres (Render free Postgres expired after 30 days). Set `DATABASE_URL` on both the dashboard and Outline services to Neon's *direct* (non-pooled) connection string; `config.py` translates `sslmode`/`channel_binding` for asyncpg. Neon free keeps point-in-time restore for a short window only, so export with `pg_dump` before risky changes.
 - **Cold starts** — Render free sleeps (~30 s wake). Fly with `min_machines_running = 0` wakes faster but still not zero. For a real SLA: keep one machine warm or pay for always-on.
 - **Two hosts, one DB (demo)** — Fly can reuse Render's external `DATABASE_URL`. Fine for a portfolio; in production I'd give each environment its own database and secrets.
 - **Edge / DNS** — optional Cloudflare in front of the dashboard: Active zone, Full (strict) SSL, rate limits on `/auth/*`, no site-wide bot challenge (see [`docs/cloudflare.md`](cloudflare.md)).
