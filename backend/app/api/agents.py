@@ -132,7 +132,11 @@ async def list_agents(
     db: AsyncSession = Depends(get_db),
 ) -> list[AgentOut]:
     rows = (
-        await db.scalars(select(TeamAgent).order_by(TeamAgent.position, TeamAgent.created_at))
+        await db.scalars(
+            select(TeamAgent)
+            .where(TeamAgent.tenant_id == user.tenant_id)
+            .order_by(TeamAgent.position, TeamAgent.created_at)
+        )
     ).all()
     return [_out(row) for row in rows if _visible(row, user)]
 
@@ -143,7 +147,14 @@ async def create_agent(
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> AgentOut:
-    count = await db.scalar(select(func.count()).select_from(TeamAgent)) or 0
+    count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(TeamAgent)
+            .where(TeamAgent.tenant_id == admin.tenant_id)
+        )
+        or 0
+    )
     if count >= MAX_AGENTS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="agent_limit_reached")
     row = TeamAgent(
@@ -167,11 +178,11 @@ async def create_agent(
 @router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_agent(
     agent_id: UUID,
-    _admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     row = await db.get(TeamAgent, agent_id)
-    if row is None:
+    if row is None or row.tenant_id != admin.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent_not_found")
     await db.delete(row)
     await db.commit()
@@ -185,7 +196,7 @@ async def chat(
     db: AsyncSession = Depends(get_db),
 ) -> ChatOut:
     row = await db.get(TeamAgent, agent_id)
-    if row is None or not _visible(row, user):
+    if row is None or row.tenant_id != user.tenant_id or not _visible(row, user):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent_not_found")
     if body.messages[-1].role != "user":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="agent_chat_failed")

@@ -73,8 +73,10 @@ def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
     )
 
 
-async def _load(db: AsyncSession, app_id: UUID) -> OAuthClient:
-    client = await db.scalar(select(OAuthClient).where(OAuthClient.id == app_id))
+async def _load(db: AsyncSession, app_id: UUID, tenant_id: UUID) -> OAuthClient:
+    client = await db.scalar(
+        select(OAuthClient).where(OAuthClient.id == app_id, OAuthClient.tenant_id == tenant_id)
+    )
     if client is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="app_not_found")
     return client
@@ -94,7 +96,7 @@ async def my_apps(
     clients = (
         await db.scalars(
             select(OAuthClient)
-            .where(OAuthClient.disabled_at.is_(None))
+            .where(OAuthClient.tenant_id == user.tenant_id, OAuthClient.disabled_at.is_(None))
             .order_by(OAuthClient.name)
         )
     ).all()
@@ -122,10 +124,16 @@ async def my_apps(
 
 @router.get("", response_model=list[AppOut])
 async def list_apps(
-    _admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
+    admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ) -> list[AppOut]:
     clients = list(
-        (await db.scalars(select(OAuthClient).order_by(OAuthClient.created_at))).all()
+        (
+            await db.scalars(
+                select(OAuthClient)
+                .where(OAuthClient.tenant_id == admin.tenant_id)
+                .order_by(OAuthClient.created_at)
+            )
+        ).all()
     )
     counts = await _grant_counts(db, [c.id for c in clients])
     return [_to_out(c, counts.get(c.id, 0)) for c in clients]
@@ -138,7 +146,14 @@ async def create_app(
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> AppCreatedOut:
-    count = await db.scalar(select(func.count()).select_from(OAuthClient)) or 0
+    count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(OAuthClient)
+            .where(OAuthClient.tenant_id == admin.tenant_id)
+        )
+        or 0
+    )
     max_apps = limits_for_tenant(admin.tenant).max_apps if admin.tenant else 3
     if count >= max_apps:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="app_limit_reached")
@@ -177,10 +192,10 @@ async def create_app(
 async def patch_app(
     app_id: UUID,
     payload: AppPatch,
-    _admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> AppOut:
-    client = await _load(db, app_id)
+    client = await _load(db, app_id, admin.tenant_id)
     if payload.name is not None:
         client.name = payload.name
     if payload.redirect_uris is not None:
@@ -211,7 +226,7 @@ async def delete_app(
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
-    client = await _load(db, app_id)
+    client = await _load(db, app_id, admin.tenant_id)
     name = client.name
     lookup = await db.scalar(
         select(OAuthClientLookup).where(OAuthClientLookup.client_id == client.client_id)
@@ -236,10 +251,10 @@ async def delete_app(
 @router.post("/{app_id}/rotate-secret", response_model=SecretOut)
 async def rotate_secret(
     app_id: UUID,
-    _admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> SecretOut:
-    client = await _load(db, app_id)
+    client = await _load(db, app_id, admin.tenant_id)
     secret = new_client_secret()
     client.client_secret_hash = hash_secret(secret)
     await db.commit()
@@ -265,10 +280,10 @@ def _normalize_grant_email(raw: str, workspace_domain: str) -> str:
 @router.get("/{app_id}/grants", response_model=GrantsOut)
 async def list_grants(
     app_id: UUID,
-    _admin: User = Depends(require_admin),
+    admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> GrantsOut:
-    client = await _load(db, app_id)
+    client = await _load(db, app_id, admin.tenant_id)
     user_ids = list(
         (await db.scalars(select(AppGrant.user_id).where(AppGrant.client_pk == client.id))).all()
     )
@@ -291,7 +306,7 @@ async def set_grants(
     db: AsyncSession = Depends(get_db),
 ) -> GrantsOut:
     """Replace assigned users and pending emails. Adds/removes are audited."""
-    client = await _load(db, app_id)
+    client = await _load(db, app_id, admin.tenant_id)
     tenant = admin.tenant
     workspace_domain = tenant.workspace_domain if tenant is not None else ""
     if not workspace_domain:
@@ -300,9 +315,13 @@ async def set_grants(
     wanted = set(payload.user_ids)
     wanted_emails = {_normalize_grant_email(e, workspace_domain) for e in payload.emails}
 
-    # Only users in this tenant can be granted (RLS already guarantees the query scope).
+    # Only users in this tenant can be granted (explicit filter on top of RLS).
     users = {
-        u.id: u for u in (await db.scalars(select(User).where(User.id.in_(wanted)))).all()
+        u.id: u for u in (
+            await db.scalars(
+                select(User).where(User.tenant_id == admin.tenant_id, User.id.in_(wanted))
+            )
+        ).all()
     } if wanted else {}
     unknown = wanted - set(users)
     if unknown:
@@ -313,7 +332,11 @@ async def set_grants(
         existing_by_email = {
             u.email: u
             for u in (
-                await db.scalars(select(User).where(User.email.in_(wanted_emails)))
+                await db.scalars(
+                    select(User).where(
+                        User.tenant_id == admin.tenant_id, User.email.in_(wanted_emails)
+                    )
+                )
             ).all()
         }
         for email, user in existing_by_email.items():
@@ -351,7 +374,13 @@ async def set_grants(
     if removed_ids:
         removed_users = {
             u.id: u
-            for u in (await db.scalars(select(User).where(User.id.in_(removed_ids)))).all()
+            for u in (
+                await db.scalars(
+                    select(User).where(
+                        User.tenant_id == admin.tenant_id, User.id.in_(removed_ids)
+                    )
+                )
+            ).all()
         }
         for user_id in removed_ids:
             await db.delete(existing[user_id])

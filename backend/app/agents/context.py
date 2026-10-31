@@ -185,8 +185,20 @@ async def workspace_briefing(
     is_owner = tenant.owner_user_id is not None and tenant.owner_user_id == user.id
     topics = topics_for(question or "", is_admin=is_admin)
 
-    people_count = await db.scalar(select(func.count()).select_from(User)) or 0
-    app_count = await db.scalar(select(func.count()).select_from(OAuthClient)) or 0
+    people_count = (
+        await db.scalar(
+            select(func.count()).select_from(User).where(User.tenant_id == tenant.id)
+        )
+        or 0
+    )
+    app_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(OAuthClient)
+            .where(OAuthClient.tenant_id == tenant.id)
+        )
+        or 0
+    )
 
     lines: list[str] = [
         PRODUCT_PRIMER if "product" in topics else SHORT_PRIMER,
@@ -220,15 +232,15 @@ async def workspace_briefing(
     if is_admin and "people" in topics:
         lines.append("")
         lines.append(f"People (up to {PEOPLE_LIMIT}):")
-        lines.extend(await _people(db, tenant.owner_user_id))
+        lines.extend(await _people(db, tenant.id, tenant.owner_user_id))
     if is_admin and "apps" in topics:
         lines.append("")
         lines.append("All apps:")
-        lines.extend(await _all_apps(db))
+        lines.extend(await _all_apps(db, tenant.id))
     if is_admin and "agents" in topics:
         lines.append("")
         lines.append("Agents (paid ChatGPT/Claude keys):")
-        lines.extend(await _agents(db))
+        lines.extend(await _agents(db, tenant.id))
     if is_admin and "activity" in topics:
         lines.append("")
         lines.append(f"Recent activity (up to {EVENTS_LIMIT}, within the plan's retention):")
@@ -255,7 +267,9 @@ async def _my_apps(db: AsyncSession, user: User) -> list[str]:
     )
     clients = (
         await db.scalars(
-            select(OAuthClient).where(OAuthClient.disabled_at.is_(None)).order_by(OAuthClient.name)
+            select(OAuthClient)
+            .where(OAuthClient.tenant_id == user.tenant_id, OAuthClient.disabled_at.is_(None))
+            .order_by(OAuthClient.name)
         )
     ).all()
     out: list[str] = []
@@ -271,8 +285,15 @@ async def _my_apps(db: AsyncSession, user: User) -> list[str]:
     return out or ["- none yet"]
 
 
-async def _people(db: AsyncSession, owner_id) -> list[str]:
-    rows = (await db.scalars(select(User).order_by(User.email).limit(PEOPLE_LIMIT))).all()
+async def _people(db: AsyncSession, tenant_id, owner_id) -> list[str]:
+    rows = (
+        await db.scalars(
+            select(User)
+            .where(User.tenant_id == tenant_id)
+            .order_by(User.email)
+            .limit(PEOPLE_LIMIT)
+        )
+    ).all()
     out: list[str] = []
     for row in rows:
         role = "owner" if owner_id is not None and row.id == owner_id else row.role.value
@@ -282,8 +303,14 @@ async def _people(db: AsyncSession, owner_id) -> list[str]:
     return out or ["- none"]
 
 
-async def _all_apps(db: AsyncSession) -> list[str]:
-    clients = (await db.scalars(select(OAuthClient).order_by(OAuthClient.name))).all()
+async def _all_apps(db: AsyncSession, tenant_id) -> list[str]:
+    clients = (
+        await db.scalars(
+            select(OAuthClient)
+            .where(OAuthClient.tenant_id == tenant_id)
+            .order_by(OAuthClient.name)
+        )
+    ).all()
     out: list[str] = []
     for client in clients:
         state = "disabled" if client.disabled_at is not None else "enabled"
@@ -292,8 +319,14 @@ async def _all_apps(db: AsyncSession) -> list[str]:
     return out or ["- none yet"]
 
 
-async def _agents(db: AsyncSession) -> list[str]:
-    rows = (await db.scalars(select(TeamAgent).order_by(TeamAgent.position))).all()
+async def _agents(db: AsyncSession, tenant_id) -> list[str]:
+    rows = (
+        await db.scalars(
+            select(TeamAgent)
+            .where(TeamAgent.tenant_id == tenant_id)
+            .order_by(TeamAgent.position)
+        )
+    ).all()
     return [
         f"- {row.name}: {row.provider} {row.model}, policy {row.access_policy.value}"
         for row in rows
@@ -305,7 +338,7 @@ async def _events(db: AsyncSession, tenant) -> list[str]:
     rows = (
         await db.scalars(
             select(AuditEvent)
-            .where(AuditEvent.created_at >= cutoff)
+            .where(AuditEvent.tenant_id == tenant.id, AuditEvent.created_at >= cutoff)
             .order_by(AuditEvent.created_at.desc())
             .limit(EVENTS_LIMIT)
         )

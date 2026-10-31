@@ -102,7 +102,12 @@ async def upsert_user_from_oidc(
 
     now = datetime.now(UTC)
     if user is None:
-        user_count = await session.scalar(select(func.count()).select_from(User)) or 0
+        user_count = (
+            await session.scalar(
+                select(func.count()).select_from(User).where(User.tenant_id == tenant.id)
+            )
+            or 0
+        )
         max_users = limits_for_tenant(tenant).max_users
         if user_count >= max_users:
             raise LoginError("seat_limit_reached")

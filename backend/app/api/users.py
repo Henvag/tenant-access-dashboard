@@ -22,7 +22,9 @@ async def list_users(
 ) -> list[TenantUserOut]:
     owner_id = await _owner_id(db, admin.tenant_id)
     result = await db.scalars(
-        select(User).order_by(User.role.asc(), User.email.asc())
+        select(User)
+        .where(User.tenant_id == admin.tenant_id)
+        .order_by(User.role.asc(), User.email.asc())
     )
     return [_to_out(user, owner_id) for user in result.all()]
 
@@ -35,7 +37,9 @@ async def patch_user(
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> TenantUserOut:
-    target = await db.scalar(select(User).where(User.id == user_id))
+    target = await db.scalar(
+        select(User).where(User.id == user_id, User.tenant_id == admin.tenant_id)
+    )
     if target is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found")
 
@@ -108,7 +112,11 @@ async def _apply_disabled(
             active_admins = await db.scalar(
                 select(func.count())
                 .select_from(User)
-                .where(User.role == UserRole.admin, User.disabled_at.is_(None))
+                .where(
+                    User.tenant_id == actor.tenant_id,
+                    User.role == UserRole.admin,
+                    User.disabled_at.is_(None),
+                )
             )
             if (active_admins or 0) <= 1:
                 raise HTTPException(
@@ -164,7 +172,11 @@ async def _apply_role(
         active_admins = await db.scalar(
             select(func.count())
             .select_from(User)
-            .where(User.role == UserRole.admin, User.disabled_at.is_(None))
+            .where(
+                User.tenant_id == actor.tenant_id,
+                User.role == UserRole.admin,
+                User.disabled_at.is_(None),
+            )
         )
         if (active_admins or 0) <= 1:
             raise HTTPException(

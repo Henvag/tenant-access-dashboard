@@ -95,6 +95,7 @@ class _FakeDb:
 @pytest.mark.asyncio
 async def test_member_briefing_has_their_account_but_not_the_people_list() -> None:
     tenant = SimpleNamespace(
+        id=uuid4(),
         name="Acme",
         workspace_domain="acme.com",
         owner_user_id=uuid4(),
@@ -108,6 +109,7 @@ async def test_member_briefing_has_their_account_but_not_the_people_list() -> No
         display_name="Bob",
         role=UserRole.user,
         last_login_at=None,
+        tenant_id=tenant.id,
         tenant=tenant,
     )
     text = await workspace_briefing(_FakeDb(), member)
@@ -140,6 +142,7 @@ def test_topics_for_maps_question_words() -> None:
 @pytest.mark.asyncio
 async def test_question_aware_briefing_skips_heavy_sections() -> None:
     tenant = SimpleNamespace(
+        id=uuid4(),
         name="Acme",
         workspace_domain="acme.com",
         owner_user_id=uuid4(),
@@ -153,6 +156,7 @@ async def test_question_aware_briefing_skips_heavy_sections() -> None:
         display_name="Ada",
         role=UserRole.admin,
         last_login_at=None,
+        tenant_id=tenant.id,
         tenant=tenant,
     )
     apps_only = await workspace_briefing(_FakeDb(), admin, "Which apps can I open?")
