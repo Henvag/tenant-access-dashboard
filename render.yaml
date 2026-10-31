@@ -44,7 +44,8 @@ services:
         value: "false"
 
   # Demo relying party: Grafana signs in through the dashboard (OIDC provider).
-  # Register "Grafana" under Apps in the dashboard, then paste the client id/secret here.
+  # Register "Grafana" under Apps in the dashboard, then paste the client id/secret into
+  # the Render dashboard (never into this file).
   - type: web
     name: tenant-access-grafana
     runtime: image
@@ -69,8 +70,11 @@ services:
         sync: false
       - key: GF_AUTH_GENERIC_OAUTH_SCOPES
         value: openid email profile
+      # The browser leg must hit the domain people sign in on (PUBLIC_BASE_URL), or the
+      # dashboard session cookie is missing and SSO loops. Server-to-server calls below
+      # go straight to Render, skipping Cloudflare.
       - key: GF_AUTH_GENERIC_OAUTH_AUTH_URL
-        value: https://tenant-access-dashboard.onrender.com/oauth/authorize
+        value: https://tenantaccess.me/oauth/authorize
       - key: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
         value: https://tenant-access-dashboard.onrender.com/oauth/token
       - key: GF_AUTH_GENERIC_OAUTH_API_URL
@@ -136,8 +140,9 @@ services:
         sync: false
       - key: OIDC_CLIENT_SECRET
         sync: false
+      # Browser leg on the public domain, server-to-server legs on Render (see Grafana).
       - key: OIDC_AUTH_URI
-        value: https://tenant-access-dashboard.onrender.com/oauth/authorize
+        value: https://tenantaccess.me/oauth/authorize
       - key: OIDC_TOKEN_URI
         value: https://tenant-access-dashboard.onrender.com/oauth/token
       - key: OIDC_USERINFO_URI
