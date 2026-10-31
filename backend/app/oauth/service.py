@@ -55,6 +55,12 @@ def pkce_matches(verifier: str, challenge: str, method: str) -> bool:
 
 
 def role_claim(user: User, tenant: Tenant) -> str:
+    from app.demo import is_demo_tenant
+
+    # The public demo is shared by anonymous visitors: relying parties only ever
+    # see a plain member, so nobody gets Grafana admin through it.
+    if is_demo_tenant(tenant.id):
+        return "member"
     if tenant.owner_user_id is not None and user.id == tenant.owner_user_id:
         return "owner"
     return "admin" if user.role == UserRole.admin else "member"

@@ -4,12 +4,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.identity import LoginError, workspace_domain_from_claims
 from app.auth.rls import set_tenant_rls
+from app.demo import is_demo_tenant
 from app.http_client import client_ip
 from app.models import AuditEvent, AuditEventType, IdentityProvider, Tenant, User, UserRole
 
 
 def _client_ip(request: Request) -> str | None:
     return client_ip(request)
+
+
+def _visitor_fields(tenant_id, request: Request) -> tuple[str | None, str | None]:
+    """IP and user agent to store. Demo visitors share one audit log, so never theirs."""
+    if is_demo_tenant(tenant_id):
+        return None, None
+    return _client_ip(request), _user_agent(request)
 
 def _user_agent(request: Request) -> str | None:
     raw = request.headers.get("user-agent")
@@ -26,6 +34,7 @@ async def record_login(
     request: Request,
 ) -> AuditEvent:
     """Append a successful login row. Caller must already have set RLS for the tenant."""
+    ip_address, user_agent = _visitor_fields(user.tenant_id, request)
     event = AuditEvent(
         tenant_id=user.tenant_id,
         user_id=user.id,
@@ -33,8 +42,8 @@ async def record_login(
         event_type=AuditEventType.login,
         idp=idp,
         error_code=None,
-        ip_address=_client_ip(request),
-        user_agent=_user_agent(request),
+        ip_address=ip_address,
+        user_agent=user_agent,
     )
     session.add(event)
     await session.flush()
@@ -120,6 +129,7 @@ async def record_app_event(
     details: dict | None = None,
 ) -> AuditEvent:
     """Append an app_* event (registration, grants, app sign-ins). RLS must be set."""
+    ip_address, user_agent = _visitor_fields(tenant_id, request)
     event = AuditEvent(
         tenant_id=tenant_id,
         user_id=user_id,
@@ -127,8 +137,8 @@ async def record_app_event(
         event_type=event_type,
         idp=idp,
         error_code=error_code[:64] if error_code else None,
-        ip_address=_client_ip(request),
-        user_agent=_user_agent(request),
+        ip_address=ip_address,
+        user_agent=user_agent,
         details=details,
     )
     session.add(event)

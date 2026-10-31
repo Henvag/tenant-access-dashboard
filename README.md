@@ -1,23 +1,24 @@
 # Tenant Access Dashboard
 
-I wanted a small, finished project that shows how I think about multi-tenant SaaS: identity, isolation, and shipping the same app without locking it to one host.
+I wanted a small, finished project that shows how I think about multi-tenant SaaS: identity, isolation, and shipping it as one portable image.
 
 **Idea:** a company registers. People sign in with Google or Microsoft. An admin can see who has access, and cannot see another company's people, even if the app code forgets a filter. The dashboard is also an **OpenID Connect provider**: register Grafana (or any OIDC app) under **Apps**, decide who may use it, and your team signs in to it with the same account. Every sign-in and denial lands in the audit log.
 
 [![CI](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml)
 
-**Why both Render and Fly?** Not because I need two demos. I wanted to show the app isn't married to one cloud. Same multi-stage `Dockerfile`, same migrations and OIDC config; Render is a PaaS blueprint (`render.yaml`), Fly is a container platform (`fly.toml` + `fly deploy`). If the image is portable, switching hosts is mostly secrets and a redirect URI.
+**Try it in a minute:** open https://tenantaccess.me and click through the product tour, or press **Explore the live demo** to land in a sample company (Nordlys Analytics) as its owner. No account needed, and the demo is read-only.
 
 | | URL | Role |
 | --- | --- | --- |
-| **Render** | https://tenantaccess.me | Primary demo (Cloudflare → Render). Free tier cold start can take ~30 s. Fallback: https://tenant-access-dashboard.onrender.com |
-| **Fly.io** | https://tenant-access-dashboard.fly.dev | Same image on a second hosting model |
+| **Dashboard** | https://tenantaccess.me | Cloudflare → Render, database on Neon. Free tier cold start can take ~30 s. Fallback: https://tenant-access-dashboard.onrender.com |
 | **Grafana** | https://tenant-access-grafana.onrender.com | Demo app that signs in *through* the dashboard (SSO + role mapping) |
 | **Outline** | https://tenant-access-outline.onrender.com | Notion-like wiki, same OIDC provider (second relying party) |
 
 ---
 
 ## Screenshots
+
+Screenshots are from the read-only demo company.
 
 | Landing | Overview |
 | --- | --- |
@@ -41,13 +42,19 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 ## Try it
 
-1. Open either link. **Register company** with your email domain (`gmail.com` or `outlook.com` works for a personal demo).
+**Without an account:** press **Explore the live demo** on the landing page. You're signed in as Ingrid, owner of Nordlys Analytics, with nine people, three apps and a week of audit history. Everything is visible and nothing can be changed.
+
+**With your own company:**
+
+1. Open the dashboard. **Register company** with your email domain (`gmail.com` or `outlook.com` works for a personal demo).
 2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
 3. **Overview** is stats and recent activity. **People** is the directory: the company **owner** (first signer) can promote, demote, and disable access; promoted admins can disable members. **Audit** lists sign-ins, failures, and access changes.
 4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned), copy the client id and secret. Everyone gets a **Your apps** launcher on Overview.
 5. Open Grafana or Outline and choose **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is the wiki. Try a user who is not assigned; the denial shows up in **Audit**.
 6. Register a second company on another domain and sign in there. You should only see that tenant, including its apps.
 7. **Billing** (owner): Free, Team, and Business, with seat and app limits. Card checkout goes through Stripe.
+
+8. **Ask** (everyone): questions about your own workspace ("who hasn't signed in this week?"), answered by Gemini with a free API key the admin adds. **Agents** (admin): company ChatGPT or Claude assistants that people use while signed in here, billed to the company's own key.
 
 There is an **EN / NO** language toggle if you want to check the UI.
 
@@ -77,10 +84,23 @@ await session.execute(
 
 No context -> empty reads and rejected writes. CI runs the RLS tests as a normal DB role, not a superuser (superusers bypass RLS and would fake the result).
 
+## A public demo that can't leak or be vandalised
+
+Letting anonymous visitors sit in an admin seat is only fine if the seat can't do anything, so the demo is locked down on the server, not just in the UI:
+
+- `POST /auth/demo` signs the visitor in as the owner of a fixed company on the reserved `nordlys.example` domain. No Google or Microsoft account can ever resolve to it.
+- An app-wide FastAPI dependency answers every non-GET request from a demo session with `403 demo_read_only`. Billing checkout, invites, app registration, role changes and AI keys are all covered by that one rule.
+- The demo's apps point at `nordlys.example` redirect URIs, have no launch URL, and their client secrets were thrown away at seed time, so no relying party can complete a sign-in through them. There are no Ask or agent keys.
+- Visitors' IP addresses and user agents are never written to the shared audit log, and OIDC role claims for the demo are capped at `member`.
+- The demo refuses to start if the database role is a superuser or has `BYPASSRLS`, because the admin views rely on RLS to stay inside one company.
+- Each demo sign-in moves the seeded timestamps forward so the activity always looks recent, and prunes anything older than a day.
+
+Code: [`backend/app/demo.py`](backend/app/demo.py), tests in [`backend/tests/test_demo.py`](backend/tests/test_demo.py). The landing-page tour is plain React over screenshots of that company ([`frontend/src/ProductTour.tsx`](frontend/src/ProductTour.tsx)); [`scripts/capture-demo.mjs`](scripts/capture-demo.mjs) retakes them.
+
 ## Sign-in -> tenant
 
 ```
-Google or Entra (OIDC) ââid_tokenâââ¶ FastAPI âââ¶ email domain âââ¶ tenant
+Google or Entra (OIDC) ──id_token──▶ FastAPI ──▶ email domain ──▶ tenant
 ```
 
 Roughly:
@@ -98,10 +118,10 @@ Roles are deliberately just `admin` and `user` (plus the tenant **owner**, the f
 Consuming OIDC from Google is table stakes; the interesting half of an identity product is *issuing* identity to other apps. So the dashboard also speaks OIDC outward:
 
 ```
-Grafana ââ/oauth/authorizeâââ¶ dashboard  (session? tenant? disabled? policy?)
-        ââââââcodeââââââââââââ           audit: app_login / app_login_denied
-Grafana ââ/oauth/token (secret + PKCE)âââ¶ RS256 id_token + access_token
-Grafana ââ/oauth/userinfoââââââââââââââ¶ email, name, role, tenant
+Grafana ──/oauth/authorize──▶ dashboard  (session? tenant? disabled? policy?)
+        ◀─────code────────────           audit: app_login / app_login_denied
+Grafana ──/oauth/token (secret + PKCE)──▶ RS256 id_token + access_token
+Grafana ──/oauth/userinfo─────────────▶ email, name, role, tenant
 ```
 
 - **Discovery + JWKS** at `/.well-known/openid-configuration` and `/.well-known/jwks.json`. Signing keys are RSA-2048, stored in Postgres (both hosts have ephemeral disks), cached in memory, rotatable.
@@ -119,9 +139,10 @@ Grafana ââ/oauth/userinfoââââââââ�
 | API | FastAPI, SQLAlchemy 2 async, Alembic | Comfortable, typed, good async Postgres story |
 | Auth | Authlib (Google + Entra ID) | One OIDC path for two IdPs |
 | OIDC provider | joserfc (RS256 JWT/JWKS), PKCE | Issue tokens to apps like Grafana; keys live in Postgres |
-| DB | PostgreSQL 16 + RLS | Isolation where I can't forget it |
+| DB | PostgreSQL 16 + RLS on Neon (free tier) | Isolation where I can't forget it; Neon because Render's free Postgres expires after 30 days |
 | UI | React + TypeScript + Vite | Built into the API image. One origin, one cookie |
-| Ship | Docker, GitHub Actions, Render + Fly | One image, two hosting models (PaaS vs containers) |
+| AI | Gemini (Ask), OpenAI and Anthropic (Agents) | Keys belong to the company, stored encrypted, only a 4-character hint is shown |
+| Ship | Docker, GitHub Actions, Render, Cloudflare | One portable image; Cloudflare in front for the custom domain |
 | Ops | JSON logs, request IDs, `/health`, basic security headers | Something useful when the free tier misbehaves |
 
 One container builds the frontend, copies it in, runs migrations on start, and serves everything.
@@ -135,11 +156,12 @@ backend/
     auth/        identity, oidc, rls, audit
     oauth/       signing keys, PKCE, codes, access policy
     models/      Tenant, User, AuditEvent, OAuthClient, AppGrant, OAuthCode, SigningKey
+    demo.py      read-only sample company behind "Explore the live demo"
     config.py    public URL from RENDER_EXTERNAL_URL or PUBLIC_BASE_URL
   alembic/
   tests/
-frontend/        EN/NO i18n, dashboard, landing
-Dockerfile Â· docker-compose.yml Â· render.yaml Â· fly.toml
+frontend/        EN/NO i18n, dashboard, landing + product tour
+Dockerfile · docker-compose.yml · render.yaml · fly.toml
 infra/render/  Terraform twin of the Render Blueprint (optional)
 docs/ops.md    How I'd run this + threat notes
 docs/cloudflare.md  Optional Cloudflare DNS/proxy + auth rate limits
@@ -217,7 +239,9 @@ Every push runs pytest, a frontend production build, and a Docker build. Render 
    - `https://tenant-access-dashboard.onrender.com/auth/callback`
    - Google origin: `https://tenant-access-dashboard.onrender.com`
 
-Fair warning on free: the web service sleeps, and free Postgres ages out after 30 days unless you upgrade.
+4. Set `DATABASE_URL` on the dashboard and Outline services (it's `sync: false` in the blueprint). I use a free [Neon](https://neon.tech) project in the same region (`us-west-2`, next to Render's Oregon). Use Neon's **direct** connection string, not the pooled one: asyncpg's prepared statements don't survive PgBouncer.
+
+Fair warning on free: the web service sleeps after 15 minutes idle, so the first request takes ~30 s.
 
 ### Grafana as a relying party
 
@@ -247,39 +271,15 @@ Bookmarkable admin views: `?view=apps`, `?view=people`, `?view=audit` on the das
 
 Locally, any OIDC client works against `http://localhost:8000` (issuer, discovery, JWKS).
 
-### Fly.io
+### Fly.io (paused)
 
-Render alone would be enough to run the app. Fly is here on purpose: **prove the Docker image is host-agnostic**. Blueprint/PaaS on Render, containers on Fly. If both work, the packaging is doing its job.
-
-Live: https://tenant-access-dashboard.fly.dev
-
-```powershell
-# Windows install: iwr https://fly.io/install.ps1 -useb | iex
-fly auth login
-fly apps create tenant-access-dashboard
-fly secrets set ENVIRONMENT=production `
-  PUBLIC_BASE_URL=https://tenant-access-dashboard.fly.dev `
-  SESSION_SECRET="<any long random string>" `
-  DATABASE_URL="<external postgres url>" `
-  GOOGLE_CLIENT_ID=. GOOGLE_CLIENT_SECRET=. `
-  ENTRA_CLIENT_ID=. ENTRA_CLIENT_SECRET=. ENTRA_TENANT_ID=common
-fly deploy
-```
-
-I pointed Fly at Render's **external** `DATABASE_URL` so I didn't need a second database for the demo. Session secrets don't need to match across hosts. They only sign cookies for that domain.
-
-Add the Fly callback in Google and Entra the same way:
-
-- `https://tenant-access-dashboard.fly.dev/auth/callback`
-- Google origin: `https://tenant-access-dashboard.fly.dev`
-
-The app picks the redirect base from `RENDER_EXTERNAL_URL` or `PUBLIC_BASE_URL`.
+The same image also ran on Fly.io to show it isn't tied to one host. That deployment is paused for now; `fly.toml` stays in the repo, and `PUBLIC_BASE_URL` is what any non-Render host needs to set.
 
 ### Infra as code
 
 - **Live Render demo:** Blueprint (`render.yaml`).
 - **Optional Terraform:** `infra/render/`. Same web + Postgres shape if you prefer state over Blueprint. See [`infra/README.md`](infra/README.md).
-- **Fly:** `fly.toml` + `flyctl` (Fly's older TF provider isn't something I'd hang a demo on).
+- **Fly (paused):** `fly.toml` + `flyctl`.
 
 ### Ops & threat model
 
@@ -293,4 +293,4 @@ I capped the scope so I could actually finish it. No fancy role hierarchy, no on
 
 The OIDC provider is intentionally a subset: authorization code + PKCE with confidential clients, RS256, no refresh tokens, no dynamic client registration, no consent screen (the admin's access policy *is* the consent). Enough for real apps like Grafana; not a drop-in Keycloak.
 
-What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and live Grafana + Outline wired to it**, basic observability, EN/NO UI, **one portable image** on Render + Fly, a short ops write-up, and Terraform as an optional path next to the Blueprint.
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and live Grafana + Outline wired to it**, a **read-only public demo** with a product tour, basic observability, EN/NO UI, **one portable image**, a short ops write-up, and Terraform as an optional path next to the Blueprint.

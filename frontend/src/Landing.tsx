@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
-import { lookupPublicInvite, loginUrl, PublicInvite, API_BASE } from "./api";
+import { demoUrl, lookupPublicInvite, loginUrl, PublicInvite, API_BASE } from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
 import { useLang } from "./i18n";
-import { IconGlobe, IconGoogle, IconLock, IconMicrosoft, IconPlug, IconShield } from "./Icons";
+import {
+  IconGlobe,
+  IconGoogle,
+  IconLock,
+  IconMicrosoft,
+  IconPlay,
+  IconPlug,
+  IconShield,
+} from "./Icons";
 import LanguageToggle from "./LanguageToggle";
+import ProductTour from "./ProductTour";
 import SignupForm from "./SignupForm";
 import appsSharedLoginMark from "./assets/apps-shared-login.png";
 import companiesIsolatedMark from "./assets/companies-isolated.jpg";
@@ -146,6 +155,14 @@ export default function Landing({
                   {t("signin.microsoft")}
                 </a>
               </div>
+              {inviteToken || continueApp ? null : (
+                <>
+                  <p className="demo-divider">
+                    <span>{t("demo.or")}</span>
+                  </p>
+                  <DemoButton />
+                </>
+              )}
               <p className="fineprint">
                 <IconGlobe width={14} height={14} />
                 {t("signin.new")}{" "}
@@ -170,6 +187,15 @@ export default function Landing({
           )}
         </section>
       </div>
+
+      <section className="landing-tour" aria-labelledby="landing-tour-title">
+        <div className="landing-tour-head">
+          <p className="eyebrow">{t("tour.eyebrow")}</p>
+          <h2 id="landing-tour-title">{t("tour.title")}</h2>
+          <p className="hint">{t("tour.lede")}</p>
+        </div>
+        <ProductTour action={<DemoButton />} />
+      </section>
 
       <section className="landing-features" aria-labelledby="landing-features-title">
         <h2 id="landing-features-title">{t("landing.featuresTitle")}</h2>
@@ -213,5 +239,19 @@ export default function Landing({
         </ul>
       </section>
     </main>
+  );
+}
+
+/** A form POST, so link prefetchers and crawlers never start a demo session. */
+export function DemoButton() {
+  const { t } = useLang();
+  return (
+    <form method="post" action={demoUrl()} className="demo-form">
+      <button type="submit" className="btn btn-primary btn-block">
+        <IconPlay width={16} height={16} />
+        {t("demo.cta")}
+      </button>
+      <p className="fineprint demo-hint">{t("demo.ctaHint")}</p>
+    </form>
   );
 }
