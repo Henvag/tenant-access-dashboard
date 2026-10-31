@@ -17,6 +17,12 @@ from app.auth.identity import (
 from app.auth.oidc import PROVIDERS
 from app.config import settings
 from app.db import get_db
+from app.demo import (
+    DEMO_SESSION_KEY,
+    database_enforces_rls,
+    ensure_demo_owner,
+    is_demo_session,
+)
 from app.models import User
 from app.models.user import IdentityProvider
 from app.oauth.pending import PENDING_AUTHORIZE_KEY
@@ -179,8 +185,28 @@ async def callback(
     return _frontend_redirect()
 
 
+@router.post("/demo")
+async def demo_login(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit_auth),
+):
+    """Sign in to the public read-only sample company. No IdP, no audit row."""
+    if not settings.demo_enabled or not await database_enforces_rls(db):
+        return _frontend_redirect(error="demo_unavailable")
+    owner = await ensure_demo_owner(db)
+    await db.commit()
+    # Drop any parked app sign-in: it belonged to whoever was here before.
+    request.session.clear()
+    write_login_session(request.session, owner)
+    request.session[DEMO_SESSION_KEY] = True
+    return RedirectResponse(
+        f"{settings.public_origin}/?_={int(time())}", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
 @router.get("/me", response_model=MeOut)
-async def me(user: User = Depends(get_current_user)) -> MeOut:
+async def me(request: Request, user: User = Depends(get_current_user)) -> MeOut:
     from app.billing.plans import effective_plan_id, limits_for_tenant
 
     limits = limits_for_tenant(user.tenant)
@@ -202,6 +228,7 @@ async def me(user: User = Depends(get_current_user)) -> MeOut:
         audit_retention_days=limits.audit_retention_days,
         has_logo=bool(user.tenant.logo_bytes),
         has_ask=bool(user.tenant.ask_secret),
+        demo=is_demo_session(request.session),
     )
 
 

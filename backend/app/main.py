@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 import re
 
-from fastapi import FastAPI, Header, HTTPException, Response, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,6 +21,7 @@ from app.api.tenants import router as tenants_router
 from app.api.users import router as users_router
 from app.auth.oidc import create_oauth
 from app.config import STATIC_DIR, settings
+from app.demo import enforce_demo_read_only
 from app.health import database_reachable
 from app.logging_config import configure_logging
 from app.observability import RequestIdMiddleware
@@ -34,7 +35,12 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Tenant Access Dashboard", lifespan=lifespan)
+app = FastAPI(
+    title="Tenant Access Dashboard",
+    lifespan=lifespan,
+    # Applies to every route: a demo session can read but never write.
+    dependencies=[Depends(enforce_demo_read_only)],
+)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,

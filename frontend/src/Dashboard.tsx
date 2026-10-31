@@ -28,6 +28,7 @@ import {
   IconList,
   IconLogout,
   IconOrg,
+  IconPlay,
   IconPlug,
   IconRefresh,
   IconSearch,
@@ -350,6 +351,23 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           ) : null}
         </header>
 
+        {me.demo ? (
+          <div className="banner info demo-banner" role="status">
+            <IconPlay width={16} height={16} />
+            <div>
+              <strong>
+                {t("demo.banner", {
+                  name: me.display_name || me.email,
+                  tenant: me.tenant_name,
+                })}
+              </strong>
+              <p className="banner-sub">{t("demo.bannerHint")}</p>
+            </div>
+            <a className="btn btn-ghost btn-sm" href={logoutUrl()}>
+              {t("demo.leave")}
+            </a>
+          </div>
+        ) : null}
         {errorCode ? (
           <p className="banner error" role="alert">
             {messageForDashboardError(errorCode, lang)}

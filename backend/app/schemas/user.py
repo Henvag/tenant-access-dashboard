@@ -23,6 +23,8 @@ class MeOut(BaseModel):
     audit_retention_days: int = 14
     has_logo: bool = False
     has_ask: bool = False
+    # Signed in through the public read-only demo.
+    demo: bool = False
 
 
 class TenantUserOut(BaseModel):

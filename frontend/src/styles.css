@@ -676,8 +676,16 @@ input:focus {
 }
 
 .tenant-chip-domain {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--side-muted);
   font-size: 0.85rem;
+}
+
+.tenant-brand > div {
+  min-width: 0;
 }
 
 .tenant-brand {
@@ -2984,5 +2992,328 @@ a.tile:active {
 @media (max-width: 960px) {
   .billing-plans {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Live demo entry ---------- */
+.demo-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.1rem 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.demo-divider::before,
+.demo-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.demo-form {
+  margin: 0;
+}
+
+.demo-form .btn {
+  gap: 0.5rem;
+}
+
+.demo-hint {
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.demo-banner {
+  align-items: center;
+}
+
+.demo-banner > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-banner .btn {
+  flex-shrink: 0;
+}
+
+/* ---------- Product tour ---------- */
+.landing-tour {
+  width: min(1100px, calc(100% - 2.5rem));
+  margin: 0 auto 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+  animation: fade-up 0.6s ease 0.05s both;
+}
+
+.landing-tour-head {
+  max-width: 620px;
+  margin-bottom: 1.4rem;
+}
+
+.landing-tour-head .eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.landing-tour-head h2 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.tour {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+@media (min-width: 960px) {
+  .tour {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 1.75rem;
+  }
+}
+
+.tour-frame {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(12, 18, 34, 0.05), 0 24px 60px rgba(12, 18, 34, 0.12);
+  overflow: hidden;
+}
+
+.tour-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.tour-dots {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.tour-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.tour-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.tour-screen {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.tour-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.tour-shot.active {
+  opacity: 1;
+}
+
+.tour-hotspot {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 6px 16px rgba(12, 18, 34, 0.25);
+  cursor: pointer;
+  animation: tour-in 0.35s ease both;
+}
+
+.tour-hotspot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: tour-ring 1.8s ease-out infinite;
+}
+
+.tour-hotspot:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+}
+
+@keyframes tour-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes tour-in {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tour-finale {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: rgba(247, 250, 249, 0.86);
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.3s ease both;
+}
+
+.tour-finale h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+}
+
+.tour-finale p {
+  margin: 0;
+  max-width: 420px;
+  color: var(--ink-2);
+}
+
+.tour-finale-actions {
+  width: min(320px, 100%);
+  margin-top: 0.4rem;
+}
+
+.tour-finale .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tour-caption {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.tour-count {
+  min-height: 1.1em;
+  margin: 0 0 0.35rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.tour-caption h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.tour-body {
+  margin: 0 0 1.1rem;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  min-height: 4.6em;
+}
+
+.tour-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tour-nav .btn {
+  gap: 0.25rem;
+}
+
+.tour-nav-spacer {
+  width: 72px;
+}
+
+.tour-steps {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tour-step-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.tour-step-dot.active {
+  width: 20px;
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-shot,
+  .tour-step-dot {
+    transition: none;
+  }
+  .tour-hotspot,
+  .tour-hotspot::after,
+  .tour-finale {
+    animation: none;
   }
 }

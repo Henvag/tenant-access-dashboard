@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # Vipps via Stripe Checkout (payment mode only; not subscription). Requires preview access.
     stripe_vipps_enabled: bool = False
 
+    # Public read-only sample company behind "Explore the live demo".
+    demo_enabled: bool = True
+
     @field_validator("database_url")
     @classmethod
     def to_asyncpg(cls, value: str) -> str:

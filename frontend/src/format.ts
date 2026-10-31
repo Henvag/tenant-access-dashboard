@@ -13,6 +13,7 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   app_unknown_client: "auth.app_unknown_client",
   app_invalid_redirect: "auth.app_invalid_redirect",
   invite_not_found: "error.invite_not_found",
+  demo_unavailable: "auth.demo_unavailable",
 };
 
 const DENIAL_KEYS: Record<string, TKey> = {
@@ -76,6 +77,7 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   email_domain_mismatch: "error.email_domain_mismatch",
   invite_not_found: "error.invite_not_found",
   tenant_missing: "error.tenant_missing",
+  demo_read_only: "error.demo_read_only",
   ...AUTH_ERROR_KEYS,
 };
 
@@ -101,7 +103,7 @@ export function messageForApiError(codeOrMessage: string, lang: Lang): string {
   }
   // Pydantic may return "Value error, domain_invalid"
   const match = codeOrMessage.match(
-    /\b(tenant_exists|name_required|domain_url|domain_invalid|https_url_required|logo_type|logo_too_large|agent_limit_reached|unknown_provider|model_not_allowed|agent_key_required|policy_not_supported)\b/,
+    /\b(tenant_exists|name_required|domain_url|domain_invalid|https_url_required|logo_type|logo_too_large|agent_limit_reached|unknown_provider|model_not_allowed|agent_key_required|policy_not_supported|demo_read_only)\b/,
   );
   if (match) {
     const mapped = API_ERROR_KEYS[match[1]];

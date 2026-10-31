@@ -20,6 +20,8 @@ export type Me = {
   audit_retention_days: number;
   has_logo: boolean;
   has_ask: boolean;
+  /** Signed in through the public read-only demo. */
+  demo?: boolean;
 };
 
 export type TenantUser = {
@@ -254,6 +256,11 @@ export function createTenant(name: string, workspace_domain: string): Promise<Te
 
 export function loginUrl(provider: "google" | "microsoft" = "google"): string {
   return `${API_BASE}/auth/login?provider=${provider}`;
+}
+
+/** POST target that signs a visitor into the read-only sample company. */
+export function demoUrl(): string {
+  return `${API_BASE}/auth/demo`;
 }
 
 export function logoutUrl(): string {
