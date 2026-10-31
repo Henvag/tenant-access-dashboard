@@ -22,7 +22,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 | Control | Where |
 | --- | --- |
 | FORCE RLS on `users`, `audit_events`, `oauth_clients`, `app_grants`, `oauth_codes` | Alembic migrations |
-| Provider: PKCE S256 when sent (optional for confidential clients — Outline omits it), codes hashed + single-use + 60 s TTL, client secrets hashed, exact redirect match | `app/oauth/service.py`, `api/oauth.py` |
+| Provider: PKCE S256 when sent (optional for confidential clients; Outline omits it), codes hashed + single-use + 60 s TTL, client secrets hashed, exact redirect match | `app/oauth/service.py`, `api/oauth.py` |
 | Provider: RS256 keys in Postgres, JWKS published, retired keys kept 24 h | `app/oauth/keys.py` |
 | App sign-ins and denials audited with the reason (`app_login`, `app_login_denied`) | `audit_events.details` |
 | OIDC redirect URI is server-configured (not user input) | `config.py` / Authlib |
@@ -38,29 +38,29 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 
 ## Threats I care about here
 
-1. **Cross-tenant data leak** — mitigated by FORCE RLS + CI tests as a non-superuser. Superuser DB access bypasses RLS; production app DB roles must not be superuser.
-2. **OIDC / redirect abuse** — redirect URI is fixed per host (`RENDER_EXTERNAL_URL` / `PUBLIC_BASE_URL`). Both production URLs must be registered at the IdP.
-3. **Session theft** — HttpOnly + Secure + HTTPS-only hosts. Still vulnerable to XSS in our own origin; keep the SPA dependency surface small and avoid `eval`-style patterns.
-4. **Credential stuffing / login spam** — in-app per-IP limits (30/min on auth, 60/min on token). Optional Cloudflare edge rules on top — see [`docs/cloudflare.md`](cloudflare.md). Multi-instance deploys would need a shared store (Redis) for the counters.
-5. **Identity conflict** (same email+IdP, different `sub`) — we reject and audit rather than silently merge. That's intentional.
-6. **Stale access** — owners and admins can disable users in People; login and existing sessions are rejected (`user_disabled`). The company **owner** (first user on the tenant) can promote/demote admins; promoted admins can only disable members. You can't disable yourself, the owner, or the last active admin.
-7. **Public `/health`** — exposes DB up/down only; fine for probes. Don't hang richer internals off it.
-8. **Open redirect via `/oauth/authorize`** — `redirect_uri` must equal a registered URI byte-for-byte; unknown clients or URIs land on our own error page, never on the attacker's URL.
-9. **Code interception / replay** — PKCE S256 is enforced when the RP sends a challenge (Grafana does); confidential clients that omit PKCE (Outline) still need the client secret. Codes are hashed at rest and burned on first use *or* first failed attempt.
-10. **Cross-tenant app access** — the token endpoint resolves `client_id → tenant_id` through `oauth_client_lookup` (public, no secrets) and sets RLS before reading anything else. A user from tenant B hitting tenant A's app is denied with `wrong_tenant` and audited under A.
-11. **Stale access to apps** — a disabled user is rejected at authorize, token and userinfo. Apps that registered a back-channel logout URL receive a logout token when the person is disabled. Apps that did not, including the Grafana demo, keep their own session until it expires.
-12. **Signing key compromise** — rotate by inserting a new `signing_keys` row and setting `retired_at` on the old one; the old public key stays in JWKS for 24 h so in-flight tokens still verify, then disappears. Tokens live 1 h.
+1. **Cross-tenant data leak**: mitigated by FORCE RLS + CI tests as a non-superuser. Superuser DB access bypasses RLS; production app DB roles must not be superuser.
+2. **OIDC / redirect abuse**: redirect URI is fixed per host (`RENDER_EXTERNAL_URL` / `PUBLIC_BASE_URL`). Both production URLs must be registered at the IdP.
+3. **Session theft**: HttpOnly + Secure + HTTPS-only hosts. Still vulnerable to XSS in our own origin; keep the SPA dependency surface small and avoid `eval`-style patterns.
+4. **Credential stuffing / login spam**: in-app per-IP limits (30/min on auth, 60/min on token). Optional Cloudflare edge rules on top; see [`docs/cloudflare.md`](cloudflare.md). Multi-instance deploys would need a shared store (Redis) for the counters.
+5. **Identity conflict** (same email+IdP, different `sub`): we reject and audit rather than silently merge. That's intentional.
+6. **Stale access**: owners and admins can disable users in People; login and existing sessions are rejected (`user_disabled`). The company **owner** (first user on the tenant) can promote/demote admins; promoted admins can only disable members. You can't disable yourself, the owner, or the last active admin.
+7. **Public `/health`**: exposes DB up/down only; fine for probes. Don't hang richer internals off it.
+8. **Open redirect via `/oauth/authorize`**: `redirect_uri` must equal a registered URI byte-for-byte; unknown clients or URIs land on our own error page, never on the attacker's URL.
+9. **Code interception / replay**: PKCE S256 is enforced when the RP sends a challenge (Grafana does); confidential clients that omit PKCE (Outline) still need the client secret. Codes are hashed at rest and burned on first use *or* first failed attempt.
+10. **Cross-tenant app access**: the token endpoint resolves `client_id → tenant_id` through `oauth_client_lookup` (public, no secrets) and sets RLS before reading anything else. A user from tenant B hitting tenant A's app is denied with `wrong_tenant` and audited under A.
+11. **Stale access to apps**: a disabled user is rejected at authorize, token and userinfo. Apps that registered a back-channel logout URL receive a logout token when the person is disabled. Apps that did not, including the Grafana demo, keep their own session until it expires.
+12. **Signing key compromise**: rotate by inserting a new `signing_keys` row and setting `retired_at` on the old one; the old public key stays in JWKS for 24 h so in-flight tokens still verify, then disappears. Tokens live 1 h.
 
 ## Ops habits
 
 - **Migrations** run on container start (`start.sh` / Alembic). Treat schema changes as part of the deploy.
-- **Database** — free Neon Postgres (Render free Postgres expired after 30 days). Set `DATABASE_URL` on both the dashboard and Outline services to Neon's *direct* (non-pooled) connection string; `config.py` translates `sslmode`/`channel_binding` for asyncpg. Neon free keeps point-in-time restore for a short window only, so export with `pg_dump` before risky changes.
-- **Cold starts** — Render free sleeps (~30 s wake). Fly with `min_machines_running = 0` wakes faster but still not zero. For a real SLA: keep one machine warm or pay for always-on.
-- **Two hosts, one DB (demo)** — Fly can reuse Render's external `DATABASE_URL`. Fine for a portfolio; in production I'd give each environment its own database and secrets.
-- **Edge / DNS** — optional Cloudflare in front of the dashboard: Active zone, Full (strict) SSL, rate limits on `/auth/*`, no site-wide bot challenge (see [`docs/cloudflare.md`](cloudflare.md)).
-- **IdP apps** — Google + Entra registrations are part of the system. Document who owns them; rotate client secrets like any other credential.
-- **Relying parties** — each registered app's secret is shown once; rotate from the Apps menu and paste into the RP. The Grafana demo runs on Render's free tier with SQLite, so its user table is ephemeral — that is fine because users are re-created from our claims on every sign-in.
-- **Expired auth codes** — purged opportunistically per tenant on each successful authorize (rows older than 10 min past expiry). A cron would be cleaner at scale.
+- **Database**: free Neon Postgres (Render free Postgres expired after 30 days). Set `DATABASE_URL` on both the dashboard and Outline services to Neon's *direct* (non-pooled) connection string; `config.py` translates `sslmode`/`channel_binding` for asyncpg. Neon free keeps point-in-time restore for a short window only, so export with `pg_dump` before risky changes.
+- **Cold starts**: Render free sleeps (~30 s wake). Fly with `min_machines_running = 0` wakes faster but still not zero. For a real SLA: keep one machine warm or pay for always-on.
+- **Two hosts, one DB (demo)**: Fly can reuse Render's external `DATABASE_URL`. Fine for a portfolio; in production I'd give each environment its own database and secrets.
+- **Edge / DNS**: optional Cloudflare in front of the dashboard: Active zone, Full (strict) SSL, rate limits on `/auth/*`, no site-wide bot challenge (see [`docs/cloudflare.md`](cloudflare.md)).
+- **IdP apps**: Google + Entra registrations are part of the system. Document who owns them; rotate client secrets like any other credential.
+- **Relying parties**: each registered app's secret is shown once; rotate from the Apps menu and paste into the RP. The Grafana demo runs on Render's free tier with SQLite, so its user table is ephemeral. That is fine because users are re-created from our claims on every sign-in.
+- **Expired auth codes**: purged opportunistically per tenant on each successful authorize (rows older than 10 min past expiry). A cron would be cleaner at scale.
 
 ## Database roles
 

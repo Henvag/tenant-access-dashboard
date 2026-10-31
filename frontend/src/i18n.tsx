@@ -11,7 +11,7 @@ const en = {
 
   "landing.title": "One sign-in for your company's apps.",
   "landing.lede":
-    "People use Google or Microsoft. Admins decide who may open Grafana, Outline, and other company tools — from one place.",
+    "People use Google or Microsoft. Admins decide who may open Grafana, Outline, and other company tools, all from one place.",
   "landing.featuresTitle": "Why teams use it",
   "feature.google.title": "Google and Microsoft",
   "feature.google.body": "Sign in with work accounts you already have. No separate passwords here.",
@@ -82,8 +82,8 @@ const en = {
   "role.admin": "Admin",
   "role.member": "Member",
   "role.ownerLabel": "Owner",
-  "role.ownerHint": "Company owner — registered this workspace",
-  "role.adminHint": "Admin — promoted by the owner",
+  "role.ownerHint": "Company owner who registered this workspace",
+  "role.adminHint": "Admin promoted by the owner",
   "signout": "Sign out",
   "lang.label": "Language",
   "lang.en": "English",
@@ -337,7 +337,7 @@ const en = {
   "apps.endpoint.jwks": "Keys (JWKS)",
   "apps.clientId": "Client ID",
   "apps.clientSecret": "Client secret",
-  "apps.secretOnce": "Copy it now — it is shown only once. You can rotate it later.",
+  "apps.secretOnce": "Copy it now. It is shown only once, but you can rotate it later.",
   "apps.created": "{name} is registered",
   "apps.rotated": "New secret for {name}",
   "apps.nameLabel": "Name",
@@ -428,7 +428,7 @@ const en = {
   "member.signedInAs": "Signed in as {email}",
 
   "myapps.title": "Your apps",
-  "myapps.hint": "Open a tool — this workspace confirms who you are.",
+  "myapps.hint": "Open a tool and this workspace confirms who you are.",
   "myapps.empty": "No apps have been shared with you yet.",
   "myapps.emptyTitle": "Nothing to open yet",
   "myapps.emptyBody":
@@ -472,7 +472,7 @@ const en = {
   "error.stripe_unconfigured": "Card payments are not configured yet.",
   "error.vipps_unconfigured": "Vipps is not enabled on this environment.",
   "error.stripe_price_unconfigured": "That plan price is not configured in Stripe yet.",
-  "error.no_stripe_customer": "No billing customer yet — start a checkout first.",
+  "error.no_stripe_customer": "No billing customer yet. Start a checkout first.",
   "error.load_billing": "Could not load billing.",
   "error.checkout_failed": "Checkout could not start. Try again.",
   "error.portal_failed": "Could not open the billing portal.",
@@ -502,10 +502,10 @@ const en = {
   "billing.working": "Opening…",
   "billing.ownerOnly": "Only the company owner can change the plan.",
   "billing.demoMode":
-    "Stripe is not configured here — the Billing UI is ready for demos; wire keys to take real payments.",
+    "Stripe is not configured here. The billing page works for demos; add Stripe keys to take real payments.",
   "billing.plansLabel": "Plans",
   "billing.checkoutSuccess": "Payment received. Plan updates after Stripe confirms (usually seconds).",
-  "billing.checkoutCancel": "Checkout canceled — nothing was charged.",
+  "billing.checkoutCancel": "Checkout canceled. Nothing was charged.",
 } as const;
 
 export type TKey = keyof typeof en;
@@ -517,7 +517,7 @@ const no: Record<TKey, string> = {
 
   "landing.title": "Én innlogging for selskapets apper.",
   "landing.lede":
-    "Folk bruker Google eller Microsoft. Administratorer bestemmer hvem som kan åpne Grafana, Outline og andre verktøy — fra ett sted.",
+    "Folk bruker Google eller Microsoft. Administratorer bestemmer hvem som kan åpne Grafana, Outline og andre verktøy, alt fra ett sted.",
   "landing.featuresTitle": "Derfor bruker team det",
   "feature.google.title": "Google og Microsoft",
   "feature.google.body": "Logg inn med jobbkontoer dere allerede har. Ingen egne passord her.",
@@ -587,8 +587,8 @@ const no: Record<TKey, string> = {
   "role.admin": "Administrator",
   "role.member": "Medlem",
   "role.ownerLabel": "Eier",
-  "role.ownerHint": "Selskapseier — registrerte dette arbeidsområdet",
-  "role.adminHint": "Administrator — forfremmet av eieren",
+  "role.ownerHint": "Selskapseier som registrerte dette arbeidsområdet",
+  "role.adminHint": "Administrator forfremmet av eieren",
   "signout": "Logg ut",
   "lang.label": "Språk",
   "lang.en": "Engelsk",
@@ -842,7 +842,7 @@ const no: Record<TKey, string> = {
   "apps.endpoint.jwks": "Nøkler (JWKS)",
   "apps.clientId": "Klient-ID",
   "apps.clientSecret": "Klienthemmelighet",
-  "apps.secretOnce": "Kopier den nå – den vises bare én gang. Du kan rotere den senere.",
+  "apps.secretOnce": "Kopier den nå. Den vises bare én gang, men du kan rotere den senere.",
   "apps.created": "{name} er registrert",
   "apps.rotated": "Ny hemmelighet for {name}",
   "apps.nameLabel": "Navn",
@@ -936,7 +936,7 @@ const no: Record<TKey, string> = {
   "member.signedInAs": "Innlogget som {email}",
 
   "myapps.title": "Dine apper",
-  "myapps.hint": "Åpne et verktøy — dette arbeidsområdet bekrefter hvem du er.",
+  "myapps.hint": "Åpne et verktøy, så bekrefter dette arbeidsområdet hvem du er.",
   "myapps.empty": "Ingen apper er delt med deg enda.",
   "myapps.emptyTitle": "Ingenting å åpne enda",
   "myapps.emptyBody":
@@ -980,7 +980,7 @@ const no: Record<TKey, string> = {
   "error.stripe_unconfigured": "Kortbetaling er ikke konfigurert ennå.",
   "error.vipps_unconfigured": "Vipps er ikke slått på i dette miljøet.",
   "error.stripe_price_unconfigured": "Den planprisen er ikke konfigurert i Stripe ennå.",
-  "error.no_stripe_customer": "Ingen faktureringskunde ennå — start en betaling først.",
+  "error.no_stripe_customer": "Ingen faktureringskunde ennå. Start en betaling først.",
   "error.load_billing": "Kunne ikke laste fakturering.",
   "error.checkout_failed": "Betalingen kunne ikke startes. Prøv igjen.",
   "error.portal_failed": "Kunne ikke åpne faktureringsportalen.",
@@ -1010,10 +1010,10 @@ const no: Record<TKey, string> = {
   "billing.working": "Åpner…",
   "billing.ownerOnly": "Bare selskapseieren kan endre planen.",
   "billing.demoMode":
-    "Stripe er ikke konfigurert her — fakturerings-UI er klar for demo; koble nøkler for ekte betaling.",
+    "Stripe er ikke konfigurert her. Faktureringssiden fungerer for demo; legg inn Stripe-nøkler for ekte betaling.",
   "billing.plansLabel": "Planer",
   "billing.checkoutSuccess": "Betaling mottatt. Planen oppdateres når Stripe bekrefter (vanligvis sekunder).",
-  "billing.checkoutCancel": "Betaling avbrutt — ingenting ble trukket.",
+  "billing.checkoutCancel": "Betaling avbrutt. Ingenting ble trukket.",
 };
 
 const DICTIONARIES: Record<Lang, Record<TKey, string>> = { en, no };

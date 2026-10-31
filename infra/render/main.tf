@@ -1,7 +1,7 @@
 # Mirrors /render.yaml as closely as the Render Terraform provider allows.
 #
 # Note: Blueprint still supports plan = free for the live demo. The provider's
-# web_service plan enum is starter+ — so this module uses starter. Postgres can
+# web_service plan enum is starter+, so this module uses starter. Postgres can
 # stay on free. Don't apply on top of the existing Blueprint demo unless you
 # intend a second environment (or terraform import).
 
