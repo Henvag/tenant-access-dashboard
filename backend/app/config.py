@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -38,6 +39,18 @@ class Settings(BaseSettings):
         url = value.replace("postgres://", "postgresql://", 1)
         if url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Hosted Postgres (Neon, Supabase, ...) hands out libpq-style URLs with
+        # ?sslmode=require&channel_binding=require. asyncpg rejects both keywords,
+        # so translate sslmode to asyncpg's `ssl` and drop channel_binding.
+        parts = urlsplit(url)
+        if parts.query:
+            params = []
+            for key, val in parse_qsl(parts.query, keep_blank_values=True):
+                if key == "sslmode":
+                    params.append(("ssl", val))
+                elif key != "channel_binding":
+                    params.append((key, val))
+            url = urlunsplit(parts._replace(query=urlencode(params)))
         return url
 
     @property
