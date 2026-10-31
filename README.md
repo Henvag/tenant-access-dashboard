@@ -46,12 +46,12 @@ Screenshots are from the read-only demo company.
 
 **With your own company:**
 
-1. Open the dashboard. **Register company** with your email domain (`gmail.com` or `outlook.com` works for a personal demo).
-2. Sign in with **Google** or **Microsoft**. First person on that domain becomes admin.
+1. Open the dashboard, choose **Register company**, name it, and sign in with **Google** or **Microsoft**. The company is created for your verified email domain and you become its owner. A Gmail or Outlook address gets a private workspace instead, since nobody owns those domains.
+2. Colleagues on the same domain just sign in and join as members.
 3. **Overview** is stats and recent activity. **People** is the directory: the company **owner** (first signer) can promote, demote, and disable access; promoted admins can disable members. **Audit** lists sign-ins, failures, and access changes.
 4. **Apps** (admin): register an OIDC app, pick who can use it (everyone / admins / assigned), copy the client id and secret. Everyone gets a **Your apps** launcher on Overview.
 5. Open Grafana or Outline and choose **Sign in with Tenant Access**. Grafana maps roles (Admin / Editor / Viewer). Outline is the wiki. Try a user who is not assigned; the denial shows up in **Audit**.
-6. Register a second company on another domain and sign in there. You should only see that tenant, including its apps.
+6. Register a second company with an account on another domain and sign in there. You should only see that tenant, including its apps.
 7. **Billing** (owner): Free, Team, and Business, with seat and app limits. Card checkout goes through Stripe.
 
 8. **Ask** (everyone): questions about your own workspace ("who hasn't signed in this week?"), answered by Gemini with a free API key the admin adds. **Agents** (admin): company ChatGPT or Claude assistants that people use while signed in here, billed to the company's own key.
@@ -107,10 +107,10 @@ Google or Entra (OIDC) ──id_token──▶ FastAPI ──▶ email domain �
 
 Roughly:
 
-1. Company registers a domain (`acme.com`).
-2. User picks Google or Microsoft. Authlib handles the OIDC flow; both IdPs land on the same `/auth/callback`.
-3. Email domain (or Google Workspace `hd`) has to match a registered tenant.
-4. User is created/updated **inside** that tenant's RLS context, stored with `idp` + `oidc_sub`. First user gets admin. Same email via the other IdP links to the same person. I write audit events for success and for failed sign-ins when we know the tenant.
+1. User picks Google or Microsoft. Authlib handles the OIDC flow; both IdPs land on the same `/auth/callback`.
+2. Only a **verified** email counts. Google must say `email_verified`. With Entra's multi-tenant `common` endpoint anyone can create a directory and give a user any address, so a work account's email is trusted only when the token carries `xms_edov: true` (the directory verified that domain); personal Microsoft accounts are verified by Microsoft. This closes the "nOAuth" takeover.
+3. The verified email domain (or Google Workspace `hd`) has to match a tenant. There is no unauthenticated "create tenant" call: **Register company** is this same sign-in carrying a company name, and the tenant is created for the domain the IdP just verified, so nobody can claim a domain they can't sign in with. Gmail/Outlook-style addresses are keyed by the full address, one private workspace each.
+4. User is created/updated **inside** that tenant's RLS context, stored with `idp` + `oidc_sub`. First user gets admin. An existing account is never linked to a new provider or subject by email alone; that sign-in is refused as `identity_conflict`. I write audit events for success and for failed sign-ins when we know the tenant.
 5. Session cookie holds `user_id` + `tenant_id`; later requests re-apply RLS from that.
 
 Roles are deliberately just `admin` and `user` (plus the tenant **owner**, the first admin). I kept the surface small on purpose.
@@ -213,9 +213,9 @@ I used a free personal Microsoft account. No paid Azure subscription for app reg
 2. Accounts: any org directory **and** personal Microsoft accounts
 3. Redirect (Web): `http://localhost:8000/auth/callback`
 4. Client secret -> `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET`. Leave `ENTRA_TENANT_ID=common`
-5. If email is missing on the token, add the optional `email` claim under Token configuration
+5. Token configuration -> Add optional claim -> ID: add `email` and `xms_edov`. Work accounts are refused without `xms_edov: true`, because an unverified Entra email can be set to anyone's address. Personal accounts work either way.
 
-`outlook.com` / `hotmail.com` / `live.com` all normalize to `outlook.com` when you register.
+`outlook.com` / `hotmail.com` / `live.com` all normalize to `outlook.com`, and each address on them gets its own private workspace.
 
 ## Tests & CI
 

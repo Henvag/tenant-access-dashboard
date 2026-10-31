@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { clearCompanyLogo, fetchCompanyLogo, uploadCompanyLogo } from "./api";
-import { messageForApiError } from "./format";
+import { messageForApiError, workspaceLabel } from "./format";
 import { useLang } from "./i18n";
 
 type Props = {
@@ -36,7 +36,7 @@ export default function OrganizationPanel({ isOwner, name, domain, logoUrl, onLo
         <div className="org-brand-copy">
           <p className="org-kicker">{t("org.logo")}</p>
           <strong>{name}</strong>
-          <p className="hint">@{domain}</p>
+          <p className="hint">{workspaceLabel(domain)}</p>
           <p className="hint">{t("org.requirements")}</p>
           {isOwner ? (
             <div className="org-brand-actions">

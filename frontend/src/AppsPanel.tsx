@@ -15,7 +15,7 @@ import {
 } from "./api";
 import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
-import { messageForApiError, planNearLimit } from "./format";
+import { isPersonalWorkspace, messageForApiError, planNearLimit } from "./format";
 import { TKey, useLang } from "./i18n";
 import AppMark from "./AppMark";
 import { IconExternal, IconKey, IconPlus, IconSearch } from "./Icons";
@@ -704,6 +704,7 @@ function AccessEditor({
         })}
       </ul>
 
+      {isPersonalWorkspace(workspaceDomain) ? null : (
       <div className="pending-emails">
         <p className="pending-emails-title">{t("apps.pendingEmails")}</p>
         <p className="hint">{t("apps.pendingEmailsHint", { domain: workspaceDomain })}</p>
@@ -749,6 +750,7 @@ function AccessEditor({
           </button>
         </div>
       </div>
+      )}
 
       <div className="modal-actions">
         <span className="hint">

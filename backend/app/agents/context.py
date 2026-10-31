@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.billing.plans import effective_plan_id, limits_for_tenant, retention_cutoff
+from app.domain import is_personal_workspace
 from app.models import AccessPolicy, AppGrant, AuditEvent, OAuthClient, TeamAgent, User, UserRole
 
 PEOPLE_LIMIT = 60
@@ -204,7 +205,11 @@ async def workspace_briefing(
         PRODUCT_PRIMER if "product" in topics else SHORT_PRIMER,
         "",
         "This workspace:",
-        f"- Company: {tenant.name} (sign-in domain @{tenant.workspace_domain})",
+        (
+            f"- Workspace: {tenant.name} (private workspace for {tenant.workspace_domain})"
+            if is_personal_workspace(tenant.workspace_domain)
+            else f"- Company: {tenant.name} (sign-in domain @{tenant.workspace_domain})"
+        ),
         f"- Plan: {plan}. Limits: {limits.max_users} people, {limits.max_apps} apps, "
         f"audit log kept {limits.audit_retention_days} days.",
         f"- Usage: {people_count} people, {app_count} apps.",

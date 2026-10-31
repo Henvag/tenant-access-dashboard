@@ -11,6 +11,8 @@ from app.auth.audit import record_login, record_login_failure
 from app.auth.identity import (
     LoginError,
     email_from_oidc_claims,
+    google_verified_email,
+    microsoft_verified_email,
     upsert_user_from_oidc,
     write_login_session,
 )
@@ -30,6 +32,11 @@ from app.rate_limit import rate_limit_auth
 from app.schemas.user import MeOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# "Register company" starts a normal sign-in carrying the company name; the
+# tenant is created for the verified email domain once the IdP confirms it.
+SIGNUP_COMPANY_KEY = "signup_company"
+MAX_COMPANY_NAME = 200
 
 
 def _microsoft_claims_options() -> dict:
@@ -77,14 +84,24 @@ def _oauth_client(request: Request, provider: str):
 async def login(
     request: Request,
     provider: str = "google",
+    company: str | None = None,
     _: None = Depends(rate_limit_auth),
 ):
-    """Start OIDC. Tenant is resolved from email domain after callback."""
+    """Start OIDC. Tenant is resolved from the verified email after callback.
+
+    ``company`` marks a "Register company" sign-in: the tenant is created for
+    the person's verified domain (or private workspace) if none exists yet.
+    """
     provider = provider.strip().lower()
     if provider not in PROVIDERS or not _provider_configured(provider):
         return _frontend_redirect(error="oidc_failed")
 
     request.session["oidc_provider"] = provider
+    company_name = (company or "").strip()
+    if company_name and len(company_name) <= MAX_COMPANY_NAME:
+        request.session[SIGNUP_COMPANY_KEY] = company_name
+    else:
+        request.session.pop(SIGNUP_COMPANY_KEY, None)
     client = _oauth_client(request, provider)
     return await client.authorize_redirect(request, settings.resolved_redirect_uri)
 
@@ -96,6 +113,7 @@ async def callback(
     _: None = Depends(rate_limit_auth),
 ):
     provider = (request.session.pop("oidc_provider", None) or "google").lower()
+    signup_company = request.session.pop(SIGNUP_COMPANY_KEY, None)
     if provider not in PROVIDERS or not _provider_configured(provider):
         return _frontend_redirect(error="oidc_failed")
 
@@ -118,24 +136,33 @@ async def callback(
         except Exception:
             userinfo = {}
 
-    email = email_from_oidc_claims(userinfo)
+    claimed_email = email_from_oidc_claims(userinfo)
     oidc_sub = userinfo.get("sub")
     idp = IdentityProvider.microsoft if provider == "microsoft" else IdentityProvider.google
     hosted_domain = userinfo.get("hd") if provider == "google" else None
 
-    if not email or not oidc_sub:
+    if not claimed_email or not oidc_sub:
         return _frontend_redirect(error="missing_claims")
 
-    if provider == "google" and userinfo.get("email_verified") is False:
-        await record_login_failure(
-            db,
-            email=email,
-            idp=idp,
-            error_code="unverified_email",
-            request=request,
-            hosted_domain=hosted_domain,
-        )
-        await db.commit()
+    # Tenant membership and account matching both hang off the email, so only
+    # an address the IdP vouches for may be used.
+    if provider == "google":
+        email = google_verified_email(userinfo)
+    else:
+        email = microsoft_verified_email(userinfo)
+    if email is None:
+        if provider == "google":
+            await record_login_failure(
+                db,
+                email=claimed_email,
+                idp=idp,
+                error_code="unverified_email",
+                request=request,
+                hosted_domain=hosted_domain,
+            )
+            await db.commit()
+        # An unverified Microsoft address is attacker-chosen, so it must not
+        # write into the audit log of whichever company owns that domain.
         return _frontend_redirect(error="unverified_email")
 
     try:
@@ -146,6 +173,7 @@ async def callback(
             oidc_sub=str(oidc_sub),
             display_name=userinfo.get("name"),
             hosted_domain=hosted_domain,
+            new_tenant_name=signup_company,
         )
         await record_login(db, user=user, idp=idp, request=request)
         await db.commit()

@@ -21,3 +21,41 @@ def normalize_workspace_domain(raw: str) -> str:
     if domain in {"hotmail.com", "live.com", "msn.com"}:
         return "outlook.com"
     return domain
+
+
+# Shared mailbox providers. Nobody owns these domains on behalf of a company,
+# so each person on them gets a private workspace keyed by their full address.
+CONSUMER_DOMAINS = frozenset(
+    {
+        "gmail.com",
+        "outlook.com",
+        "yahoo.com",
+        "icloud.com",
+        "me.com",
+        "aol.com",
+        "proton.me",
+        "protonmail.com",
+        "gmx.com",
+        "online.no",
+    }
+)
+
+MAX_WORKSPACE_KEY = 253
+
+
+def is_personal_workspace(workspace_key: str) -> bool:
+    return "@" in workspace_key
+
+
+def workspace_key_for_email(email: str) -> str:
+    """Company domain for work email, the whole address for consumer mailboxes."""
+    local, _, raw_domain = email.strip().lower().rpartition("@")
+    if not local or not raw_domain:
+        raise ValueError("email_invalid")
+    domain = normalize_workspace_domain(raw_domain)
+    if domain not in CONSUMER_DOMAINS:
+        return domain
+    key = f"{local}@{domain}"
+    if len(key) > MAX_WORKSPACE_KEY:
+        raise ValueError("email_too_long")
+    return key

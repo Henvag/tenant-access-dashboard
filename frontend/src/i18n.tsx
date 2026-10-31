@@ -35,8 +35,7 @@ const en = {
   "signin.registerFirst": "Register it first",
   "register.title": "Register your company",
   "register.hint":
-    "Choose a name and email domain. Then sign in with Google or Microsoft on that domain to become the owner.",
-  "notice.registered": "{domain} is registered. Sign in with a @{domain} account.",
+    "Name your company, then sign in with your work account. The company is registered for your email's domain and you become its owner.",
 
   "demo.cta": "Explore the live demo",
   "demo.ctaHint": "No sign-in needed. You join a sample company as its owner, read-only.",
@@ -69,13 +68,10 @@ const en = {
 
   "form.company": "Company name",
   "form.companyPlaceholder": "Acme Inc",
-  "form.domain": "Email domain",
-  "form.domainPlaceholder": "acme.com",
-  "form.domainHelpBefore": "Must match the email people use to sign in. For demos you can use",
-  "form.domainHelpAfter": ".",
-  "form.submit": "Register company",
-  "form.pending": "Creating…",
-  "form.error": "Could not create company",
+  "form.signupHelp":
+    "Gmail and Outlook addresses get a private workspace that only you can sign in to.",
+  "form.registerGoogle": "Register with Google",
+  "form.registerMicrosoft": "Register with Microsoft",
 
   "nav.label": "Main",
   "nav.overview": "Overview",
@@ -106,7 +102,7 @@ const en = {
   "stats.activeHint": "Signed in within 7 days",
 
   "recent.title": "Recent activity",
-  "recent.hint": "Latest sign-ins for @{domain}",
+  "recent.hint": "Latest sign-ins for {domain}",
   "recent.viewAll": "View full audit log",
   "recent.emptyTitle": "No sign-ins yet",
   "recent.emptyBody": "Activity appears here when people sign in with Google or Microsoft.",
@@ -234,12 +230,14 @@ const en = {
   "error.tenant_missing": "Company not found.",
 
   "auth.no_tenant":
-    "No company is registered for your email domain yet. Register it first, then sign in.",
+    "No company is registered for your email yet. Use Register company to create one.",
   "auth.invalid_domain": "That email domain is not valid.",
   "auth.domain_mismatch": "Your Google account domain does not match this company.",
   "auth.missing_claims": "Sign-in did not return a verified email. Try again.",
-  "auth.unverified_email": "Your email is not verified.",
-  "auth.identity_conflict": "This email is already linked to a different identity.",
+  "auth.unverified_email":
+    "We couldn't confirm that email address with your provider. With a Microsoft work account, your organization must have verified its email domain.",
+  "auth.identity_conflict":
+    "This email already signs in with another account. Use the provider you signed up with.",
   "auth.user_disabled": "Your account has been disabled by an admin.",
   "auth.seat_limit_reached":
     "This company has reached its seat limit. Ask the owner to upgrade the plan.",
@@ -426,7 +424,7 @@ const en = {
   "catalog.hideUrls": "Hide URL fields",
 
   "landing.invite": "{tenant} invited you",
-  "landing.inviteHint": "Sign in with a work email at @{domain}.",
+  "landing.inviteHint": "Sign in with a work email at {domain}.",
   "member.signedInAs": "Signed in as {email}",
 
   "myapps.title": "Your apps",
@@ -543,8 +541,7 @@ const no: Record<TKey, string> = {
   "signin.registerFirst": "Registrer det først",
   "register.title": "Registrer selskapet ditt",
   "register.hint":
-    "Velg navn og e-postdomene. Logg deretter inn med Google eller Microsoft på det domenet for å bli eier.",
-  "notice.registered": "{domain} er registrert. Logg inn med en @{domain}-konto.",
+    "Gi selskapet et navn, og logg inn med jobbkontoen din. Selskapet registreres for domenet til e-posten din, og du blir eier.",
   "demo.cta": "Utforsk live-demoen",
   "demo.ctaHint": "Ingen innlogging. Du blir eier av et eksempelselskap, med kun lesetilgang.",
   "demo.or": "eller",
@@ -576,13 +573,10 @@ const no: Record<TKey, string> = {
 
   "form.company": "Selskapsnavn",
   "form.companyPlaceholder": "Acme AS",
-  "form.domain": "E-postdomene",
-  "form.domainPlaceholder": "acme.com",
-  "form.domainHelpBefore": "Må matche e-posten folk logger inn med. Til demo kan du bruke",
-  "form.domainHelpAfter": ".",
-  "form.submit": "Registrer selskap",
-  "form.pending": "Oppretter…",
-  "form.error": "Kunne ikke opprette selskap",
+  "form.signupHelp":
+    "Gmail- og Outlook-adresser får et privat arbeidsområde som bare du kan logge inn i.",
+  "form.registerGoogle": "Registrer med Google",
+  "form.registerMicrosoft": "Registrer med Microsoft",
 
   "nav.label": "Hovedmeny",
   "nav.overview": "Oversikt",
@@ -613,7 +607,7 @@ const no: Record<TKey, string> = {
   "stats.activeHint": "Logget inn siste 7 dager",
 
   "recent.title": "Siste aktivitet",
-  "recent.hint": "Siste innlogginger for @{domain}",
+  "recent.hint": "Siste innlogginger for {domain}",
   "recent.viewAll": "Se hele revisjonsloggen",
   "recent.emptyTitle": "Ingen innlogginger enda",
   "recent.emptyBody": "Aktivitet vises her når noen logger inn med Google eller Microsoft.",
@@ -741,12 +735,14 @@ const no: Record<TKey, string> = {
   "error.tenant_missing": "Selskapet ble ikke funnet.",
 
   "auth.no_tenant":
-    "Ingen selskap er registrert for e-postdomenet ditt enda. Registrer det først, og logg deretter inn.",
+    "Ingen selskap er registrert for e-posten din enda. Bruk Registrer selskap for å opprette et.",
   "auth.invalid_domain": "E-postdomenet er ikke gyldig.",
   "auth.domain_mismatch": "Domenet på Google-kontoen stemmer ikke med dette selskapet.",
   "auth.missing_claims": "Innlogging returnerte ikke en verifisert e-post. Prøv igjen.",
-  "auth.unverified_email": "E-posten din er ikke verifisert.",
-  "auth.identity_conflict": "Denne e-posten er allerede knyttet til en annen identitet.",
+  "auth.unverified_email":
+    "Vi kunne ikke bekrefte e-postadressen hos leverandøren din. Med en Microsoft-jobbkonto må organisasjonen ha verifisert e-postdomenet sitt.",
+  "auth.identity_conflict":
+    "Denne e-posten logger allerede inn med en annen konto. Bruk leverandøren du registrerte deg med.",
   "auth.user_disabled": "Kontoen din er deaktivert av en administrator.",
   "auth.seat_limit_reached":
     "Selskapet har nådd setegrensen. Be eieren oppgradere planen.",
@@ -936,7 +932,7 @@ const no: Record<TKey, string> = {
   "catalog.hideUrls": "Skjul URL-felter",
 
   "landing.invite": "{tenant} har invitert deg",
-  "landing.inviteHint": "Logg inn med en jobb-e-post på @{domain}.",
+  "landing.inviteHint": "Logg inn med en jobb-e-post på {domain}.",
   "member.signedInAs": "Innlogget som {email}",
 
   "myapps.title": "Dine apper",
