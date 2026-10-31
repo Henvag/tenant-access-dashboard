@@ -102,8 +102,20 @@ async def billing_status(
         await db.commit()
 
     limits = limits_for_tenant(tenant)
-    users_used = await db.scalar(select(func.count()).select_from(User)) or 0
-    apps_used = await db.scalar(select(func.count()).select_from(OAuthClient)) or 0
+    users_used = (
+        await db.scalar(
+            select(func.count()).select_from(User).where(User.tenant_id == tenant.id)
+        )
+        or 0
+    )
+    apps_used = (
+        await db.scalar(
+            select(func.count())
+            .select_from(OAuthClient)
+            .where(OAuthClient.tenant_id == tenant.id)
+        )
+        or 0
+    )
     return BillingStatusOut(
         plan=effective_plan_id(tenant).value,
         max_users=limits.max_users,

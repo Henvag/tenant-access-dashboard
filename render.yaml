@@ -12,6 +12,10 @@ services:
       # string in the Render dashboard; sslmode/channel_binding are handled in config.py.
       - key: DATABASE_URL
         sync: false
+      # Owner connection for Alembic only. DATABASE_URL above must be the restricted
+      # tenant_app role (NOBYPASSRLS); production refuses to start otherwise.
+      - key: MIGRATION_DATABASE_URL
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       # Custom domain behind Cloudflare (see docs/cloudflare.md). Until set, Render's

@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/access_dashboard"
+    # Owner connection used only by Alembic. DATABASE_URL must be a restricted
+    # role (NOBYPASSRLS) in production so row-level security actually applies.
+    # Empty = migrations reuse DATABASE_URL (local development).
+    migration_database_url: str = ""
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8000/auth/callback"
@@ -36,9 +40,11 @@ class Settings(BaseSettings):
     # Public read-only sample company behind "Explore the live demo".
     demo_enabled: bool = True
 
-    @field_validator("database_url")
+    @field_validator("database_url", "migration_database_url")
     @classmethod
     def to_asyncpg(cls, value: str) -> str:
+        if not value:
+            return value
         url = value.replace("postgres://", "postgresql://", 1)
         if url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -55,6 +61,10 @@ class Settings(BaseSettings):
                     params.append((key, val))
             url = urlunsplit(parts._replace(query=urlencode(params)))
         return url
+
+    @property
+    def migrations_url(self) -> str:
+        return self.migration_database_url or self.database_url
 
     @property
     def is_production(self) -> bool:

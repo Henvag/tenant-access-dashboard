@@ -123,7 +123,11 @@ async def _resolve_client(db: AsyncSession, client_id: str) -> OAuthClient | Non
     if lookup is None:
         return None
     await set_tenant_rls(db, lookup.tenant_id)
-    return await db.scalar(select(OAuthClient).where(OAuthClient.client_id == client_id))
+    return await db.scalar(
+        select(OAuthClient).where(
+            OAuthClient.client_id == client_id, OAuthClient.tenant_id == lookup.tenant_id
+        )
+    )
 
 
 @router.get("/oauth/authorize")
@@ -180,7 +184,9 @@ async def authorize(request: Request, db: AsyncSession = Depends(get_db)):
         await db.commit()
         return _frontend({"error": "app_access_denied", "app": client.name, "reason": "wrong_tenant"})
 
-    user = await db.scalar(select(User).where(User.id == session_user_id))
+    user = await db.scalar(
+        select(User).where(User.id == session_user_id, User.tenant_id == client.tenant_id)
+    )
     if user is None:
         request.session.clear()
         request.session[PENDING_AUTHORIZE_KEY] = str(request.url.query)
@@ -309,7 +315,9 @@ async def token(
         await db.commit()
         return _token_error("invalid_grant", "code is invalid, expired, or already used")
 
-    user = await db.scalar(select(User).where(User.id == row.user_id))
+    user = await db.scalar(
+        select(User).where(User.id == row.user_id, User.tenant_id == client.tenant_id)
+    )
     tenant = await db.scalar(select(Tenant).where(Tenant.id == client.tenant_id))
     if user is None or tenant is None or user.disabled:
         await db.commit()
@@ -386,7 +394,9 @@ async def userinfo(
         return _token_error("invalid_token", "malformed claims", 401)
 
     await set_tenant_rls(db, tenant_id)
-    user = await db.scalar(select(User).where(User.id == user_id))
+    user = await db.scalar(
+        select(User).where(User.id == user_id, User.tenant_id == tenant_id)
+    )
     tenant = await db.scalar(select(Tenant).where(Tenant.id == tenant_id))
     if user is None or tenant is None or user.disabled:
         return _token_error("invalid_token", "user is no longer allowed to sign in", 401)

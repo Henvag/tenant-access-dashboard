@@ -21,6 +21,7 @@ async def list_audit_events(
     cutoff = retention_cutoff(_admin.tenant) if _admin.tenant else None
     query = (
         select(AuditEvent)
+        .where(AuditEvent.tenant_id == _admin.tenant_id)
         .options(selectinload(AuditEvent.user))
         .order_by(AuditEvent.created_at.desc())
         .limit(limit)

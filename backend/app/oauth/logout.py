@@ -28,7 +28,10 @@ async def notify_disabled_user(db: AsyncSession, user: User) -> dict[str, int]:
     clients = list(
         (
             await db.scalars(
-                select(OAuthClient).where(OAuthClient.backchannel_logout_uri.is_not(None))
+                select(OAuthClient).where(
+                    OAuthClient.tenant_id == user.tenant_id,
+                    OAuthClient.backchannel_logout_uri.is_not(None),
+                )
             )
         ).all()
     )

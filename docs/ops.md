@@ -62,6 +62,30 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 - **Relying parties** — each registered app's secret is shown once; rotate from the Apps menu and paste into the RP. The Grafana demo runs on Render's free tier with SQLite, so its user table is ephemeral — that is fine because users are re-created from our claims on every sign-in.
 - **Expired auth codes** — purged opportunistically per tenant on each successful authorize (rows older than 10 min past expiry). A cron would be cleaner at scale.
 
+## Database roles
+
+Row-level security only works if the app's database role can't skip it. Superusers and roles with `BYPASSRLS` ignore every policy, and Neon's default `neondb_owner` has `BYPASSRLS`. So the dashboard uses two connections:
+
+- `DATABASE_URL`: the `tenant_app` role, `NOSUPERUSER NOBYPASSRLS`, with only data privileges. The app checks this at startup and refuses to start in production otherwise.
+- `MIGRATION_DATABASE_URL`: the owner (`neondb_owner`), used only by `alembic upgrade head` in `start.sh` and by Outline's bootstrap endpoint.
+
+Creating the role (run as the owner; generate the password, never commit it):
+
+```sql
+CREATE ROLE tenant_app LOGIN PASSWORD '<generated>' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+GRANT CONNECT ON DATABASE neondb TO tenant_app;
+GRANT USAGE ON SCHEMA public TO tenant_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenant_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenant_app;
+-- Tables and sequences created by future migrations
+ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tenant_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO tenant_app;
+```
+
+Create it with SQL and check `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'tenant_app'` is false afterwards. Neon's own owner role has `BYPASSRLS`, so don't assume roles made in the Neon console are restricted.
+
 ## Infra path
 
 Live Render demo: **Blueprint** (`render.yaml`). Optional state-managed twin: **`infra/render`** (Terraform). Fly: **`fly.toml` + flyctl** (see `/infra/README.md` for why not Terraform-on-Fly yet).

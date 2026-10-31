@@ -84,6 +84,8 @@ await session.execute(
 
 No context -> empty reads and rejected writes. CI runs the RLS tests as a normal DB role, not a superuser (superusers bypass RLS and would fake the result).
 
+The same goes for production. Superusers and roles with `BYPASSRLS` skip every policy, and Neon's default `neondb_owner` has `BYPASSRLS`. So the app runs as a restricted `tenant_app` role (`DATABASE_URL`), migrations run as the owner (`MIGRATION_DATABASE_URL`), and the app refuses to start in production if its role can bypass RLS. Queries also filter on `tenant_id` explicitly, so a misconfigured role doesn't turn into a leak on its own.
+
 ## A public demo that can't leak or be vandalised
 
 Letting anonymous visitors sit in an admin seat is only fine if the seat can't do anything, so the demo is locked down on the server, not just in the UI:
@@ -240,6 +242,7 @@ Every push runs pytest, a frontend production build, and a Docker build. Render 
    - Google origin: `https://tenant-access-dashboard.onrender.com`
 
 4. Set `DATABASE_URL` on the dashboard and Outline services (it's `sync: false` in the blueprint). I use a free [Neon](https://neon.tech) project in the same region (`us-west-2`, next to Render's Oregon). Use Neon's **direct** connection string, not the pooled one: asyncpg's prepared statements don't survive PgBouncer.
+   On the dashboard, `DATABASE_URL` must be a restricted role and the owner goes in `MIGRATION_DATABASE_URL` (see [docs/ops.md](docs/ops.md#database-roles)); otherwise the service won't start.
 
 Fair warning on free: the web service sleeps after 15 minutes idle, so the first request takes ~30 s.
 

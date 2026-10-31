@@ -21,16 +21,19 @@ from app.api.tenants import router as tenants_router
 from app.api.users import router as users_router
 from app.auth.oidc import create_oauth
 from app.config import STATIC_DIR, settings
+from app.db import engine
 from app.demo import enforce_demo_read_only
 from app.health import database_reachable
 from app.logging_config import configure_logging
 from app.observability import RequestIdMiddleware
+from app.rls_guard import ensure_rls_enforced
 from app.security_headers import SecurityHeadersMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(json_logs=settings.is_production)
+    await ensure_rls_enforced(engine)
     app.state.oauth = create_oauth(settings)
     yield
 
@@ -90,7 +93,8 @@ async def outline_database_url(authorization: str | None = Header(default=None))
     token = os.environ.get("OUTLINE_DB_BOOTSTRAP_TOKEN", "")
     if not token or authorization != f"Bearer {token}":
         raise HTTPException(status_code=404, detail="Not found")
-    raw = os.environ.get("DATABASE_URL", "")
+    # Outline needs owner rights on its own database, not the restricted app role.
+    raw = os.environ.get("MIGRATION_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
     if not raw:
         raise HTTPException(status_code=503, detail="DATABASE_URL unset")
     rewritten = re.sub(r"/[^/?]+(\?|$)", r"/outline\1", raw, count=1)
