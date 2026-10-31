@@ -18,7 +18,17 @@ import AuditTable from "./AuditTable";
 import Avatar from "./Avatar";
 import BillingPanel from "./BillingPanel";
 import BrandMark from "./BrandMark";
-import { AppDenial, formatTimestamp, isWithinDays, messageForApiError, messageForAppDenial, messageForDashboardError, planNearLimit } from "./format";
+import {
+  AppDenial,
+  formatTimestamp,
+  isPersonalWorkspace,
+  isWithinDays,
+  messageForApiError,
+  messageForAppDenial,
+  messageForDashboardError,
+  planNearLimit,
+  workspaceLabel,
+} from "./format";
 import { useLang } from "./i18n";
 import {
   IconActivity,
@@ -214,7 +224,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             ) : null}
             <div>
               <strong>{me.tenant_name}</strong>
-              <span className="tenant-chip-domain">@{me.workspace_domain}</span>
+              <span className="tenant-chip-domain">{workspaceLabel(me.workspace_domain)}</span>
             </div>
           </div>
         </div>
@@ -463,7 +473,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               <div className="panel-head">
                 <div>
                   <h2>{t("recent.title")}</h2>
-                  <p className="hint">{t("recent.hint", { domain: me.workspace_domain })}</p>
+                  <p className="hint">{t("recent.hint", { domain: workspaceLabel(me.workspace_domain) })}</p>
                 </div>
                 <button type="button" className="link" onClick={() => setView("audit")}>
                   {t("recent.viewAll")}
@@ -502,7 +512,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                 </p>
               </div>
               <div className="people-toolbar">
-                {isAdmin ? (
+                {isAdmin && !isPersonalWorkspace(me.workspace_domain) ? (
                   <InviteLinkControls domain={me.workspace_domain} />
                 ) : null}
                 <div className="segmented" role="group" aria-label={t("filter.label")}>

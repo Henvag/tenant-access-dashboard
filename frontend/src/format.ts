@@ -162,3 +162,13 @@ export function initials(name: string | null, email: string): string {
   }
   return email.slice(0, 2).toUpperCase();
 }
+
+/** Gmail/Outlook users get a private workspace keyed by their whole address. */
+export function isPersonalWorkspace(workspaceDomain: string): boolean {
+  return workspaceDomain.includes("@");
+}
+
+/** "@acme.com" for a company, the address itself for a private workspace. */
+export function workspaceLabel(workspaceDomain: string): string {
+  return isPersonalWorkspace(workspaceDomain) ? workspaceDomain : `@${workspaceDomain}`;
+}

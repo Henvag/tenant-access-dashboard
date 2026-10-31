@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { demoUrl, lookupPublicInvite, loginUrl, PublicInvite, API_BASE } from "./api";
 import BrandMark from "./BrandMark";
-import { AppDenial, messageForAppDenial, messageForAuthError } from "./format";
+import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { useLang } from "./i18n";
 import {
   IconGlobe,
@@ -39,7 +39,6 @@ export default function Landing({
   const { lang, t } = useLang();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [errorCode, setErrorCode] = useState<string | null>(initialErrorCode);
-  const [noticeDomain, setNoticeDomain] = useState<string | null>(null);
   const [invite, setInvite] = useState<PublicInvite | null>(null);
   const error = denial ? messageForAppDenial(denial, lang) : messageForAuthError(errorCode, lang);
 
@@ -116,7 +115,7 @@ export default function Landing({
               <div>
                 <strong>{t("landing.invite", { tenant: invite.tenant_name })}</strong>
                 <p className="banner-sub">
-                  {t("landing.inviteHint", { domain: invite.workspace_domain })}
+                  {t("landing.inviteHint", { domain: workspaceLabel(invite.workspace_domain) })}
                 </p>
               </div>
             </div>
@@ -133,11 +132,6 @@ export default function Landing({
           {error ? (
             <p className="banner error" role="alert">
               {error}
-            </p>
-          ) : null}
-          {noticeDomain ? (
-            <p className="banner ok" role="status">
-              {t("notice.registered", { domain: noticeDomain })}
             </p>
           ) : null}
 
@@ -176,13 +170,7 @@ export default function Landing({
             <div className="tab-panel">
               <h2>{t("register.title")}</h2>
               <p className="hint">{t("register.hint")}</p>
-              <SignupForm
-                onCreated={(domain) => {
-                  setErrorCode(null);
-                  setNoticeDomain(domain);
-                  setTab("signin");
-                }}
-              />
+              <SignupForm />
             </div>
           )}
         </section>

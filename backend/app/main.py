@@ -17,7 +17,6 @@ from app.api.billing import router as billing_router
 from app.api.company import router as company_router
 from app.api.invites import router as invites_router
 from app.api.oauth import router as oauth_router
-from app.api.tenants import router as tenants_router
 from app.api.users import router as users_router
 from app.auth.oidc import create_oauth
 from app.config import STATIC_DIR, settings
@@ -61,7 +60,6 @@ app.add_middleware(SecurityHeadersMiddleware)
 # Outermost: assign/echo X-Request-ID and emit structured access logs.
 app.add_middleware(RequestIdMiddleware)
 app.include_router(auth_router)
-app.include_router(tenants_router)
 app.include_router(users_router)
 app.include_router(audit_router)
 app.include_router(apps_router)

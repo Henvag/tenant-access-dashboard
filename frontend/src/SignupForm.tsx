@@ -1,31 +1,23 @@
-import { FormEvent, useState } from "react";
-import { createTenant } from "./api";
-import { messageForApiError } from "./format";
+import { FormEvent, useRef, useState } from "react";
+import { loginUrl, Provider } from "./api";
 import { useLang } from "./i18n";
+import { IconGoogle, IconMicrosoft } from "./Icons";
 
-type Props = {
-  onCreated: (domain: string) => void;
-};
-
-export default function SignupForm({ onCreated }: Props) {
-  const { lang, t } = useLang();
+/** Register by signing in: the company is created for the domain of the
+ * email Google or Microsoft verifies, so nobody can claim a domain they
+ * cannot sign in with. */
+export default function SignupForm() {
+  const { t } = useLang();
   const [name, setName] = useState("");
-  const [domain, setDomain] = useState("");
-  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const provider = useRef<Provider>("google");
 
-  async function onSubmit(event: FormEvent) {
+  function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setErrorCode(null);
+    const company = name.trim();
+    if (!company) return;
     setPending(true);
-    try {
-      const tenant = await createTenant(name, domain);
-      onCreated(tenant.workspace_domain);
-    } catch (err) {
-      setErrorCode(err instanceof Error && err.message ? err.message : "form_error");
-    } finally {
-      setPending(false);
-    }
+    window.location.assign(loginUrl(provider.current, company));
   }
 
   return (
@@ -37,32 +29,35 @@ export default function SignupForm({ onCreated }: Props) {
           onChange={(event) => setName(event.target.value)}
           autoComplete="organization"
           placeholder={t("form.companyPlaceholder")}
+          maxLength={200}
           required
         />
+        <small>{t("form.signupHelp")}</small>
       </label>
-      <label className="field">
-        <span>{t("form.domain")}</span>
-        <input
-          value={domain}
-          onChange={(event) => setDomain(event.target.value)}
-          placeholder={t("form.domainPlaceholder")}
-          autoComplete="off"
-          spellCheck={false}
-          required
-        />
-        <small>
-          {t("form.domainHelpBefore")} <code>gmail.com</code> / <code>outlook.com</code>
-          {t("form.domainHelpAfter")}
-        </small>
-      </label>
-      {errorCode ? (
-        <p className="banner error" role="alert">
-          {errorCode === "form_error" ? t("form.error") : messageForApiError(errorCode, lang)}
-        </p>
-      ) : null}
-      <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
-        {pending ? t("form.pending") : t("form.submit")}
-      </button>
+      <div className="signin-actions">
+        <button
+          type="submit"
+          className="btn btn-google btn-block"
+          disabled={pending}
+          onClick={() => {
+            provider.current = "google";
+          }}
+        >
+          <IconGoogle />
+          {t("form.registerGoogle")}
+        </button>
+        <button
+          type="submit"
+          className="btn btn-microsoft btn-block"
+          disabled={pending}
+          onClick={() => {
+            provider.current = "microsoft";
+          }}
+        >
+          <IconMicrosoft />
+          {t("form.registerMicrosoft")}
+        </button>
+      </div>
     </form>
   );
 }

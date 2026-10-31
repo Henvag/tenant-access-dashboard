@@ -13,7 +13,7 @@ from app.api.deps import get_current_user, require_admin
 from app.auth.audit import record_app_event
 from app.db import get_db
 from app.billing.plans import limits_for_tenant
-from app.domain import normalize_workspace_domain
+from app.domain import is_personal_workspace, normalize_workspace_domain
 from app.models import (
     AccessPolicy,
     AppGrant,
@@ -272,9 +272,12 @@ def _normalize_grant_email(raw: str, workspace_domain: str) -> str:
         normalized = normalize_workspace_domain(domain)
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_email") from None
-    if normalized != workspace_domain:
+    email = f"{local}@{normalized}"
+    # A private (Gmail/Outlook) workspace has exactly one possible member.
+    expected = email if is_personal_workspace(workspace_domain) else normalized
+    if expected != workspace_domain:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="email_domain_mismatch")
-    return f"{local}@{normalized}"
+    return email
 
 
 @router.get("/{app_id}/grants", response_model=GrantsOut)

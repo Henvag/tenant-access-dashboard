@@ -34,13 +34,6 @@ export type TenantUser = {
   is_owner: boolean;
 };
 
-export type Tenant = {
-  id: string;
-  name: string;
-  workspace_domain: string;
-  created_at: string;
-};
-
 type ApiErrorBody = {
   detail?: string | { msg?: string }[];
 };
@@ -247,15 +240,15 @@ export function listAuditEvents(limit = 50): Promise<AuditEvent[]> {
   return request<AuditEvent[]>(`/audit?limit=${limit}`);
 }
 
-export function createTenant(name: string, workspace_domain: string): Promise<Tenant> {
-  return request<Tenant>("/tenants", {
-    method: "POST",
-    body: JSON.stringify({ name, workspace_domain }),
-  });
-}
 
-export function loginUrl(provider: "google" | "microsoft" = "google"): string {
-  return `${API_BASE}/auth/login?provider=${provider}`;
+export type Provider = "google" | "microsoft";
+
+/** Start sign-in. With `company`, the sign-in also registers that company
+ * for the verified email domain (or a private Gmail/Outlook workspace). */
+export function loginUrl(provider: Provider = "google", company?: string): string {
+  const params = new URLSearchParams({ provider });
+  if (company) params.set("company", company);
+  return `${API_BASE}/auth/login?${params.toString()}`;
 }
 
 /** POST target that signs a visitor into the read-only sample company. */

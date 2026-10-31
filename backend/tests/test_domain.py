@@ -2,7 +2,6 @@ import pytest
 
 from app.auth.identity import LoginError, workspace_domain_from_claims
 from app.domain import normalize_workspace_domain
-from app.schemas.tenant import TenantCreate
 
 
 def test_normalizes_gmail_and_googlemail():
@@ -35,6 +34,8 @@ def test_claims_reject_hd_mismatch():
     assert exc.value.code == "domain_mismatch"
 
 
-def test_tenant_create_accepts_gmail():
-    body = TenantCreate(name="Demo", workspace_domain="Gmail.com")
-    assert body.workspace_domain == "gmail.com"
+def test_consumer_mailboxes_get_a_private_workspace_key():
+    assert workspace_domain_from_claims("Ada@Gmail.com", None) == "ada@gmail.com"
+    assert workspace_domain_from_claims("ada@googlemail.com", None) == "ada@gmail.com"
+    assert workspace_domain_from_claims("bob@hotmail.com", None) == "bob@outlook.com"
+    assert workspace_domain_from_claims("bob@acme.com", None) == "acme.com"
