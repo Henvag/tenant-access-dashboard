@@ -15,7 +15,8 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 
 - **Tenant isolation** lives in Postgres RLS (`app.tenant_id`), not only in Python `WHERE` clauses. A missing filter in app code should still return nothing.
 - **Identity** is delegated to Google / Entra. We store `idp` + `oidc_sub`, not passwords. Email domain maps the user to a tenant.
-- **Session** is a signed cookie carrying `user_id` / `tenant_id` / `role`. Secret stays in env (`SESSION_SECRET`); Render generates it, Fly gets its own (cookies aren't shared across hosts anyway).
+- **Session** is a signed cookie carrying `user_id` / `tenant_id` / `role`, valid for 12 hours (`SESSION_MAX_AGE_SECONDS`; Starlette's default is 14 days). Disabled users are rechecked on every request. Secret stays in env (`SESSION_SECRET`); Render generates it.
+- **Stored AI keys** are encrypted with `DATA_ENCRYPTION_KEY`, not the session secret, so rotating one doesn't break or expose the other. Values from before the split still decrypt.
 
 ## What I already do
 
@@ -33,7 +34,7 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 | `/health` checks DB (used by Render/Fly probes) | `GET /health` |
 | Secrets via env / platform secret stores, not git | Render Blueprint, Fly secrets, `.env` gitignored |
 | Basic browser hardening headers | `SecurityHeadersMiddleware` |
-| Real visitor IP when behind Cloudflare (`CF-Connecting-IP`) | `app/http_client.py` → audit |
+| Real visitor IP: `CF-Connecting-IP` only when the connecting peer is a Cloudflare edge, so direct calls to the Render origin can't fake it | `app/http_client.py` → audit, rate limits |
 | Per-IP sliding-window limits on `/auth/login`, `/auth/callback`, `/oauth/token` | `app/rate_limit.py` (in-process) |
 
 ## Threats I care about here

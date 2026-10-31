@@ -18,6 +18,9 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      # Encrypts companies' stored AI provider keys; separate from SESSION_SECRET.
+      - key: DATA_ENCRYPTION_KEY
+        generateValue: true
       # Custom domain behind Cloudflare (see docs/cloudflare.md). Until set, Render's
       # RENDER_EXTERNAL_URL remains the OIDC issuer / Google+Entra callback base.
       - key: PUBLIC_BASE_URL
