@@ -60,8 +60,9 @@ async def _seed(
         t = await session.scalar(select(Tenant).where(Tenant.id == tenant.id))
         assert t is not None
         t.owner_user_id = admin.id
-        await session.commit()
+        # Refresh while app.tenant_id is still set; RLS hides the row after commit.
         await session.refresh(admin)
+        await session.commit()
     return tenant, admin
 
 
@@ -106,6 +107,7 @@ async def test_company_invite_create_lookup_rotate(
     assert public.json() == {
         "tenant_name": tenant.name,
         "workspace_domain": tenant.workspace_domain,
+        "has_logo": False,
     }
 
     rotated = await client.post("/invites/company/rotate", cookies=cookie)

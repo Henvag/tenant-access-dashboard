@@ -59,8 +59,9 @@ async def _seed(
         t = await session.scalar(select(Tenant).where(Tenant.id == tenant.id))
         assert t is not None
         t.owner_user_id = admin.id
-        await session.commit()
+        # Refresh while app.tenant_id is still set; RLS hides the row after commit.
         await session.refresh(admin)
+        await session.commit()
     return tenant, admin
 
 
