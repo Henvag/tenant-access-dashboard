@@ -1,4 +1,5 @@
-// Screenshots of the read-only demo company for the README and the landing-page tour.
+// Screenshots of the read-only demo company for the README. The landing film has its own
+// capture script in film/scripts/capture.mjs.
 //
 //   BASE=http://localhost:8000 node scripts/capture-demo.mjs
 //
@@ -26,7 +27,7 @@ await page.screenshot({ path: path.join(DOCS, "landing.png") });
 await page.getByRole("button", { name: "Explore the live demo" }).first().click();
 await page.getByText("read-only demo").waitFor();
 
-// The tour and README show the product itself, so hide the demo notice.
+// The README shows the product itself, so hide the demo notice.
 async function shot(view, name) {
   await page.goto(`${BASE}/?view=${view}`, { waitUntil: "networkidle" });
   await page.addStyleTag({ content: ".demo-banner { display: none !important; }" });
@@ -51,5 +52,3 @@ for (const view of ["overview", "people", "apps", "audit", "billing"]) {
 await browser.close();
 console.log(`wrote landing, overview, people, apps, audit and billing to ${DOCS}`);
 
-// The tour uses WebP copies (quality 80) of overview, people, apps and audit, plus
-// grafana-login.png saved as grafana.webp, in frontend/src/assets/tour/.

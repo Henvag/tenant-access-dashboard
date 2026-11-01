@@ -80,5 +80,6 @@ of generated-design tells and its study of real app screens), [HyperFrames](http
   Never a mock dashboard built from grey bars.
 - Real brand marks (Google, Microsoft, Grafana, Outline) are welcome where they name something, small and
   inline. Decorative icons in tinted boxes, repeated on every item, are not.
-- After a visual change, retake the tour images (`frontend/src/assets/tour/`) and check the hotspot
-  positions in `ProductTour.tsx` still land on their targets.
+- The landing film follows these rules too; its numbers (sizes, eases, shot timings) are in
+  `film/SPEC.md`. After a visual change, re-capture and re-render it (`film/README.md`) and retake the
+  README screenshots.

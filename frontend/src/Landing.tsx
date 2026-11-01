@@ -12,7 +12,7 @@ import {
   IconShield,
 } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
-import ProductTour from "./ProductTour";
+import ProductFilm from "./ProductFilm";
 import SignupForm from "./SignupForm";
 
 type Tab = "signin" | "register";
@@ -171,12 +171,15 @@ export default function Landing({
         </section>
       </div>
 
-      <section className="landing-tour" aria-labelledby="landing-tour-title">
-        <div className="landing-tour-head">
-          <h2 id="landing-tour-title">{t("tour.title")}</h2>
-          <p className="hint">{t("tour.lede")}</p>
+      <section className="landing-film" aria-labelledby="landing-film-title">
+        <div className="landing-film-head">
+          <h2 id="landing-film-title">{t("film.title")}</h2>
+          <p className="hint">{t("film.lede")}</p>
         </div>
-        <ProductTour action={<DemoButton />} />
+        <ProductFilm />
+        <div className="landing-film-action">
+          <DemoButton />
+        </div>
       </section>
 
       <section className="landing-features" aria-labelledby="landing-features-title">
