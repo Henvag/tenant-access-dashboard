@@ -47,6 +47,8 @@ The landing page has two dark surfaces, the Security section and the featured (T
 | `--night-muted` | `#9aaba5` | Body text on night (7.4:1) |
 | `--night-accent` | `#6cd2b8` | Links on night |
 | `--night-line` | `#26332f` | Rules on night |
+| `--night-raised` | `#142420` | The separation figure's panel on night |
+| `--night-warm` | `#e7b66b` | Company B in the separation figure, nothing else |
 
 - The accent goes on data and links, not on chrome, and stays under about 5% of a screen. Primary
   buttons are near-black (`--ink`), one per view; the others are `.btn-secondary` (white, `--line-strong`
@@ -106,6 +108,15 @@ The landing page has two dark surfaces, the Security section and the featured (T
   the browser default `ease`. Loading loops (spinner, typing dots) may stay linear.
 - Animate only `transform` and `opacity`. No hover lift on cards; a hover changes the border colour.
 - Everything respects `prefers-reduced-motion`.
+- The one story animation is the separation figure in the Security section (`SeparationFigure.tsx`).
+  Two hands grip one shared `users` table, it cracks, they pull it apart, and each company's rows
+  land on its own half with row-level security in the gap. It is meant to say it without words.
+  - GSAP is the only animation library. It is loaded with a dynamic `import("gsap")`, so it stays out
+    of the main bundle.
+  - It plays once, when half the figure is on screen, and has a Play again button. Nothing loops.
+  - With reduced motion it shows the end scene, without the hands or the button.
+  - Exceptions to transform/opacity, all inside this figure: the crack draws with
+    `stroke-dashoffset`, and the row bars shrink with the SVG `width` attribute.
 
 ## Copy
 
