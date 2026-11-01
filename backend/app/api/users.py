@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
 from app.auth.audit import record_role_change, record_user_access_change
+from app.auth.partners import MAX_OUTSIDE_ADMINS, count_outside_admins
 from app.db import get_db
 from app.models import Tenant, User, UserRole
 from app.oauth.logout import notify_disabled_user
@@ -127,6 +128,13 @@ async def _apply_disabled(
         logout = await notify_disabled_user(db, target)
         details = {"logout_notified": logout["notified"], "logout_failed": logout["failed"]}
     else:
+        if target.external and (
+            await count_outside_admins(db, actor.tenant_id) >= MAX_OUTSIDE_ADMINS
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="outside_admin_limit",
+            )
         target.disabled_at = None
         details = None
 
@@ -164,6 +172,11 @@ async def _apply_role(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="cannot_change_owner_role",
+        )
+    if target.external:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="outside_admin_role_fixed",
         )
     if target.role == new_role:
         return
@@ -205,4 +218,5 @@ def _to_out(user: User, owner_id: UUID | None) -> TenantUserOut:
         last_login_at=user.last_login_at,
         disabled=user.disabled,
         is_owner=owner_id is not None and user.id == owner_id,
+        external=user.external,
     )

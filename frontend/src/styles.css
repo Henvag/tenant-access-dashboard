@@ -3286,6 +3286,13 @@ a.tile:active {
     display: none;
   }
 
+  /* Keep the company switcher reachable on phones (partner mode). */
+  .tenant-chip.has-switch {
+    display: flex;
+    order: 1;
+    width: 100%;
+  }
+
   .nav {
     order: 2;
     flex-direction: row;
@@ -3854,4 +3861,22 @@ a.tile:active {
 
 .legal-back {
   margin-top: 2.5rem;
+}
+
+/* ---------- Partner mode: switch company from the sidebar ---------- */
+.company-switch {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.company-switch select {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.company-switch-error {
+  margin: 0.375rem 0 0;
+  color: var(--danger);
+  font-size: 0.75rem;
 }

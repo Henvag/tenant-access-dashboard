@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AuditEvent,
+  Company,
   downloadAuditCsv,
   ensureCompanyInvite,
   fetchCompanyLogo,
   listAuditEvents,
+  listCompanies,
   listUsers,
   logoutUrl,
   Me,
   rotateCompanyInvite,
+  switchCompany,
   TenantUser,
 } from "./api";
 import AgentsPanel from "./AgentsPanel";
@@ -49,6 +52,7 @@ import {
 import LanguageToggle from "./LanguageToggle";
 import DomainsPanel from "./DomainsPanel";
 import OrganizationPanel from "./OrganizationPanel";
+import PartnersPanel from "./PartnersPanel";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
 import WebhooksPanel from "./WebhooksPanel";
@@ -143,6 +147,28 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
     void refresh();
   }, []);
 
+  // Partner mode: companies this sign-in belongs to. One means no switcher.
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [switchError, setSwitchError] = useState(false);
+  useEffect(() => {
+    if (me.demo) return;
+    void listCompanies()
+      .then(setCompanies)
+      .catch(() => setCompanies([]));
+  }, [me.demo]);
+
+  async function onSwitchCompany(tenantId: string) {
+    if (tenantId === me.tenant_id) return;
+    setSwitchError(false);
+    try {
+      await switchCompany(tenantId);
+      // A fresh document, so every panel loads for the new company.
+      window.location.assign(`/?_=${Date.now()}`);
+    } catch {
+      setSwitchError(true);
+    }
+  }
+
   useEffect(() => {
     if (!me.has_logo) {
       setLogoUrl(null);
@@ -168,6 +194,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
     const list = users ?? [];
     return {
       total: list.length,
+      // Outside admins (partner mode) don't use the plan's seats.
+      seats: list.filter((u) => !u.external).length,
       admins: list.filter((u) => u.role === "admin").length,
       members: list.filter((u) => u.role === "user").length,
       activeWeek: list.filter((u) => isWithinDays(u.last_login_at, 7)).length,
@@ -218,7 +246,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
           <span className="brand-name">{t("brand")}</span>
         </div>
 
-        <div className="tenant-chip">
+        <div className={companies.length > 1 ? "tenant-chip has-switch" : "tenant-chip"}>
           <span className="tenant-chip-label">{t("sidebar.tenant")}</span>
           <div className="tenant-brand">
             {logoUrl ? (
@@ -229,6 +257,26 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               <span className="tenant-chip-domain">{workspaceLabel(me.workspace_domain)}</span>
             </div>
           </div>
+          {companies.length > 1 ? (
+            <label className="company-switch">
+              <span className="sr-only">{t("switch.label")}</span>
+              <select
+                value={me.tenant_id}
+                onChange={(event) => void onSwitchCompany(event.target.value)}
+              >
+                {companies.map((company) => (
+                  <option key={company.tenant_id} value={company.tenant_id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {switchError ? (
+            <p className="company-switch-error" role="alert">
+              {t("switch.failed")}
+            </p>
+          ) : null}
         </div>
 
         <nav className="nav" aria-label={t("nav.label")}>
@@ -496,6 +544,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
             </section>
           </>
         ) : view === "people" ? (
+          <>
           <section className="card">
             <div className="card-head">
               <div>
@@ -504,8 +553,8 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                   {t("people.count", { shown: filtered.length, total: stats.total })}
                 </p>
                 <p className="hint">
-                  {t("people.usage", { used: stats.total, max: me.max_users })}
-                  {planNearLimit(stats.total, me.max_users) ? (
+                  {t("people.usage", { used: stats.seats, max: me.max_users })}
+                  {planNearLimit(stats.seats, me.max_users) ? (
                     <>
                       {" · "}
                       <button type="button" className="link" onClick={() => setView("billing")}>
@@ -558,6 +607,13 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
               />
             )}
           </section>
+          {actorIsOwner ? (
+            <PartnersPanel
+              tenantName={me.tenant_name}
+              onChange={() => void listAuditEvents(50).then(setEvents).catch(() => undefined)}
+            />
+          ) : null}
+          </>
         ) : view === "apps" ? (
           <AppsPanel
             tenantName={me.tenant_name}

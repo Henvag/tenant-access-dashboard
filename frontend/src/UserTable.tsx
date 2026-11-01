@@ -135,7 +135,9 @@ export default function UserTable({
             const busy = busyId === user.id;
             const canDisable = !isYou && !user.is_owner && (actorIsOwner || user.role === "user");
             const showPromote = actorIsOwner && !isYou && !user.is_owner && user.role === "user";
-            const showDemote = actorIsOwner && !isYou && !user.is_owner && user.role === "admin";
+            // Outside admins are always admins; switching them off removes access.
+            const showDemote =
+              actorIsOwner && !isYou && !user.is_owner && user.role === "admin" && !user.external;
 
             const items: MenuItem[] = [];
             if (showPromote) {
@@ -176,6 +178,13 @@ export default function UserTable({
                         ) : null}
                         {user.disabled ? (
                           <span className="pill pill-xs pill-danger">{t("status.disabled")}</span>
+                        ) : null}
+                        {user.external ? (
+                          <Tip label={t("people.externalHint")}>
+                            <span className="pill pill-xs" tabIndex={0}>
+                              {t("people.external")}
+                            </span>
+                          </Tip>
                         ) : null}
                       </span>
                       <span className="person-email">{user.email}</span>

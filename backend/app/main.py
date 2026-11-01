@@ -19,6 +19,7 @@ from app.api.billing import router as billing_router
 from app.api.company import router as company_router
 from app.api.domains import router as domains_router
 from app.api.invites import router as invites_router
+from app.api.partners import router as partners_router
 from app.api.oauth import router as oauth_router
 from app.api.users import router as users_router
 from app.api.webhooks import router as webhooks_router
@@ -83,6 +84,7 @@ app.include_router(company_router)
 app.include_router(domains_router)
 app.include_router(webhooks_router)
 app.include_router(invites_router)
+app.include_router(partners_router)
 app.include_router(billing_router)
 app.include_router(oauth_router)
 
