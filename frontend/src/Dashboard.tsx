@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AuditEvent,
+  downloadAuditCsv,
   ensureCompanyInvite,
   fetchCompanyLogo,
   listAuditEvents,
@@ -46,9 +47,11 @@ import {
   IconUsers,
 } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
+import DomainsPanel from "./DomainsPanel";
 import OrganizationPanel from "./OrganizationPanel";
 import StatCard from "./StatCard";
 import UserTable from "./UserTable";
+import WebhooksPanel from "./WebhooksPanel";
 
 type View = "overview" | "ask" | "people" | "apps" | "agents" | "organization" | "audit" | "billing";
 type RoleFilter = "all" | "admin" | "user";
@@ -401,18 +404,26 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
         ) : view === "agents" ? (
           <AgentsPanel isAdmin={isAdmin} tenantName={me.tenant_name} />
         ) : view === "organization" ? (
-          <OrganizationPanel
-            isOwner={actorIsOwner}
-            name={me.tenant_name}
-            domain={me.workspace_domain}
-            logoUrl={logoUrl}
-            onLogo={(url) => {
-              setLogoUrl((current) => {
-                if (current && current !== url) URL.revokeObjectURL(current);
-                return url;
-              });
-            }}
-          />
+          <>
+            <OrganizationPanel
+              isOwner={actorIsOwner}
+              name={me.tenant_name}
+              domain={me.workspace_domain}
+              logoUrl={logoUrl}
+              onLogo={(url) => {
+                setLogoUrl((current) => {
+                  if (current && current !== url) URL.revokeObjectURL(current);
+                  return url;
+                });
+              }}
+            />
+            {isAdmin ? (
+              <>
+                <DomainsPanel isOwner={actorIsOwner} tenantName={me.tenant_name} />
+                <WebhooksPanel />
+              </>
+            ) : null}
+          </>
         ) : !isAdmin ? (
           <>
             <AppTiles refreshKey={tilesKey} signedInEmail={me.email} />
@@ -573,6 +584,7 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                   })}
                 </p>
               </div>
+              <AuditExportButton />
             </div>
             {pendingAudit ? (
               <TableSkeleton rows={5} />
@@ -656,6 +668,35 @@ function InviteLinkControls({ domain }: { domain: string }) {
       {error ? (
         <p className="banner error" role="alert">
           {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function AuditExportButton() {
+  const { lang, t } = useLang();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="card-head-actions">
+      <button
+        type="button"
+        className="btn btn-ghost"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          setError(null);
+          void downloadAuditCsv()
+            .catch((err) => setError(err instanceof Error ? err.message : "error"))
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? t("audit.exporting") : t("audit.export")}
+      </button>
+      {error ? (
+        <p className="hint error-text" role="alert">
+          {messageForApiError(error, lang)}
         </p>
       ) : null}
     </div>

@@ -14,6 +14,7 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   app_invalid_redirect: "auth.app_invalid_redirect",
   invite_not_found: "error.invite_not_found",
   demo_unavailable: "auth.demo_unavailable",
+  managed_account_required: "auth.managed_account_required",
 };
 
 const DENIAL_KEYS: Record<string, TKey> = {
@@ -51,6 +52,19 @@ const API_ERROR_KEYS: Record<string, TKey> = {
   cannot_change_owner_role: "error.cannot_change_owner_role",
   cannot_demote_last_admin: "error.cannot_demote_last_admin",
   load_people: "error.load_people",
+  domain_consumer: "error.domain_consumer",
+  domain_exists: "error.domain_exists",
+  domain_taken: "error.domain_taken",
+  domain_limit_reached: "error.domain_limit_reached",
+  domain_not_found: "error.domain_not_found",
+  dns_record_missing: "error.dns_record_missing",
+  dns_lookup_failed: "error.dns_lookup_failed",
+  personal_workspace_domains: "error.personal_workspace_domains",
+  webhook_url_private: "error.webhook_url_private",
+  webhook_url_invalid: "error.webhook_url_invalid",
+  webhook_limit_reached: "error.webhook_limit_reached",
+  webhook_event_unknown: "error.webhook_event_unknown",
+  webhook_not_found: "error.webhook_not_found",
   app_not_found: "error.app_not_found",
   app_limit_reached: "error.app_limit_reached",
   logo_type: "error.logo_type",

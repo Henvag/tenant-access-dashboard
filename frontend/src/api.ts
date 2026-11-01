@@ -78,6 +78,13 @@ export type AuditEventType =
   | "app_deleted"
   | "app_access_granted"
   | "app_access_revoked"
+  | "audit_exported"
+  | "domain_added"
+  | "domain_verified"
+  | "domain_removed"
+  | "sign_in_policy_changed"
+  | "webhook_created"
+  | "webhook_deleted"
   | "app_login"
   | "app_login_denied";
 
@@ -238,6 +245,125 @@ export function setUserRole(userId: string, role: UserRole): Promise<TenantUser>
 
 export function listAuditEvents(limit = 50): Promise<AuditEvent[]> {
   return request<AuditEvent[]>(`/audit?limit=${limit}`);
+}
+
+/** Download every audit row the plan keeps as a CSV file. */
+export async function downloadAuditCsv(): Promise<void> {
+  const response = await fetch(`${API_BASE}/audit/export.csv`, {
+    cache: "no-store",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => ({}))) as ApiErrorBody;
+    throw new Error(formatDetail(data.detail) || `request_failed:${response.status}`);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const name = disposition.match(/filename="([^"]+)"/)?.[1] ?? "audit.csv";
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export type WebhookEndpoint = {
+  id: string;
+  url: string;
+  event_types: string[] | null;
+  enabled: boolean;
+  secret_hint: string;
+  created_at: string;
+};
+
+export type WebhookList = {
+  endpoints: WebhookEndpoint[];
+  event_types: string[];
+  max_endpoints: number;
+};
+
+export type WebhookDelivery = {
+  id: string;
+  event_type: string;
+  status: "pending" | "succeeded" | "failed";
+  attempts: number;
+  response_status: number | null;
+  last_error: string | null;
+  created_at: string;
+  last_attempt_at: string | null;
+};
+
+export function listWebhooks(): Promise<WebhookList> {
+  return request<WebhookList>("/webhooks");
+}
+
+export function createWebhook(
+  url: string,
+  eventTypes: string[] | null,
+): Promise<WebhookEndpoint & { secret: string }> {
+  return request("/webhooks", {
+    method: "POST",
+    body: JSON.stringify({ url, event_types: eventTypes }),
+  });
+}
+
+export function deleteWebhook(id: string): Promise<void> {
+  return request<void>(`/webhooks/${id}`, { method: "DELETE" });
+}
+
+export function listWebhookDeliveries(id: string): Promise<WebhookDelivery[]> {
+  return request<WebhookDelivery[]>(`/webhooks/${id}/deliveries`);
+}
+
+export function sendTestWebhook(id: string): Promise<WebhookDelivery> {
+  return request<WebhookDelivery>(`/webhooks/${id}/test`, { method: "POST" });
+}
+
+export type CompanyDomain = {
+  id: string;
+  domain: string;
+  verified: boolean;
+  verified_at: string | null;
+  last_checked_at: string | null;
+  record_name: string;
+  record_value: string;
+};
+
+export type CompanyDomains = {
+  primary_domain: string;
+  personal_workspace: boolean;
+  require_managed_accounts: boolean;
+  domains: CompanyDomain[];
+  max_domains: number;
+};
+
+export function listDomains(): Promise<CompanyDomains> {
+  return request<CompanyDomains>("/company/domains");
+}
+
+export function addDomain(domain: string): Promise<CompanyDomain> {
+  return request<CompanyDomain>("/company/domains", {
+    method: "POST",
+    body: JSON.stringify({ domain }),
+  });
+}
+
+export function verifyDomain(id: string): Promise<CompanyDomain> {
+  return request<CompanyDomain>(`/company/domains/${id}/verify`, { method: "POST" });
+}
+
+export function removeDomain(id: string): Promise<void> {
+  return request<void>(`/company/domains/${id}`, { method: "DELETE" });
+}
+
+export function setSignInPolicy(requireManagedAccounts: boolean): Promise<CompanyDomains> {
+  return request<CompanyDomains>("/company/sign-in-policy", {
+    method: "PUT",
+    body: JSON.stringify({ require_managed_accounts: requireManagedAccounts }),
+  });
 }
 
 

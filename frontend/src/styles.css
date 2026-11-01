@@ -3053,3 +3053,143 @@ a.tile:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Domains and webhooks (Organization) */
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: #f6c5bf;
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.mono-inline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+}
+
+.domain-list .app-row,
+.webhook-row {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.domain-list .app-row-main,
+.webhook-row .app-row-main {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.dns-record {
+  margin-top: 0.5rem;
+}
+
+.dns-record .hint {
+  margin: 0 0 0.25rem;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.inline-form .field {
+  flex: 1 1 14rem;
+  margin-bottom: 0;
+}
+
+.policy-block {
+  margin-top: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.policy-toggle {
+  align-items: flex-start;
+}
+
+.policy-toggle input {
+  margin-top: 0.15rem;
+  flex: none;
+}
+
+.policy-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.policy-toggle small {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.secret-banner p {
+  margin: 0 0 0.5rem;
+}
+
+.secret-value {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.secret-value code {
+  overflow-wrap: anywhere;
+}
+
+.webhook-form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.webhook-form .field {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.webhook-form > .check-row {
+  padding-left: 0;
+}
+
+.webhook-form > .check-row:hover {
+  background: transparent;
+}
+
+.event-list {
+  width: 100%;
+  max-height: 16rem;
+}
+
+.delivery-log {
+  flex: 1 1 100%;
+  margin-top: 0.25rem;
+}
+
+.card-head-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.error-text {
+  color: var(--danger);
+}

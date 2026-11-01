@@ -134,6 +134,15 @@ Grafana ──/oauth/userinfo─────────────▶ email, n
 - **RLS still applies.** Clients, grants and codes are tenant tables under FORCE RLS. The unauthenticated token endpoint resolves `client_id -> tenant_id` through a tiny secret-free lookup table, sets the tenant, and only then reads the protected rows.
 - **Not signed in yet?** The authorize request is parked in the session; after Google/Microsoft sign-in the callback resumes it, so "Sign in to continue to Grafana" is a real flow, not a dead end.
 
+## Domains, webhooks and export
+
+Three things an IT team expects once more than one person relies on the dashboard:
+
+- **More than one domain.** The first domain is proved by the owner's sign-in. Under **Organization**, the owner can add another (say `acme.com` next to `acme.no`) and publish a TXT record at `_tenant-access.<domain>`. **Check DNS** looks it up over DNS-over-HTTPS; once it matches, people with verified addresses on that domain join this company. A domain can be verified by one company only (a partial unique index enforces it), and shared mailbox domains like `gmail.com` are refused.
+- **Company accounts only.** An optional rule refuses personal Google accounts that use the company address (they carry no `hd` claim) and personal Microsoft accounts, so only Google Workspace and Entra work accounts get in. Refusals show in **Audit** as `managed_account_required`.
+- **Webhooks.** Admins add up to three HTTPS endpoints and pick which audit events to receive. Each audit row queues its deliveries in the same transaction (an outbox), and a background task sends them signed with [Standard Webhooks](https://www.standardwebhooks.com) headers, so any Standard Webhooks library can verify them. Failed sends retry with backoff for about seven hours. Private, loopback and link-local addresses are refused before every send, redirects are not followed, and the signing secret is shown once and stored encrypted. The delivery queue table holds only ids and due times, so the sender finds work without reading across tenants, then reads each delivery under that tenant's RLS context.
+- **CSV export.** **Download CSV** on the audit log exports everything your plan keeps. Cells that would run as spreadsheet formulas are escaped, and the export itself is audited.
+
 ## What I used
 
 | | | Why I picked it |

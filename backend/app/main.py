@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 import hmac
 import os
 import re
@@ -16,12 +17,14 @@ from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
 from app.api.billing import router as billing_router
 from app.api.company import router as company_router
+from app.api.domains import router as domains_router
 from app.api.invites import router as invites_router
 from app.api.oauth import router as oauth_router
 from app.api.users import router as users_router
+from app.api.webhooks import router as webhooks_router
 from app.auth.oidc import create_oauth
 from app.config import STATIC_DIR, settings
-from app.db import engine
+from app.db import SessionLocal, engine
 from app.demo import enforce_demo_read_only
 from app.health import database_reachable
 from app.logging_config import configure_logging
@@ -35,7 +38,16 @@ async def lifespan(app: FastAPI):
     configure_logging(json_logs=settings.is_production)
     await ensure_rls_enforced(engine)
     app.state.oauth = create_oauth(settings)
+    sender = None
+    if settings.webhooks_worker_enabled:
+        from app.webhooks.worker import run_forever
+
+        sender = asyncio.create_task(run_forever(SessionLocal))
     yield
+    if sender is not None:
+        sender.cancel()
+        with suppress(asyncio.CancelledError):
+            await sender
 
 
 app = FastAPI(
@@ -68,6 +80,8 @@ app.include_router(apps_router)
 app.include_router(agents_router)
 app.include_router(ask_router)
 app.include_router(company_router)
+app.include_router(domains_router)
+app.include_router(webhooks_router)
 app.include_router(invites_router)
 app.include_router(billing_router)
 app.include_router(oauth_router)

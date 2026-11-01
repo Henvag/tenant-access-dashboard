@@ -87,6 +87,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
 
 Create it with SQL and check `SELECT rolbypassrls FROM pg_roles WHERE rolname = 'tenant_app'` is false afterwards. Neon's own owner role has `BYPASSRLS`, so don't assume roles made in the Neon console are restricted.
 
+## Webhook sender
+
+Queued webhooks are sent by a task inside the web process, every 5 seconds. Set `WEBHOOKS_WORKER_ENABLED=false` on every instance but one if the service ever scales out (rows are claimed with `FOR UPDATE SKIP LOCKED`, so two senders don't double-send, but one is enough). On Render's free tier the instance sleeps after 15 minutes without traffic; queued retries wait until it wakes. Deliveries older than 30 days are pruned when new ones are queued.
+
 ## Infra path
 
 Live Render demo: **Blueprint** (`render.yaml`). Optional state-managed twin: **`infra/render`** (Terraform). Fly: **`fly.toml` + flyctl** (see `/infra/README.md` for why not Terraform-on-Fly yet).

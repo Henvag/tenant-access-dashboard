@@ -1,5 +1,6 @@
 from app.models.agent import TeamAgent
 from app.models.audit import AuditEvent, AuditEventType
+from app.models.domain import TenantDomain
 from app.models.oauth import (
     AccessPolicy,
     AppGrant,
@@ -12,6 +13,7 @@ from app.models.oauth import (
 )
 from app.models.tenant import Tenant, TenantPlan
 from app.models.user import IdentityProvider, User, UserRole
+from app.models.webhook import WebhookDelivery, WebhookEndpoint, WebhookOutbox
 
 __all__ = [
     "AccessPolicy",
@@ -27,7 +29,11 @@ __all__ = [
     "SigningKey",
     "TeamAgent",
     "Tenant",
+    "TenantDomain",
     "TenantPlan",
     "User",
     "UserRole",
+    "WebhookDelivery",
+    "WebhookEndpoint",
+    "WebhookOutbox",
 ]

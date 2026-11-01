@@ -25,6 +25,13 @@ class AuditEventType(str, enum.Enum):
     app_access_revoked = "app_access_revoked"
     app_login = "app_login"
     app_login_denied = "app_login_denied"
+    audit_exported = "audit_exported"
+    domain_added = "domain_added"
+    domain_verified = "domain_verified"
+    domain_removed = "domain_removed"
+    sign_in_policy_changed = "sign_in_policy_changed"
+    webhook_created = "webhook_created"
+    webhook_deleted = "webhook_deleted"
 
 
 class AuditEvent(Base):

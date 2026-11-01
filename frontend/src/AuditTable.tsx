@@ -23,6 +23,7 @@ const ERROR_KEYS: Record<string, TKey> = {
   identity_conflict: "auth.identity_conflict",
   user_disabled: "auth.user_disabled",
   oidc_failed: "auth.oidc_failed",
+  managed_account_required: "auth.managed_account_required",
 };
 
 /** Two-word chip for the table row. */
@@ -35,6 +36,7 @@ const REASON_KEYS: Record<string, TKey> = {
   identity_conflict: "reason.identity_conflict",
   user_disabled: "reason.user_disabled",
   oidc_failed: "reason.oidc_failed",
+  managed_account_required: "reason.managed_account_required",
 };
 
 type Tone = "neutral" | "accent" | "ok" | "warn" | "danger";
@@ -168,6 +170,60 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         tone: "accent",
         reason: { text: toAdmin ? t("reason.toAdmin") : t("reason.toMember"), tone: "accent" },
         sentence: t("audit.roleChangedDetail"),
+        warn: false,
+      };
+    }
+    case "audit_exported":
+      return {
+        labelKey: "audit.auditExported",
+        tone: "neutral",
+        reason: { text: "CSV", tone: "neutral" },
+        sentence: t("audit.auditExportedDetail", { rows: String(event.details?.rows ?? "") }),
+        warn: false,
+      };
+    case "domain_added":
+    case "domain_verified":
+    case "domain_removed": {
+      const domain = event.details?.domain ?? "-";
+      const keys = {
+        domain_added: ["audit.domainAdded", "audit.domainAddedDetail", "neutral"],
+        domain_verified: ["audit.domainVerified", "audit.domainVerifiedDetail", "ok"],
+        domain_removed: ["audit.domainRemoved", "audit.domainRemovedDetail", "warn"],
+      } as const;
+      const [label, detail, tone] = keys[event.event_type];
+      return {
+        labelKey: label,
+        tone,
+        reason: { text: domain, tone: "neutral" },
+        sentence: t(detail, { domain }),
+        warn: false,
+      };
+    }
+    case "sign_in_policy_changed": {
+      const on = String(event.details?.require_managed_accounts) === "true";
+      return {
+        labelKey: "audit.policyChanged",
+        tone: "accent",
+        reason: { text: on ? t("reason.policyOn") : t("reason.policyOff"), tone: "neutral" },
+        sentence: on ? t("audit.policyOnDetail") : t("audit.policyOffDetail"),
+        warn: false,
+      };
+    }
+    case "webhook_created":
+    case "webhook_deleted": {
+      const url = event.details?.url ?? "-";
+      let host = url;
+      try {
+        host = new URL(url).host;
+      } catch {
+        // keep the raw value
+      }
+      const created = event.event_type === "webhook_created";
+      return {
+        labelKey: created ? "audit.webhookCreated" : "audit.webhookDeleted",
+        tone: created ? "ok" : "warn",
+        reason: { text: host, tone: "neutral" },
+        sentence: t(created ? "audit.webhookCreatedDetail" : "audit.webhookDeletedDetail", { url }),
         warn: false,
       };
     }
