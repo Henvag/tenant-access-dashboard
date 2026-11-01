@@ -13,6 +13,7 @@ import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { TKey, useLang } from "./i18n";
 import {
+  IconCheck,
   IconClose,
   IconGlobe,
   IconGoogle,
@@ -449,42 +450,142 @@ function WorksWith() {
   );
 }
 
-/** Public plan list. Prices come from the same catalog the Billing screen uses. */
+type Period = "monthly" | "yearly";
+
+/**
+ * Public plans as three cards. Team is the featured card on the night ground, and a
+ * monthly/yearly switch shows the real saving from the catalog. Every company starts
+ * on Free, so each card's button opens registration.
+ */
 function Pricing({ plans, onRegister }: { plans: BillingPlan[] | null; onRegister: () => void }) {
   const { t } = useLang();
+  const [period, setPeriod] = useState<Period>("monthly");
+  const savings = (plans ?? []).flatMap((plan) =>
+    plan.price_monthly_nok && plan.price_annual_nok
+      ? [Math.round((1 - plan.price_annual_nok / (plan.price_monthly_nok * 12)) * 100)]
+      : [],
+  );
+  const saving = savings.length > 0 ? Math.max(...savings) : 0;
+
   return (
-    <section className="landing-section" id="pricing" aria-labelledby="pricing-title">
+    <section className="landing-section landing-pricing" id="pricing" aria-labelledby="pricing-title">
       <SectionHead id="pricing-title" title={t("landing.pricingTitle")} lede={t("landing.pricingLede")} />
       {plans && plans.length > 0 ? (
-        <ul className="pricing-list">
-          {plans.map((plan) => (
-            <li key={plan.id}>
-              <strong>{t(`billing.plan.${plan.id}` as "billing.plan.free")}</strong>
-              <p className="billing-price">
-                {plan.price_monthly_nok == null
-                  ? t("billing.freePrice")
-                  : t("billing.monthlyPrice", { amount: String(plan.price_monthly_nok) })}
-              </p>
-              {plan.price_annual_nok != null ? (
-                <p className="hint">
-                  {t("landing.pricingAnnual", { amount: String(plan.price_annual_nok) })}
-                </p>
-              ) : null}
-              <ul className="billing-features">
-                <li>{t("billing.feature.seats", { count: String(plan.max_users) })}</li>
-                <li>{t("billing.feature.apps", { count: String(plan.max_apps) })}</li>
-                <li>{t("billing.feature.audit", { days: String(plan.audit_retention_days) })}</li>
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <>
+          {saving > 0 ? (
+            <div className="period-toggle" role="group" aria-label={t("landing.pricingPeriod")}>
+              {(["monthly", "yearly"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={period === value ? "period-opt active" : "period-opt"}
+                  aria-pressed={period === value}
+                  onClick={() => setPeriod(value)}
+                >
+                  {value === "monthly" ? t("landing.pricingMonthly") : t("landing.pricingYearly")}
+                  {value === "yearly" ? (
+                    <span className="period-save">{t("landing.pricingSave", { percent: saving })}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <ul className="plan-cards">
+            {plans.map((plan, index) => {
+              const id = plan.id as "free" | "team" | "business";
+              const free = plan.price_monthly_nok == null;
+              const featured = id === "team";
+              const yearly = period === "yearly";
+              const amount = free ? 0 : yearly ? plan.price_annual_nok : plan.price_monthly_nok;
+              return (
+                <li key={plan.id} className={featured ? "plan-card plan-card-featured" : "plan-card"}>
+                  <div className="plan-card-top">
+                    <div className="plan-card-head">
+                      <TierMark level={index + 1} />
+                      {featured ? <span className="plan-card-tag">{t("landing.pricingRecommended")}</span> : null}
+                    </div>
+                    <h3>{t(`billing.plan.${id}`)}</h3>
+                    <p className="plan-card-for">{t(`landing.plan.${id}.for`)}</p>
+                    <p className="plan-card-price">
+                      <span className="plan-card-amount">NOK {amount}</span>
+                      <span className="plan-card-per">
+                        {yearly ? t("landing.pricingPerYear") : t("landing.pricingPerMonth")}
+                      </span>
+                    </p>
+                    <p className="plan-card-note">
+                      {free
+                        ? t("landing.pricingNoCard")
+                        : yearly
+                          ? t("landing.pricingBilledYearly")
+                          : t("landing.pricingBilledMonthly")}
+                    </p>
+                    <a
+                      className={featured ? "btn btn-inverse btn-block" : "btn btn-secondary btn-block"}
+                      href="#signin"
+                      onClick={onRegister}
+                    >
+                      {free ? t("landing.pricingStartFree") : t("landing.pricingStartPaid")}
+                    </a>
+                  </div>
+                  <ul className="plan-card-features">
+                    <li>
+                      <IconCheck width={16} height={16} />
+                      <BoldValue text={t("billing.feature.seats", { count: MARK })} value={plan.max_users} />
+                    </li>
+                    <li>
+                      <IconCheck width={16} height={16} />
+                      <BoldValue text={t("billing.feature.apps", { count: MARK })} value={plan.max_apps} />
+                    </li>
+                    <li>
+                      <IconCheck width={16} height={16} />
+                      <BoldValue
+                        text={t("billing.feature.audit", { days: MARK })}
+                        value={plan.audit_retention_days}
+                      />
+                    </li>
+                  </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       ) : null}
-      <div className="pricing-action">
-        <a className="btn btn-secondary" href="#signin" onClick={onRegister}>
-          {t("landing.registerCta")}
-        </a>
-      </div>
+      <p className="pricing-included">{t("landing.pricingIncluded")}</p>
     </section>
+  );
+}
+
+const MARK = "\u0000";
+
+/** Puts the number in a translated line in bold, wherever the language places it. */
+function BoldValue({ text, value }: { text: string; value: number }) {
+  const [before, after = ""] = text.split(MARK);
+  return (
+    <span>
+      {before}
+      <strong>{value}</strong>
+      {after}
+    </span>
+  );
+}
+
+/** Three rising bars, filled up to the plan's size. */
+function TierMark({ level }: { level: number }) {
+  return (
+    <svg className="tier-mark" width="18" height="16" viewBox="0 0 18 16" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <rect
+          key={i}
+          x={i * 7}
+          y={10 - i * 5}
+          width="4"
+          height={6 + i * 5}
+          rx="1"
+          fill="currentColor"
+          opacity={i < level ? 1 : 0.22}
+        />
+      ))}
+    </svg>
   );
 }
 
