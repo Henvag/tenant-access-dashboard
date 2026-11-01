@@ -3747,6 +3747,20 @@ a.tile:active {
   border-bottom: 1px solid var(--line);
 }
 
+.plan-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tier-mark {
+  display: block;
+  color: var(--accent);
+}
+
 .plan-card h3 {
   font-size: 1.125rem;
   font-weight: 600;
@@ -3769,7 +3783,7 @@ a.tile:active {
 }
 
 .plan-card-amount {
-  font-size: 1.875rem;
+  font-size: 2rem;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -3813,12 +3827,123 @@ a.tile:active {
   color: var(--accent);
 }
 
+.plan-card-features strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The featured plan sits on the night ground, the page's second dark surface. */
+.plan-card-featured {
+  background: var(--night);
+  border-color: var(--night);
+  color: var(--night-ink);
+}
+
+.plan-card-featured .plan-card-top {
+  border-bottom-color: var(--night-line);
+}
+
+.plan-card-featured .plan-card-for,
+.plan-card-featured .plan-card-per,
+.plan-card-featured .plan-card-note {
+  color: var(--night-muted);
+}
+
+.plan-card-featured .plan-card-features,
+.plan-card-featured .plan-card-features strong {
+  color: var(--night-ink);
+}
+
+.plan-card-featured .plan-card-features svg,
+.plan-card-featured .tier-mark {
+  color: var(--night-accent);
+}
+
+.plan-card-featured a:focus-visible {
+  outline-color: var(--night-accent);
+}
+
+.plan-card-tag {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid rgba(108, 210, 184, 0.4);
+  border-radius: 999px;
+  color: var(--night-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.btn-inverse {
+  background: var(--night-ink);
+  color: var(--night);
+}
+
+.btn-inverse:hover {
+  background: #ffffff;
+}
+
+/* Pricing is the one centered section, like the pricing pages it learns from. */
+.landing-pricing .section-head {
+  margin: 0 auto 1.5rem;
+  text-align: center;
+}
+
+.landing-pricing .section-head .landing-lede {
+  margin: 0 auto;
+}
+
+.period-toggle {
+  display: flex;
+  gap: 2px;
+  width: fit-content;
+  margin: 0 auto 2rem;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.period-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.875rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.period-opt:hover {
+  color: var(--ink);
+}
+
+.period-opt.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.period-save {
+  padding: 0.0625rem 0.375rem;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .pricing-included {
-  margin-top: 1.25rem;
-  max-width: 72ch;
+  max-width: 64ch;
+  margin: 1.5rem auto 0;
   color: var(--muted);
   font-size: 0.875rem;
   line-height: 1.55;
+  text-align: center;
 }
 
 @media (max-width: 899px) {

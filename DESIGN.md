@@ -38,7 +38,7 @@ The palette is called Fjord: pale green-grey grounds, near-black type and one de
 | `--accent-soft` | `#e1efea` | Accent pills and step numbers |
 | `--danger` | `#b42318` | Refusals and destructive actions only |
 
-The landing page has one dark field, the Security section, and inside it only the night tokens:
+The landing page has two dark surfaces, the Security section and the featured (Team) plan card in Pricing, and inside them only the night tokens:
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -89,6 +89,14 @@ The landing page has one dark field, the Security section, and inside it only th
 - Links are plain `#id` anchors, so the address can be shared (`tenantaccess.me/#pricing`). Scrolling is
   smooth unless reduced motion is on, and `scroll-padding-top` keeps the bar off each heading.
 - Below 900px the links fold into a menu under the bar, in the same order. Escape closes it.
+
+## Landing pricing
+
+- Pricing is the one centered section: heading, lede and a Monthly/Yearly switch whose saving is worked
+  out from the plan catalog, never typed in.
+- Three plan cards: a tier mark, the name, who it is for, the price, one button, a rule, then the limits
+  with check marks and the numbers in bold. Team is the featured card on `--night`, tagged
+  "Recommended" (our advice, not a popularity claim). No "Most popular" labels.
 - When a section is added, removed or moved, change `SECTIONS` in `Landing.tsx` so the nav keeps the
   page's order.
 
