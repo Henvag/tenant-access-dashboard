@@ -25,6 +25,8 @@ class MeOut(BaseModel):
     has_ask: bool = False
     # Signed in through the public read-only demo.
     demo: bool = False
+    # An outside admin in this company (partner mode).
+    external: bool = False
 
 
 class TenantUserOut(BaseModel):
@@ -35,6 +37,7 @@ class TenantUserOut(BaseModel):
     last_login_at: datetime | None
     disabled: bool = False
     is_owner: bool = False
+    external: bool = False
 
     model_config = {"from_attributes": True}
 

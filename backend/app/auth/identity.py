@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.partners import remember_membership
 from app.auth.rls import set_tenant_rls
 from app.billing.plans import limits_for_tenant
 from app.domain import normalize_workspace_domain, workspace_key_for_email
@@ -208,8 +209,17 @@ async def upsert_user_from_oidc(
             )
             or 0
         )
+        # Outside admins (partner mode) don't use the company's seats.
+        seats_used = (
+            await session.scalar(
+                select(func.count())
+                .select_from(User)
+                .where(User.tenant_id == tenant.id, User.external.is_(False))
+            )
+            or 0
+        )
         max_users = limits_for_tenant(tenant).max_users
-        if user_count >= max_users:
+        if seats_used >= max_users:
             raise LoginError("seat_limit_reached")
         user = User(
             tenant_id=tenant.id,
@@ -236,6 +246,7 @@ async def upsert_user_from_oidc(
         tenant.owner_user_id = user.id
 
     await _fulfill_pending_app_grants(session, user)
+    await remember_membership(session, user)
     return user
 
 

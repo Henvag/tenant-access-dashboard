@@ -41,7 +41,7 @@ const COPY: Record<Lang, Copy> = {
     storeTitle: "What we store",
     store: [
       ["Company", "Name, email domain, plan, and a logo if the owner uploads one."],
-      ["People", "Name, work email, the account ID from Google or Microsoft, role, last sign-in, and whether the person is switched off."],
+      ["People", "Name, work email, the account ID from Google or Microsoft, role, last sign-in, and whether the person is switched off. For outside admins, also which companies they belong to and the invites sent to their address."],
       ["Apps", "The apps a company adds, their sign-in settings, and who may open each one. App secrets are stored hashed."],
       ["Audit log", "Every sign-in and app sign-in attempt: time, result, IP address and browser type."],
       ["Billing", "Stripe customer and subscription IDs. Card and Vipps details stay with Stripe."],
@@ -75,7 +75,7 @@ const COPY: Record<Lang, Copy> = {
     storeTitle: "Hva vi lagrer",
     store: [
       ["Selskap", "Navn, e-postdomene, plan og logo hvis eieren laster opp en."],
-      ["Personer", "Navn, jobb-e-post, konto-ID fra Google eller Microsoft, rolle, siste innlogging og om personen er slått av."],
+      ["Personer", "Navn, jobb-e-post, konto-ID fra Google eller Microsoft, rolle, siste innlogging og om personen er slått av. For eksterne administratorer også hvilke selskaper de er med i og invitasjonene som er sendt til adressen deres."],
       ["Apper", "Appene et selskap legger til, innloggingsinnstillingene deres og hvem som kan åpne hver av dem. Apphemmeligheter lagres som hash."],
       ["Revisjonslogg", "Hver innlogging og hvert innloggingsforsøk i apper: tidspunkt, resultat, IP-adresse og nettlesertype."],
       ["Betaling", "Kunde- og abonnements-ID fra Stripe. Kort- og Vipps-opplysninger blir hos Stripe."],

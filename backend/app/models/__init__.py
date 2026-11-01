@@ -11,6 +11,7 @@ from app.models.oauth import (
     PendingAppGrant,
     SigningKey,
 )
+from app.models.partner import IdentityMembership, PartnerInvite
 from app.models.tenant import Tenant, TenantPlan
 from app.models.user import IdentityProvider, User, UserRole
 from app.models.webhook import WebhookDelivery, WebhookEndpoint, WebhookOutbox
@@ -21,10 +22,12 @@ __all__ = [
     "AuditEvent",
     "AuditEventType",
     "CompanyInviteToken",
+    "IdentityMembership",
     "IdentityProvider",
     "OAuthClient",
     "OAuthClientLookup",
     "OAuthCode",
+    "PartnerInvite",
     "PendingAppGrant",
     "SigningKey",
     "TeamAgent",

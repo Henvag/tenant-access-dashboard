@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,8 +24,9 @@ class IdentityProvider(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        UniqueConstraint("email"),
-        UniqueConstraint("idp", "oidc_sub"),
+        # Per company: one identity may hold a row in several companies (partner mode).
+        UniqueConstraint("tenant_id", "email", name="uq_users_tenant_email"),
+        UniqueConstraint("tenant_id", "idp", "oidc_sub", name="uq_users_tenant_idp_oidc_sub"),
     )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -45,6 +46,10 @@ class User(Base):
     display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     disabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # An outside admin: invited by the owner from another domain (partner mode).
+    external: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
 
     tenant: Mapped["Tenant"] = relationship(
         back_populates="users",

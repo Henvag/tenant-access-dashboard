@@ -227,6 +227,36 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         warn: false,
       };
     }
+    case "partner_invited":
+    case "partner_invite_revoked":
+    case "partner_joined": {
+      const email = event.details?.email ?? event.email;
+      const keys = {
+        partner_invited: ["audit.partnerInvited", "audit.partnerInvitedDetail", "neutral"],
+        partner_invite_revoked: [
+          "audit.partnerInviteRevoked",
+          "audit.partnerInviteRevokedDetail",
+          "warn",
+        ],
+        partner_joined: ["audit.partnerJoined", "audit.partnerJoinedDetail", "accent"],
+      } as const;
+      const [label, detail, tone] = keys[event.event_type];
+      return {
+        labelKey: label,
+        tone,
+        reason: { text: t("people.external"), tone: "neutral" },
+        sentence: t(detail, { email }),
+        warn: false,
+      };
+    }
+    case "company_switched":
+      return {
+        labelKey: "audit.companySwitched",
+        tone: "neutral",
+        reason: { text: t("people.external"), tone: "neutral" },
+        sentence: t("audit.companySwitchedDetail"),
+        warn: false,
+      };
     default:
       return {
         labelKey: "audit.login",

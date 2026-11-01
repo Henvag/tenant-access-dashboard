@@ -32,6 +32,10 @@ class AuditEventType(str, enum.Enum):
     sign_in_policy_changed = "sign_in_policy_changed"
     webhook_created = "webhook_created"
     webhook_deleted = "webhook_deleted"
+    partner_invited = "partner_invited"
+    partner_invite_revoked = "partner_invite_revoked"
+    partner_joined = "partner_joined"
+    company_switched = "company_switched"
 
 
 class AuditEvent(Base):

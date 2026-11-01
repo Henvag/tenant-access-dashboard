@@ -145,6 +145,15 @@ Three things an IT team expects once more than one person relies on the dashboar
 - **Webhooks.** Admins add up to three HTTPS endpoints and pick which audit events to receive. Each audit row queues its deliveries in the same transaction (an outbox), and a background task sends them signed with [Standard Webhooks](https://www.standardwebhooks.com) headers, so any Standard Webhooks library can verify them. Failed sends retry with backoff for about seven hours. Private, loopback and link-local addresses are refused before every send, redirects are not followed, and the signing secret is shown once and stored encrypted. The delivery queue table holds only ids and due times, so the sender finds work without reading across tenants, then reads each delivery under that tenant's RLS context.
 - **CSV export.** **Download CSV** on the audit log exports everything your plan keeps. Cells that would run as spreadsheet formulas are escaped, and the export itself is audited.
 
+## Outside admins (partner mode)
+
+Small companies often have an IT firm look after their tools. Under **People**, the owner can invite up to three **outside admins** by exact email address, say `kari@itfirma.no` for a company on `fjordbakeriet.no`:
+
+- Kari signs in with Google or Microsoft as usual. If the verified address matches an open invite, she gets an admin account row inside that company, marked **External**. If her own domain has no company, she lands in the one that invited her.
+- One sign-in identity can now hold an account row in several companies, so `users.email` and `(idp, oidc_sub)` are unique per company. A secret-free lookup table maps the identity to the companies it is in. That table only answers "which companies may this identity enter"; every read of company data still runs as one row under one company's RLS scope.
+- A **company switcher** in the sidebar writes a new session for the other row after re-checking the lookup, and the switch is audited in the company being entered.
+- Outside admins don't use the company's seats and are always admins, never owner, so the client can switch them off like anyone else. An invite never attaches a second identity to an address the company already has (the same rule that blocks nOAuth).
+
 ## What I used
 
 | | | Why I picked it |

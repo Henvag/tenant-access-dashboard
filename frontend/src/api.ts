@@ -22,6 +22,8 @@ export type Me = {
   has_ask: boolean;
   /** Signed in through the public read-only demo. */
   demo?: boolean;
+  /** An outside admin in this company (partner mode). */
+  external?: boolean;
 };
 
 export type TenantUser = {
@@ -32,6 +34,8 @@ export type TenantUser = {
   last_login_at: string | null;
   disabled: boolean;
   is_owner: boolean;
+  /** Outside admin from another company; uses no seat. */
+  external?: boolean;
 };
 
 type ApiErrorBody = {
@@ -85,6 +89,10 @@ export type AuditEventType =
   | "sign_in_policy_changed"
   | "webhook_created"
   | "webhook_deleted"
+  | "partner_invited"
+  | "partner_invite_revoked"
+  | "partner_joined"
+  | "company_switched"
   | "app_login"
   | "app_login_denied";
 
@@ -529,4 +537,52 @@ export async function fetchCompanyLogo(): Promise<string | null> {
   if (!response.ok) return null;
   const blob = await response.blob();
   return URL.createObjectURL(blob);
+}
+
+/* ---------- Partner mode: outside admins and switching company ---------- */
+
+export type Company = {
+  tenant_id: string;
+  name: string;
+  workspace_domain: string;
+  current: boolean;
+};
+
+export function listCompanies(): Promise<Company[]> {
+  return request<Company[]>("/auth/companies");
+}
+
+export function switchCompany(tenantId: string): Promise<{ tenant_id: string }> {
+  return request<{ tenant_id: string }>("/auth/switch", {
+    method: "POST",
+    body: JSON.stringify({ tenant_id: tenantId }),
+  });
+}
+
+export type PartnerInvite = {
+  id: string;
+  email: string;
+  created_at: string;
+  expires_at: string;
+};
+
+export type Partners = {
+  invites: PartnerInvite[];
+  outside_admins: number;
+  limit: number;
+};
+
+export function listPartners(): Promise<Partners> {
+  return request<Partners>("/partners");
+}
+
+export function invitePartner(email: string): Promise<PartnerInvite> {
+  return request<PartnerInvite>("/partners/invites", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function revokePartnerInvite(id: string): Promise<void> {
+  return request<void>(`/partners/invites/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

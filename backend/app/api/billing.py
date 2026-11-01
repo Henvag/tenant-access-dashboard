@@ -104,7 +104,9 @@ async def billing_status(
     limits = limits_for_tenant(tenant)
     users_used = (
         await db.scalar(
-            select(func.count()).select_from(User).where(User.tenant_id == tenant.id)
+            select(func.count())
+            .select_from(User)
+            .where(User.tenant_id == tenant.id, User.external.is_(False))
         )
         or 0
     )
