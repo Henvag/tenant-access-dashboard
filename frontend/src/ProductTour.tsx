@@ -111,7 +111,7 @@ export default function ProductTour({ action }: Props) {
       </div>
 
       <div className="tour-caption" aria-live="polite">
-        <p className="tour-count">
+        <p className="sr-only">
           {done ? "" : t("tour.step", { n: String(index + 1), total: String(TOTAL) })}
         </p>
         <h3>{t(titleKey)}</h3>
