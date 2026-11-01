@@ -31,7 +31,6 @@ import {
 } from "./format";
 import { useLang } from "./i18n";
 import {
-  IconActivity,
   IconAsk,
   IconCreditCard,
   IconGrid,
@@ -443,27 +442,21 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                 label={t("stats.people")}
                 value={pendingPeople ? "-" : stats.total}
                 hint={t("stats.peopleHint")}
-                icon={<IconUsers />}
-                tone="accent"
               />
               <StatCard
                 label={t("stats.admins")}
                 value={pendingPeople ? "-" : stats.admins}
                 hint={t("stats.adminsHint")}
-                icon={<IconShield />}
               />
               <StatCard
                 label={t("stats.members")}
                 value={pendingPeople ? "-" : stats.members}
                 hint={t("stats.membersHint")}
-                icon={<IconGrid />}
               />
               <StatCard
                 label={t("stats.active")}
                 value={pendingPeople ? "-" : stats.activeWeek}
                 hint={t("stats.activeHint")}
-                icon={<IconActivity />}
-                tone="warm"
               />
             </section>
 

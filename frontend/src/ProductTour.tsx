@@ -18,16 +18,16 @@ type Step = {
 
 // Screenshots of the demo company (scripts/capture-demo.mjs), 1440×900.
 const STEPS: Step[] = [
-  { id: "overview", image: overviewShot, url: "tenantaccess.me", hotspot: { x: 42, y: 44 } },
-  { id: "people", image: peopleShot, url: "tenantaccess.me/?view=people", hotspot: { x: 66, y: 71 } },
-  { id: "apps", image: appsShot, url: "tenantaccess.me/?view=apps", hotspot: { x: 34, y: 40 } },
+  { id: "overview", image: overviewShot, url: "tenantaccess.me", hotspot: { x: 41, y: 42.5 } },
+  { id: "people", image: peopleShot, url: "tenantaccess.me/?view=people", hotspot: { x: 66, y: 68 } },
+  { id: "apps", image: appsShot, url: "tenantaccess.me/?view=apps", hotspot: { x: 33.5, y: 38.5 } },
   {
     id: "sso",
     image: grafanaShot,
     url: "tenant-access-grafana.onrender.com/login",
     hotspot: { x: 50, y: 60 },
   },
-  { id: "audit", image: auditShot, url: "tenantaccess.me/?view=audit", hotspot: { x: 62, y: 83 } },
+  { id: "audit", image: auditShot, url: "tenantaccess.me/?view=audit", hotspot: { x: 62, y: 79.5 } },
 ];
 
 const TOTAL = STEPS.length;

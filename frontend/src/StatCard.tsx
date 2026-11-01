@@ -1,17 +1,13 @@
-import { ReactNode } from "react";
-
 type Props = {
   label: string;
   value: string | number;
   hint?: string;
-  icon: ReactNode;
-  tone?: "default" | "accent" | "warm";
 };
 
-export default function StatCard({ label, value, hint, icon, tone = "default" }: Props) {
+/** One cell of the overview figures strip: label over number, no icon. */
+export default function StatCard({ label, value, hint }: Props) {
   return (
-    <div className={`stat stat-${tone}`}>
-      <div className="stat-icon">{icon}</div>
+    <div className="stat">
       <div className="stat-body">
         <span className="stat-label">{label}</span>
         <span className="stat-value">{value}</span>
