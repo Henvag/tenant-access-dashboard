@@ -44,7 +44,7 @@ of generated-design tells and its study of real app screens), [HyperFrames](http
 - Radius is tight and chosen once: cards 8px, controls 6px, chips and code 4px. Pills and avatars are
   fully round.
 - A border or a shadow, never both. Resting cards have a 1px `--line` border and no shadow. Shadows
-  (`--shadow`) are only for what floats: menus, dialogs, tooltips, the tour caption.
+  (`--shadow`) are only for what floats: menus, dialogs and tooltips.
 - No one-sided accent bars on cards, nav items or notices.
 - Group figures in one container split by 1px dividers, label over number, no icon. Never a row of
   separate cards with an icon in a tinted square.

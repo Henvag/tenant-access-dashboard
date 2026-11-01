@@ -6,7 +6,6 @@ import { useLang } from "./i18n";
 import {
   IconGlobe,
   IconGoogle,
-  IconLock,
   IconMicrosoft,
   IconPlay,
   IconPlug,
@@ -15,9 +14,6 @@ import {
 import LanguageToggle from "./LanguageToggle";
 import ProductTour from "./ProductTour";
 import SignupForm from "./SignupForm";
-import appsSharedLoginMark from "./assets/apps-shared-login.png";
-import companiesIsolatedMark from "./assets/companies-isolated.jpg";
-import idpPairMark from "./assets/google-microsoft.png";
 
 type Tab = "signin" | "register";
 
@@ -163,7 +159,6 @@ export default function Landing({
                 <button type="button" className="link" onClick={() => setTab("register")}>
                   {t("signin.registerFirst")}
                 </button>
-                .
               </p>
             </div>
           ) : (
@@ -178,7 +173,6 @@ export default function Landing({
 
       <section className="landing-tour" aria-labelledby="landing-tour-title">
         <div className="landing-tour-head">
-          <p className="eyebrow">{t("tour.eyebrow")}</p>
           <h2 id="landing-tour-title">{t("tour.title")}</h2>
           <p className="hint">{t("tour.lede")}</p>
         </div>
@@ -188,42 +182,12 @@ export default function Landing({
       <section className="landing-features" aria-labelledby="landing-features-title">
         <h2 id="landing-features-title">{t("landing.featuresTitle")}</h2>
         <ul className="feature-list">
-          <li>
-            <span className="feature-icon feature-icon-wide">
-              <img src={idpPairMark} alt="" width={36} height={36} />
-            </span>
-            <div>
-              <strong>{t("feature.google.title")}</strong>
-              <span>{t("feature.google.body")}</span>
-            </div>
-          </li>
-          <li>
-            <span className="feature-icon feature-icon-wide">
-              <img src={companiesIsolatedMark} alt="" width={36} height={36} />
-            </span>
-            <div>
-              <strong>{t("feature.isolated.title")}</strong>
-              <span>{t("feature.isolated.body")}</span>
-            </div>
-          </li>
-          <li>
-            <span className="feature-icon">
-              <IconLock width={24} height={24} />
-            </span>
-            <div>
-              <strong>{t("feature.roles.title")}</strong>
-              <span>{t("feature.roles.body")}</span>
-            </div>
-          </li>
-          <li>
-            <span className="feature-icon feature-icon-wide">
-              <img src={appsSharedLoginMark} alt="" width={36} height={36} />
-            </span>
-            <div>
-              <strong>{t("feature.apps.title")}</strong>
-              <span>{t("feature.apps.body")}</span>
-            </div>
-          </li>
+          {(["google", "isolated", "roles", "apps"] as const).map((key) => (
+            <li key={key}>
+              <strong>{t(`feature.${key}.title`)}</strong>
+              <p>{t(`feature.${key}.body`)}</p>
+            </li>
+          ))}
         </ul>
       </section>
     </main>
