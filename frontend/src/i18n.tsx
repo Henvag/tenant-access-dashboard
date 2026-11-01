@@ -537,7 +537,7 @@ const no: Record<TKey, string> = {
   "auth.demo_unavailable": "Live-demoen er slått av akkurat nå.",
   "film.title": "Se det på 25 sekunder",
   "film.lede": "Det en administrator ser i eksempelselskapet. Åpne så live-demoen og klikk deg rundt selv.",
-  "film.summary": "En film på 25 sekunder, på engelsk, fra eksempelselskapet Nordlys Analytics. Eieren ser selskapets apper, velger hvem som kan åpne hver av dem, slår av Jonas Lie og finner den avviste innloggingen hans i revisjonsloggen.",
+  "film.summary": "En film på 25 sekunder fra eksempelselskapet Nordlys Analytics. Eieren ser selskapets apper, velger hvem som kan åpne hver av dem, slår av Jonas Lie og finner den avviste innloggingen hans i revisjonsloggen.",
   "film.pause": "Pause",
   "film.play": "Spill av",
 

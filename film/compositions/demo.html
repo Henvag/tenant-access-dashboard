@@ -40,8 +40,13 @@
       display: inline-block;
       opacity: 0;
     }
-    .d-blur {
-      filter: blur(6px);
+    /* Both languages are in the markup; the mount's lang variable picks one. */
+    .d-only-no,
+    [data-lang="no"] .d-only-en {
+      display: none;
+    }
+    [data-lang="no"] .d-only-no {
+      display: block;
     }
     .d-red {
       color: #b42318;
@@ -149,30 +154,58 @@
       opacity: 0;
     }
   </style>
-  <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
+  <div
+    id="root"
+    class="d-scene"
+    data-composition-id="demo"
+    data-width="1920"
+    data-height="1080"
+    data-composition-variables='[{"id":"lang","type":"enum","label":"Language","default":"en","options":[{"value":"en","label":"English"},{"value":"no","label":"Norsk"}]}]'
+  >
     <!-- Lines -->
     <div id="d-l1" class="d-line clip" data-start="0.2" data-duration="3.1" data-track-index="2">
-      <p class="d-big">
+      <p class="d-big d-only-en" lang="en">
         <span class="d-w d-blur">One</span> <span class="d-w d-blur">sign-in</span>
         <span class="d-w d-blur">for</span> <span class="d-w d-blur">your</span>
         <span class="d-w d-blur">company's</span> <span class="d-w d-blur">apps.</span>
       </p>
+      <p class="d-big d-only-no" lang="nb">
+        <span class="d-w d-blur">Én</span> <span class="d-w d-blur">innlogging</span>
+        <span class="d-w d-blur">for</span> <span class="d-w d-blur">selskapets</span>
+        <span class="d-w d-blur">apper.</span>
+      </p>
     </div>
     <div id="d-l2" class="d-line clip" data-start="3.75" data-duration="5.0" data-track-index="2">
-      <p class="d-big">
+      <p class="d-big d-only-en" lang="en">
         <span class="d-w">Choose</span> <span class="d-w">who</span> <span class="d-w">can</span>
         <span class="d-w">open</span> <span class="d-w">each</span> <span class="d-w">app.</span>
       </p>
+      <p class="d-big d-only-no" lang="nb">
+        <span class="d-w">Velg</span> <span class="d-w">hvem</span> <span class="d-w">som</span>
+        <span class="d-w">kan</span> <span class="d-w">åpne</span> <span class="d-w">hver</span>
+        <span class="d-w">app.</span>
+      </p>
     </div>
     <div id="d-l3" class="d-line clip" data-start="9.1" data-duration="6.5" data-track-index="2">
-      <p id="d-l3a" class="d-big d-w d-blur">Someone leaves? Switch off their access.</p>
-      <p id="d-l3b" class="d-quiet d-w d-blur">Their next app sign-in is refused.</p>
+      <div class="d-only-en" lang="en">
+        <p class="d-l3a d-big d-w d-blur">Someone leaves? Switch off their access.</p>
+        <p class="d-l3b d-quiet d-w d-blur">Their next app sign-in is refused.</p>
+      </div>
+      <div class="d-only-no" lang="nb">
+        <p class="d-l3a d-big d-w d-blur">Slutter noen? Slå av tilgangen deres.</p>
+        <p class="d-l3b d-quiet d-w d-blur">Neste innlogging i en app blir avvist.</p>
+      </div>
     </div>
     <div id="d-l4" class="d-line clip" data-start="16.1" data-duration="4.5" data-track-index="2">
-      <p class="d-big">
+      <p class="d-big d-only-en" lang="en">
         <span class="d-w d-blur">Every</span> <span class="d-w d-blur">sign-in</span>
         <span class="d-w d-blur">and</span> <span class="d-w d-blur d-red">refusal</span>
         <span class="d-w d-blur">is</span> <span class="d-w d-blur">logged.</span>
+      </p>
+      <p class="d-big d-only-no" lang="nb">
+        <span class="d-w d-blur">Hver</span> <span class="d-w d-blur">innlogging</span>
+        <span class="d-w d-blur">og</span> <span class="d-w d-blur d-red">avvisning</span>
+        <span class="d-w d-blur">logges.</span>
       </p>
     </div>
 
@@ -180,27 +213,27 @@
     <div id="d-win">
       <div id="d-clip">
         <div id="d-cam" data-layout-allow-overflow>
-          <div id="d-scr-overview" class="d-scr"><img src="assets/shots/overview.png" alt="" /></div>
+          <div id="d-scr-overview" class="d-scr"><img class="d-only-en" src="assets/shots/en/overview.png" alt="" /><img class="d-only-no" src="assets/shots/no/overview.png" alt="" /></div>
           <div id="d-scr-apps" class="d-scr d-later">
-            <img src="assets/shots/apps.png" alt="" />
+            <img class="d-only-en" src="assets/shots/en/apps.png" alt="" /><img class="d-only-no" src="assets/shots/no/apps.png" alt="" />
             <div id="d-v1" class="d-veil" style="left: 311px; top: 236px; width: 1067px; height: 86px"></div>
             <div id="d-v2" class="d-veil" style="left: 311px; top: 322px; width: 1067px; height: 86px"></div>
             <div id="d-v3" class="d-veil" style="left: 311px; top: 408px; width: 1067px; height: 86px"></div>
           </div>
-          <div id="d-scr-people" class="d-scr d-later"><img src="assets/shots/people-active.png" alt="" /></div>
+          <div id="d-scr-people" class="d-scr d-later"><img class="d-only-en" src="assets/shots/en/people-active.png" alt="" /><img class="d-only-no" src="assets/shots/no/people-active.png" alt="" /></div>
           <div id="d-scr-menu" class="d-scr d-later">
-            <img src="assets/shots/people-menu.png" alt="" />
+            <img class="d-only-en" src="assets/shots/en/people-menu.png" alt="" /><img class="d-only-no" src="assets/shots/no/people-menu.png" alt="" />
             <div id="d-hover"></div>
           </div>
-          <div id="d-scr-disabled" class="d-scr d-later"><img src="assets/shots/people-disabled.png" alt="" /></div>
+          <div id="d-scr-disabled" class="d-scr d-later"><img class="d-only-en" src="assets/shots/en/people-disabled.png" alt="" /><img class="d-only-no" src="assets/shots/no/people-disabled.png" alt="" /></div>
           <div id="d-scr-audit" class="d-scr d-later">
             <div id="d-audit-scroll">
-              <img src="assets/shots/audit-full.png" alt="" />
+              <img class="d-only-en" src="assets/shots/en/audit-full.png" alt="" /><img class="d-only-no" src="assets/shots/no/audit-full.png" alt="" />
               <div id="d-va" class="d-veil" style="left: 305px; top: 237px; width: 1078px; height: 1024px"></div>
               <div id="d-vb" class="d-veil" style="left: 305px; top: 1325px; width: 1078px; height: 64px"></div>
               <div id="d-vc" class="d-veil" style="left: 305px; top: 1453px; width: 1078px; height: 447px"></div>
             </div>
-            <div id="d-audit-side"><img src="assets/shots/audit.png" alt="" /></div>
+            <div id="d-audit-side"><img class="d-only-en" src="assets/shots/en/audit.png" alt="" /><img class="d-only-no" src="assets/shots/no/audit.png" alt="" /></div>
           </div>
         </div>
         <div id="d-cursor">
@@ -240,6 +273,10 @@
     (function () {
       const tl = gsap.timeline({ paused: true });
       const $ = (s) => document.querySelector(s);
+      const vars = window.__hyperframes && window.__hyperframes.getVariables ? window.__hyperframes.getVariables() : {};
+      const L = vars.lang === "no" ? "no" : "en";
+      $(".d-scene").setAttribute("data-lang", L);
+      const only = `.d-only-${L}`;
       const cam = $("#d-cam");
       const cur = $("#d-cursor");
 
@@ -262,18 +299,19 @@
         peopleB: region(1075, 640, 1.84),
         audit: region(652, 450, 1.76),
       };
-      // Points the cursor visits, from the capture's measured boxes.
+      // Points the cursor visits, from the boxes in assets/shots/<lang>/geo.json.
       const P = {
         grafana: { x: 591, y: 383 },
         navApps: { x: 76, y: 368 },
-        everyone: { x: 466, y: 262 },
-        assigned: { x: 483, y: 348 },
-        admins: { x: 457, y: 434 },
         navPeople: { x: 76, y: 325 },
         kebab: { x: 1358, y: 613 },
         disable: { x: 1250, y: 695 },
         navAudit: { x: 76, y: 455 },
-        refused: { x: 706, y: 392 },
+        ...{
+          // Policy pills and the Failed sign-in pill change width with the language.
+          en: { everyone: { x: 466, y: 262 }, assigned: { x: 483, y: 348 }, admins: { x: 457, y: 434 }, refused: { x: 738, y: 399 } },
+          no: { everyone: { x: 451, y: 262 }, assigned: { x: 485, y: 348 }, admins: { x: 479, y: 434 }, refused: { x: 749, y: 399 } },
+        }[L],
       };
       const AUDIT_SCROLL = 907;
 
@@ -332,18 +370,18 @@
 
       // Shot 1: overview
       tl.fromTo("#d-win", { scale: 0.97 }, { scale: 1, duration: 1.0, ease: "expo.out" }, 0);
-      wordsBlurIn("#d-l1", 0.25);
+      wordsBlurIn(`#d-l1 ${only}`, 0.25);
       camTo(1.0, 0.6, R.tiles);
       cursorTo(1.7, 0.7, P.grafana, { x: W + 40, y: H + 40 });
       camTo(2.65, 0.5, BASE);
-      lineOut("#d-l1 .d-w", 3.05);
+      lineOut(`#d-l1 ${only} .d-w`, 3.05);
       cursorTo(3.15, 0.45, P.navApps);
       click(3.6);
       show("#d-scr-apps", 3.65);
 
       // Shot 2: apps
-      tl.fromTo("#d-l2 .d-w", { opacity: 0, color: "#c5cacd" }, { opacity: 1, color: "#c5cacd", duration: 0.12, ease: "power1.out", immediateRender: false }, 3.8);
-      tl.fromTo("#d-l2 .d-w", { color: "#c5cacd" }, { color: "#111418", duration: 0.2, ease: "power1.out", stagger: 0.08, immediateRender: false }, 3.95);
+      tl.fromTo(`#d-l2 ${only} .d-w`, { opacity: 0, color: "#c5cacd" }, { opacity: 1, color: "#c5cacd", duration: 0.12, ease: "power1.out", immediateRender: false }, 3.8);
+      tl.fromTo(`#d-l2 ${only} .d-w`, { color: "#c5cacd" }, { color: "#111418", duration: 0.2, ease: "power1.out", stagger: 0.08, immediateRender: false }, 3.95);
       camTo(4.0, 0.6, R.apps);
       cursorTo(4.75, 0.5, P.everyone, { x: 760, y: H + 50 });
       fade("#d-v2", 5.1, 0.6);
@@ -357,13 +395,13 @@
       fade("#d-v1", 7.95, 0);
       fade("#d-v2", 7.95, 0);
       camTo(8.0, 0.5, BASE);
-      lineOut("#d-l2 .d-w", 8.5);
+      lineOut(`#d-l2 ${only} .d-w`, 8.5);
       cursorTo(8.5, 0.45, P.navPeople);
       click(8.95);
       show("#d-scr-people", 9.0);
 
       // Shot 3: people. Jonas is active, then switched off.
-      lineBlurIn("#d-l3a", 9.15);
+      lineBlurIn(`#d-l3 ${only} .d-l3a`, 9.15);
       camTo(9.3, 0.6, R.peopleA);
       camTo(10.55, 0.6, R.peopleB);
       cursorTo(11.0, 0.55, P.kebab, { x: W + 40, y: 520 });
@@ -373,16 +411,16 @@
       tl.fromTo("#d-hover", { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, 12.25);
       click(12.45);
       show("#d-scr-disabled", 12.5, 0.12);
-      lineBlurIn("#d-l3b", 12.7);
+      lineBlurIn(`#d-l3 ${only} .d-l3b`, 12.7);
       camTo(13.2, 0.6, R.peopleA);
       camTo(15.0, 0.5, BASE);
-      lineOut("#d-l3a, #d-l3b", 15.35);
+      lineOut(`#d-l3 ${only} .d-l3a, #d-l3 ${only} .d-l3b`, 15.35);
       cursorTo(15.5, 0.45, P.navAudit);
       click(15.95);
       show("#d-scr-audit", 16.0);
 
       // Shot 4: audit. Scroll to Jonas's refused sign-in.
-      wordsBlurIn("#d-l4", 16.2);
+      wordsBlurIn(`#d-l4 ${only}`, 16.2);
       camTo(16.3, 0.6, R.audit);
       tl.fromTo("#d-audit-scroll", { y: 0 }, { y: -AUDIT_SCROLL, duration: 1.1, ease: "power2.inOut" }, 16.95);
       fade("#d-va", 18.0, 0.6, 0.3);
@@ -390,7 +428,7 @@
       fade("#d-vc", 18.0, 0.6, 0.3);
       cursorTo(18.3, 0.6, P.refused, { x: 700, y: H + 50 });
       camTo(20.0, 0.5, BASE);
-      lineOut("#d-l4 .d-w", 20.3);
+      lineOut(`#d-l4 ${only} .d-w`, 20.3);
 
       // Hand-off: the sidebar's mark lifts out and lands where the end card holds it.
       const mx = 648 + S0 * 22.4;

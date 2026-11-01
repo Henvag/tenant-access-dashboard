@@ -56,12 +56,26 @@
       padding: 20px 30px;
       border-radius: 9px;
     }
+    .e-only-no,
+    [data-lang="no"] .e-only-en {
+      display: none;
+    }
+    [data-lang="no"] .e-only-no {
+      display: inline;
+    }
     #e-url {
       font-size: 28px;
       color: #5f6670;
     }
   </style>
-  <div id="root" data-composition-id="endcard" data-width="1920" data-height="1080">
+  <div
+    id="root"
+    class="e-scene"
+    data-composition-id="endcard"
+    data-width="1920"
+    data-height="1080"
+    data-composition-variables='[{"id":"lang","type":"enum","label":"Language","default":"en","options":[{"value":"en","label":"English"},{"value":"no","label":"Norsk"}]}]'
+  >
     <svg id="e-mark" viewBox="0 0 32 32" aria-hidden="true">
       <defs>
         <linearGradient id="e-markGrad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
@@ -81,12 +95,14 @@
     </svg>
     <h1 id="e-word"><span>Tenant Access</span></h1>
     <div id="e-cta">
-      <span id="e-button">Explore the live demo</span>
+      <span id="e-button"><span class="e-only-en" lang="en">Explore the live demo</span><span class="e-only-no" lang="nb">Utforsk live-demoen</span></span>
       <span id="e-url">tenantaccess.me</span>
     </div>
   </div>
   <script>
     (function () {
+      const vars = window.__hyperframes && window.__hyperframes.getVariables ? window.__hyperframes.getVariables() : {};
+      document.querySelector(".e-scene").setAttribute("data-lang", vars.lang === "no" ? "no" : "en");
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#e-word span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out", immediateRender: false }, 0.15);
       tl.fromTo("#e-cta", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out", immediateRender: false }, 0.65);
