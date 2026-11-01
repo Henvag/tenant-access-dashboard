@@ -8,7 +8,7 @@ payment (Stripe does not support Vipps in subscription mode).
 
 | Plan     | Monthly | Annual (Vipps) | Seats | Apps | Audit retention |
 |----------|---------|----------------|-------|------|-----------------|
-| Free     | —       | —              | 10    | 3    | 14 days         |
+| Free     | -       | -              | 10    | 3    | 14 days         |
 | Team     | 99      | 990            | 50    | 15   | 90 days         |
 | Business | 249     | 2490           | 250   | 25   | 365 days        |
 
@@ -59,8 +59,8 @@ Use the printed `whsec_…` as `STRIPE_WEBHOOK_SECRET`.
 
 ## API
 
-- `GET /billing/plans` — public catalog
-- `GET /billing/status` — current plan + usage (auth)
-- `POST /billing/checkout` — owner only; body `{ plan, method }`
-- `POST /billing/portal` — Stripe Customer Portal (owner)
-- `POST /billing/webhook` — Stripe signed events
+- `GET /billing/plans`: public catalog
+- `GET /billing/status`: current plan + usage (auth)
+- `POST /billing/checkout`: owner only; body `{ plan, method }`
+- `POST /billing/portal`: Stripe Customer Portal (owner)
+- `POST /billing/webhook`: Stripe signed events

@@ -2302,7 +2302,7 @@ fieldset.field legend {
   border-radius: 10px;
 }
 
-/* Product logos (e.g. Grafana) — fill the rounded mark; logo already has a dark plate. */
+/* Product logos (e.g. Grafana) fill the rounded mark; logo already has a dark plate. */
 .app-mark-brand {
   background: #111;
   padding: 0;

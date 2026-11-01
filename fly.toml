@@ -1,4 +1,4 @@
-# Same Docker image as Render — second hosting model for the portfolio story.
+# Same Docker image as Render, a second hosting model for the portfolio story.
 # Deploy: install flyctl → fly auth login → fly launch --no-deploy (or use this file) → set secrets → fly deploy
 #
 # App name must be unique on Fly; change `app` if taken.
