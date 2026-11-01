@@ -9,20 +9,24 @@ const en = {
   "app.title": "Tenant Access",
   "brand": "Tenant Access",
 
-  "landing.title": "One sign-in for your company's apps.",
+  "landing.title": "Sign-in and access control for the tools you run yourself.",
   "landing.lede":
-    "People use Google or Microsoft. Admins decide who may open Grafana, Outline, and other company tools, all from one place.",
+    "Your team signs in with Google or Microsoft. You decide who may open Grafana, Outline, Gitea and the other tools your company hosts, and see who was refused. Made for small companies, in English and Norwegian.",
   "landing.featuresTitle": "What it does",
   "feature.google.title": "Google and Microsoft",
   "feature.google.body": "Sign in with work accounts you already have. No separate passwords here.",
   "feature.isolated.title": "Separate per company",
   "feature.isolated.body": "Each company's people and apps stay in their own workspace.",
-  "feature.roles.title": "Owner, admins, and members",
-  "feature.roles.body":
-    "The first person on a domain becomes the owner. Owners can promote admins.",
-  "feature.apps.title": "Apps share the same login",
+  "feature.offboard.title": "One switch when someone leaves",
+  "feature.offboard.body":
+    "Switch a person off and every app refuses their next sign-in. The audit log shows who tried, and when.",
+  "feature.apps.title": "Ready for self-hosted tools",
   "feature.apps.body":
-    "Register tools that support OpenID Connect. Your team opens them with the same work account.",
+    "Grafana, Outline, Gitea, BookStack and Portainer have ready-made setups. Any other tool that supports OpenID Connect works too.",
+  "landing.pricingTitle": "Priced per company",
+  "landing.pricingLede": "One monthly price for the whole company, not per person. Prices in Norwegian kroner.",
+  "landing.pricingAnnual": "or NOK {amount} a year",
+  "landing.privacy": "Privacy and hosting",
 
   "tabs.label": "Get started",
   "tabs.signin": "Sign in",
@@ -500,20 +504,24 @@ const no: Record<TKey, string> = {
   "app.title": "Tenant Access",
   "brand": "Tenant Access",
 
-  "landing.title": "En innlogging for selskapets apper.",
+  "landing.title": "Innlogging og tilgangsstyring for verktøyene dere drifter selv.",
   "landing.lede":
-    "Folk bruker Google eller Microsoft. Administratorer bestemmer hvem som kan åpne Grafana, Outline og andre verktøy, alt fra ett sted.",
+    "Teamet logger inn med Google eller Microsoft. Du bestemmer hvem som kan åpne Grafana, Outline, Gitea og de andre verktøyene selskapet drifter, og ser hvem som ble avvist. Laget for små selskaper, på norsk og engelsk.",
   "landing.featuresTitle": "Hva det gjør",
   "feature.google.title": "Google og Microsoft",
   "feature.google.body": "Logg inn med jobbkontoer dere allerede har. Ingen egne passord her.",
   "feature.isolated.title": "Adskilt per selskap",
   "feature.isolated.body": "Hvert selskaps personer og apper ligger i sitt eget arbeidsområde.",
-  "feature.roles.title": "Eier, administratorer og medlemmer",
-  "feature.roles.body":
-    "Den første på et domene blir eier. Eiere kan forfremme administratorer.",
-  "feature.apps.title": "Apper deler samme innlogging",
+  "feature.offboard.title": "En bryter når noen slutter",
+  "feature.offboard.body":
+    "Slå av en person, så avviser alle appene neste innlogging. Revisjonsloggen viser hvem som prøvde, og når.",
+  "feature.apps.title": "Klar for verktøy dere drifter selv",
   "feature.apps.body":
-    "Registrer verktøy som støtter OpenID Connect. Teamet åpner dem med samme jobbkonto.",
+    "Grafana, Outline, Gitea, BookStack og Portainer har ferdige oppsett. Alle andre verktøy som støtter OpenID Connect fungerer også.",
+  "landing.pricingTitle": "Pris per selskap",
+  "landing.pricingLede": "En månedspris for hele selskapet, ikke per person. Priser i norske kroner.",
+  "landing.pricingAnnual": "eller NOK {amount} per år",
+  "landing.privacy": "Personvern og drift",
 
   "tabs.label": "Kom i gang",
   "tabs.signin": "Logg inn",
