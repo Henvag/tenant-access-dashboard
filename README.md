@@ -4,6 +4,8 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 **Idea:** a company registers. People sign in with Google or Microsoft. An admin can see who has access, and cannot see another company's people, even if the app code forgets a filter. The dashboard is also an **OpenID Connect provider**: register Grafana (or any OIDC app) under **Apps**, decide who may use it, and your team signs in to it with the same account. Every sign-in and denial lands in the audit log.
 
+**Who it is for:** small Norwegian companies (5 to 50 people) that run their own tools, such as Grafana, Outline and Gitea, and the IT consultancies that look after them. Prices are per company in NOK, and the UI is in English and Norwegian. What is stored and where it is hosted is on the [privacy page](https://tenantaccess.me/privacy).
+
 [![CI](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml)
 
 **Try it in a minute:** open https://tenantaccess.me and watch the 25-second product film, or press **Explore the live demo** to land in a sample company (Nordlys Analytics) as its owner. No account needed, and the demo is read-only.

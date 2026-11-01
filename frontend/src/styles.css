@@ -3053,3 +3053,166 @@ a.tile:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Public pricing on the landing page ---------- */
+.landing-pricing {
+  width: min(1100px, calc(100% - 2.5rem));
+  margin: 0 auto 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 720px) {
+  .landing-pricing {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 3rem;
+  }
+}
+
+.landing-pricing h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+
+/* One container split by rules, like the stats strip. No card per plan. */
+.pricing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.pricing-list > li {
+  padding: 1rem 1.15rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pricing-list > li + li {
+  border-left: 1px solid var(--line);
+}
+
+.pricing-list strong {
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .pricing-list {
+    grid-template-columns: 1fr;
+  }
+  .pricing-list > li + li {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+.landing-footer {
+  width: min(1100px, calc(100% - 2.5rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 2rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+
+.landing-footer a,
+.legal-body a {
+  color: var(--accent);
+}
+
+/* ---------- Privacy page ---------- */
+.legal {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.legal-top {
+  width: min(760px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.25rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.legal-brand {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.legal-body {
+  width: min(760px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 4rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.legal-body h1 {
+  font-size: clamp(1.875rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.legal-lead {
+  font-size: 1.125rem;
+  color: var(--ink-2);
+  margin: 0 0 0.25rem;
+}
+
+.legal-body h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2.25rem 0 0.5rem;
+}
+
+.legal-body p {
+  margin: 0 0 0.75rem;
+  max-width: 68ch;
+}
+
+.legal-list {
+  margin: 0 0 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.legal-list > div {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.legal-list dt {
+  font-weight: 600;
+}
+
+.legal-list dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+@media (max-width: 560px) {
+  .legal-list > div {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+.legal-table td {
+  vertical-align: top;
+}
+
+.legal-back {
+  margin-top: 2.5rem;
+}

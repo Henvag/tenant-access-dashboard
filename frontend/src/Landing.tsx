@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { demoUrl, lookupPublicInvite, loginUrl, PublicInvite, API_BASE } from "./api";
+import {
+  API_BASE,
+  BillingPlan,
+  demoUrl,
+  listBillingPlans,
+  lookupPublicInvite,
+  loginUrl,
+  PublicInvite,
+} from "./api";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { useLang } from "./i18n";
@@ -185,7 +193,7 @@ export default function Landing({
       <section className="landing-features" aria-labelledby="landing-features-title">
         <h2 id="landing-features-title">{t("landing.featuresTitle")}</h2>
         <ul className="feature-list">
-          {(["google", "isolated", "roles", "apps"] as const).map((key) => (
+          {(["apps", "google", "offboard", "isolated"] as const).map((key) => (
             <li key={key}>
               <strong>
                 {key === "google" ? (
@@ -201,7 +209,66 @@ export default function Landing({
           ))}
         </ul>
       </section>
+
+      <Pricing />
+
+      <footer className="landing-footer">
+        <a href="/privacy">{t("landing.privacy")}</a>
+      </footer>
     </main>
+  );
+}
+
+/** Public plan list. Prices come from the same catalog the Billing screen uses. */
+function Pricing() {
+  const { t } = useLang();
+  const [plans, setPlans] = useState<BillingPlan[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    listBillingPlans()
+      .then((list) => {
+        if (!cancelled) setPlans(list);
+      })
+      .catch(() => {
+        if (!cancelled) setPlans([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!plans || plans.length === 0) return null;
+
+  return (
+    <section className="landing-pricing" aria-labelledby="landing-pricing-title">
+      <div>
+        <h2 id="landing-pricing-title">{t("landing.pricingTitle")}</h2>
+        <p className="hint">{t("landing.pricingLede")}</p>
+      </div>
+      <ul className="pricing-list">
+        {plans.map((plan) => (
+          <li key={plan.id}>
+            <strong>{t(`billing.plan.${plan.id}` as "billing.plan.free")}</strong>
+            <p className="billing-price">
+              {plan.price_monthly_nok == null
+                ? t("billing.freePrice")
+                : t("billing.monthlyPrice", { amount: String(plan.price_monthly_nok) })}
+            </p>
+            {plan.price_annual_nok != null ? (
+              <p className="hint">
+                {t("landing.pricingAnnual", { amount: String(plan.price_annual_nok) })}
+              </p>
+            ) : null}
+            <ul className="billing-features">
+              <li>{t("billing.feature.seats", { count: String(plan.max_users) })}</li>
+              <li>{t("billing.feature.apps", { count: String(plan.max_apps) })}</li>
+              <li>{t("billing.feature.audit", { days: String(plan.audit_retention_days) })}</li>
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
