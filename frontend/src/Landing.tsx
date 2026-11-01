@@ -13,6 +13,7 @@ import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { TKey, useLang } from "./i18n";
 import {
+  IconCheck,
   IconClose,
   IconGlobe,
   IconGoogle,
@@ -449,41 +450,58 @@ function WorksWith() {
   );
 }
 
-/** Public plan list. Prices come from the same catalog the Billing screen uses. */
+/**
+ * Public plans as three cards, in the style of the Billing screen. Prices come from the
+ * same catalog. Every company starts on Free, so each card's button opens registration.
+ */
 function Pricing({ plans, onRegister }: { plans: BillingPlan[] | null; onRegister: () => void }) {
   const { t } = useLang();
   return (
     <section className="landing-section" id="pricing" aria-labelledby="pricing-title">
       <SectionHead id="pricing-title" title={t("landing.pricingTitle")} lede={t("landing.pricingLede")} />
       {plans && plans.length > 0 ? (
-        <ul className="pricing-list">
-          {plans.map((plan) => (
-            <li key={plan.id}>
-              <strong>{t(`billing.plan.${plan.id}` as "billing.plan.free")}</strong>
-              <p className="billing-price">
-                {plan.price_monthly_nok == null
-                  ? t("billing.freePrice")
-                  : t("billing.monthlyPrice", { amount: String(plan.price_monthly_nok) })}
-              </p>
-              {plan.price_annual_nok != null ? (
-                <p className="hint">
-                  {t("landing.pricingAnnual", { amount: String(plan.price_annual_nok) })}
-                </p>
-              ) : null}
-              <ul className="billing-features">
-                <li>{t("billing.feature.seats", { count: String(plan.max_users) })}</li>
-                <li>{t("billing.feature.apps", { count: String(plan.max_apps) })}</li>
-                <li>{t("billing.feature.audit", { days: String(plan.audit_retention_days) })}</li>
-              </ul>
-            </li>
-          ))}
+        <ul className="plan-cards">
+          {plans.map((plan) => {
+            const free = plan.price_monthly_nok == null;
+            const id = plan.id as "free" | "team" | "business";
+            return (
+              <li key={plan.id} className="plan-card">
+                <div className="plan-card-top">
+                  <h3>{t(`billing.plan.${id}`)}</h3>
+                  <p className="plan-card-for">{t(`landing.plan.${id}.for`)}</p>
+                  <p className="plan-card-price">
+                    <span className="plan-card-amount">NOK {free ? 0 : plan.price_monthly_nok}</span>
+                    <span className="plan-card-per">{t("landing.pricingPerMonth")}</span>
+                  </p>
+                  <p className="plan-card-note">
+                    {plan.price_annual_nok != null
+                      ? t("landing.pricingAnnual", { amount: String(plan.price_annual_nok) })
+                      : t("landing.pricingNoCard")}
+                  </p>
+                  <a className="btn btn-secondary btn-block" href="#signin" onClick={onRegister}>
+                    {free ? t("landing.pricingStartFree") : t("landing.pricingStartPaid")}
+                  </a>
+                </div>
+                <ul className="plan-card-features">
+                  <li>
+                    <IconCheck width={16} height={16} />
+                    {t("billing.feature.seats", { count: String(plan.max_users) })}
+                  </li>
+                  <li>
+                    <IconCheck width={16} height={16} />
+                    {t("billing.feature.apps", { count: String(plan.max_apps) })}
+                  </li>
+                  <li>
+                    <IconCheck width={16} height={16} />
+                    {t("billing.feature.audit", { days: String(plan.audit_retention_days) })}
+                  </li>
+                </ul>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
-      <div className="pricing-action">
-        <a className="btn btn-secondary" href="#signin" onClick={onRegister}>
-          {t("landing.registerCta")}
-        </a>
-      </div>
+      <p className="pricing-included">{t("landing.pricingIncluded")}</p>
     </section>
   );
 }
