@@ -184,7 +184,15 @@ export default function Landing({
         <ul className="feature-list">
           {(["google", "isolated", "roles", "apps"] as const).map((key) => (
             <li key={key}>
-              <strong>{t(`feature.${key}.title`)}</strong>
+              <strong>
+                {key === "google" ? (
+                  <span className="feature-marks" aria-hidden="true">
+                    <IconGoogle width={16} height={16} />
+                    <IconMicrosoft width={16} height={16} />
+                  </span>
+                ) : null}
+                {t(`feature.${key}.title`)}
+              </strong>
               <p>{t(`feature.${key}.body`)}</p>
             </li>
           ))}

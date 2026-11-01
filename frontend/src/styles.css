@@ -508,6 +508,14 @@ input:focus {
   color: var(--muted);
 }
 
+/* The real Google and Microsoft marks, inline with their title. No box. */
+.feature-marks {
+  display: inline-flex;
+  gap: 0.375rem;
+  margin-right: 0.5rem;
+  vertical-align: -0.15em;
+}
+
 .landing-card {
   display: flex;
   flex-direction: column;
