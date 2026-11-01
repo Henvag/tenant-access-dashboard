@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.rls import set_tenant_rls
 from app.billing.plans import limits_for_tenant
 from app.domain import normalize_workspace_domain, workspace_key_for_email
-from app.models import AppGrant, PendingAppGrant, Tenant, User, UserRole
+from app.models import AppGrant, PendingAppGrant, Tenant, TenantDomain, User, UserRole
 from app.models.user import IdentityProvider
 
 
@@ -34,6 +34,40 @@ def workspace_domain_from_claims(email: str, hosted_domain: str | None) -> str:
         return workspace_key_for_email(email)
     except ValueError:
         raise LoginError("invalid_domain") from None
+
+
+async def find_tenant_for_domain(
+    session: AsyncSession, domain: str, *, for_update: bool = False
+) -> Tenant | None:
+    """The company a sign-in domain belongs to: its primary domain, or one it verified by DNS."""
+    query = select(Tenant).where(Tenant.workspace_domain == domain)
+    if for_update:
+        query = query.with_for_update()
+    tenant = await session.scalar(query)
+    if tenant is not None:
+        return tenant
+    query = (
+        select(Tenant)
+        .join(TenantDomain, TenantDomain.tenant_id == Tenant.id)
+        .where(TenantDomain.domain == domain, TenantDomain.verified_at.is_not(None))
+    )
+    if for_update:
+        query = query.with_for_update(of=Tenant)
+    return await session.scalar(query)
+
+
+def is_managed_account(idp: IdentityProvider, claims: dict) -> bool:
+    """True for accounts the company's IT controls.
+
+    Google: a Workspace account carries ``hd``. A personal Google account can
+    use any address it can receive mail on, so it has no ``hd``.
+    Microsoft: any work account (its directory verified the domain, see
+    ``microsoft_verified_email``); personal Microsoft accounts are not managed.
+    """
+    if idp == IdentityProvider.google:
+        return bool((claims.get("hd") or "").strip())
+    tid = str(claims.get("tid") or "")
+    return bool(tid) and tid != MICROSOFT_CONSUMER_TENANT_ID
 
 
 # Personal Microsoft accounts (outlook.com, hotmail.com, ...) all sign in from
@@ -126,23 +160,28 @@ async def upsert_user_from_oidc(
     display_name: str | None,
     hosted_domain: str | None,
     new_tenant_name: str | None = None,
+    managed_account: bool = True,
 ) -> User:
     """Sign in a user whose email the caller has already verified with the IdP.
 
     ``new_tenant_name`` is set when the person chose "Register company": if no
     tenant exists for their verified domain yet, it is created and they become
     its owner. Nobody can register a domain they cannot sign in with.
+
+    ``managed_account`` says whether the IdP account is company-managed (see
+    ``is_managed_account``); companies can require it.
     """
     domain = workspace_domain_from_claims(email, hosted_domain)
-    tenant = await session.scalar(
-        select(Tenant).where(Tenant.workspace_domain == domain).with_for_update()
-    )
+    tenant = await find_tenant_for_domain(session, domain, for_update=True)
     if tenant is None:
         if not new_tenant_name:
             raise LoginError("no_tenant")
         tenant = Tenant(name=new_tenant_name, workspace_domain=domain)
         session.add(tenant)
         await session.flush()
+
+    elif tenant.require_managed_accounts and not managed_account:
+        raise LoginError("managed_account_required")
 
     await set_tenant_rls(session, tenant.id)
 

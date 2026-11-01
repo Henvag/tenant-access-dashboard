@@ -12,6 +12,7 @@ from app.auth.identity import (
     LoginError,
     email_from_oidc_claims,
     google_verified_email,
+    is_managed_account,
     microsoft_verified_email,
     upsert_user_from_oidc,
     write_login_session,
@@ -174,6 +175,7 @@ async def callback(
             display_name=userinfo.get("name"),
             hosted_domain=hosted_domain,
             new_tenant_name=signup_company,
+            managed_account=is_managed_account(idp, userinfo),
         )
         await record_login(db, user=user, idp=idp, request=request)
         await db.commit()

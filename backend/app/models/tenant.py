@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,6 +62,10 @@ class Tenant(Base):
     ask_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
     ask_key_hint: Mapped[str | None] = mapped_column(String(8), nullable=True)
     ask_model: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    # Refuse personal Google accounts on the company address (Workspace / Entra only).
+    require_managed_accounts: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     users: Mapped[list["User"]] = relationship(
         back_populates="tenant",

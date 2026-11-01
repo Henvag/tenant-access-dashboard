@@ -2,11 +2,21 @@ from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.identity import LoginError, workspace_domain_from_claims
+from app.auth.identity import LoginError, find_tenant_for_domain, workspace_domain_from_claims
 from app.auth.rls import set_tenant_rls
 from app.demo import is_demo_tenant
 from app.http_client import client_ip
 from app.models import AuditEvent, AuditEventType, IdentityProvider, Tenant, User, UserRole
+
+
+async def _append(session: AsyncSession, event: AuditEvent) -> AuditEvent:
+    """Write the audit row and queue its webhooks in the same transaction."""
+    from app.webhooks.service import enqueue_for_event
+
+    session.add(event)
+    await session.flush()
+    await enqueue_for_event(session, event)
+    return event
 
 
 def _client_ip(request: Request) -> str | None:
@@ -45,9 +55,7 @@ async def record_login(
         ip_address=ip_address,
         user_agent=user_agent,
     )
-    session.add(event)
-    await session.flush()
-    return event
+    return await _append(session, event)
 
 
 async def record_login_failure(
@@ -69,7 +77,7 @@ async def record_login_failure(
     except LoginError:
         return None
 
-    tenant = await session.scalar(select(Tenant).where(Tenant.workspace_domain == domain))
+    tenant = await find_tenant_for_domain(session, domain)
     if tenant is None:
         return None
 
@@ -85,9 +93,7 @@ async def record_login_failure(
         ip_address=_client_ip(request),
         user_agent=_user_agent(request),
     )
-    session.add(event)
-    await session.flush()
-    return event
+    return await _append(session, event)
 
 
 async def record_user_access_change(
@@ -111,9 +117,7 @@ async def record_user_access_change(
         user_agent=_user_agent(request),
         details=details,
     )
-    session.add(event)
-    await session.flush()
-    return event
+    return await _append(session, event)
 
 
 async def record_app_event(
@@ -141,9 +145,7 @@ async def record_app_event(
         user_agent=user_agent,
         details=details,
     )
-    session.add(event)
-    await session.flush()
-    return event
+    return await _append(session, event)
 
 
 async def record_role_change(
@@ -167,6 +169,28 @@ async def record_role_change(
         user_agent=_user_agent(request),
         details={"from_role": from_role.value, "to_role": to_role.value},
     )
-    session.add(event)
-    await session.flush()
-    return event
+    return await _append(session, event)
+
+
+async def record_admin_event(
+    session: AsyncSession,
+    *,
+    actor: User,
+    event_type: AuditEventType,
+    request: Request,
+    details: dict | None = None,
+) -> AuditEvent:
+    """Append a workspace setting change made by ``actor`` (domains, webhooks, export)."""
+    ip_address, user_agent = _visitor_fields(actor.tenant_id, request)
+    event = AuditEvent(
+        tenant_id=actor.tenant_id,
+        user_id=actor.id,
+        email=actor.email,
+        event_type=event_type,
+        idp=actor.idp,
+        error_code=None,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        details=details,
+    )
+    return await _append(session, event)

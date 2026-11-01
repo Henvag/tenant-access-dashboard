@@ -43,6 +43,8 @@ class Settings(BaseSettings):
 
     # Public read-only sample company behind "Explore the live demo".
     demo_enabled: bool = True
+    # Background sender for queued webhooks. One process should run it.
+    webhooks_worker_enabled: bool = True
 
     @field_validator("database_url", "migration_database_url")
     @classmethod
