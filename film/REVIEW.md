@@ -13,18 +13,26 @@
   are all real UI states.
 - The end card is entered through an object: the sidebar's brand mark lifts out and lands centred.
 
+## Norwegian
+
+The Norwegian film is the same timeline over Norwegian screens, with the lines taken from the
+site's own copy where it exists ("En innlogging for selskapets apper.", "Hver innlogging og
+avvisning logges.", "Utforsk live-demoen"). Only the policy pills and the Failed sign-in pill sit at
+different points, because their labels are longer.
+
 ## Measured
 
 - `hyperframes check`: no errors. Contrast 22 of 22 passed.
 - Frames looked at: the review sheets, a QA set at 0.1, 2, 3.7, 5.3, 7.4, 10.3, 11.8, 12.35, 12.9,
   14.2, 17.5, 18.9, 20.9, 21.25 and 24.5 s, and 12 frames pulled from the rendered MP4.
 - Fixed after review: the Apps heading was clipped (camera moved up 15 px), "Account disabled" touched
-  the window edge (audit push 1.8 to 1.76), the cursor covered the refusal text (now points at the
-  Failed sign-in pill), and screen swaps ghosted for 4 frames (now 2).
+  the window edge (audit push 1.8 to 1.76), the cursor covered the refusal text (it now rests just
+  past the Failed sign-in pill), and screen swaps ghosted for 4 frames (now 2).
 
 ## Not checked
 
 - No sound, on purpose; nobody listened to anything.
+- `check` runs on the English mount only; the Norwegian film was reviewed from its rendered frames.
 - At phone width (360 px) the lines are about 9 px and not readable. The film is a desktop piece; the
   landing page keeps the live demo button right under it.
 

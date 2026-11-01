@@ -1,22 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "./i18n";
 import { IconPause, IconPlay } from "./Icons";
-import film from "./assets/film/tenant-access.mp4";
-import poster from "./assets/film/poster.webp";
+import filmEn from "./assets/film/tenant-access-en.mp4";
+import filmNo from "./assets/film/tenant-access-no.mp4";
+import posterEn from "./assets/film/poster-en.webp";
+import posterNo from "./assets/film/poster-no.webp";
+
+const FILMS = { en: { src: filmEn, poster: posterEn }, no: { src: filmNo, poster: posterNo } };
 
 /**
- * The 25-second product film, made from the demo company with HyperFrames (see film/README.md).
+ * The 25-second product film in the page's language, made from the demo company with HyperFrames
+ * (see film/README.md).
  * Muted and looping; it plays only while on screen and waits for a click when the visitor
  * prefers reduced motion.
  */
 export default function ProductFilm() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const film = FILMS[lang];
   const videoRef = useRef<HTMLVideoElement>(null);
   const heldByVisitor = useRef(false);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
+    // A new language mounts a fresh, paused video.
+    setPlaying(false);
     if (!video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       heldByVisitor.current = true;
@@ -32,7 +40,8 @@ export default function ProductFilm() {
     );
     observer.observe(video);
     return () => observer.disconnect();
-  }, []);
+    // A language switch mounts a new video element (key below), so watch that one.
+  }, [lang]);
 
   function toggle() {
     const video = videoRef.current;
@@ -51,9 +60,10 @@ export default function ProductFilm() {
   return (
     <figure className="film">
       <video
+        key={lang}
         ref={videoRef}
-        src={film}
-        poster={poster}
+        src={film.src}
+        poster={film.poster}
         width={1920}
         height={1080}
         muted

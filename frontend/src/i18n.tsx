@@ -500,7 +500,7 @@ const no: Record<TKey, string> = {
   "app.title": "Tenant Access",
   "brand": "Tenant Access",
 
-  "landing.title": "Én innlogging for selskapets apper.",
+  "landing.title": "En innlogging for selskapets apper.",
   "landing.lede":
     "Folk bruker Google eller Microsoft. Administratorer bestemmer hvem som kan åpne Grafana, Outline og andre verktøy, alt fra ett sted.",
   "landing.featuresTitle": "Hva det gjør",
@@ -537,7 +537,7 @@ const no: Record<TKey, string> = {
   "auth.demo_unavailable": "Live-demoen er slått av akkurat nå.",
   "film.title": "Se det på 25 sekunder",
   "film.lede": "Det en administrator ser i eksempelselskapet. Åpne så live-demoen og klikk deg rundt selv.",
-  "film.summary": "En film på 25 sekunder, på engelsk, fra eksempelselskapet Nordlys Analytics. Eieren ser selskapets apper, velger hvem som kan åpne hver av dem, slår av Jonas Lie og finner den avviste innloggingen hans i revisjonsloggen.",
+  "film.summary": "En film på 25 sekunder fra eksempelselskapet Nordlys Analytics. Eieren ser selskapets apper, velger hvem som kan åpne hver av dem, slår av Jonas Lie og finner den avviste innloggingen hans i revisjonsloggen.",
   "film.pause": "Pause",
   "film.play": "Spill av",
 
