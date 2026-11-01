@@ -29,6 +29,8 @@
   --night-muted: #9aaba5;
   --night-accent: #6cd2b8;
   --night-line: #26332f;
+  --night-raised: #142420;
+  --night-warm: #e7b66b;
 
   /* The sidebar sits on the page ground, separated by one rule. */
   --side-bg: var(--bg);
@@ -911,6 +913,366 @@ html:has(.landing) {
 .security-list a {
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+/* List beside the separation figure on wide screens; the figure drops under it on narrow ones. */
+.security-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.5rem;
+}
+
+@media (min-width: 900px) {
+  .security-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    column-gap: 4rem;
+    align-items: start;
+  }
+
+  .security-body .security-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Separation figure (Security section) ---------- */
+.sep-figure {
+  margin: 0;
+  padding: 1.25rem;
+  background: var(--night-raised);
+  border: 1px solid var(--night-line);
+  border-radius: var(--radius-lg);
+}
+
+.sep-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font-sans);
+}
+
+.sep-figure figcaption {
+  margin-top: 1rem;
+  color: var(--night-muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.sep-req,
+.sep-table {
+  fill: var(--night);
+  stroke: var(--night-line);
+}
+
+.sep-req-on {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+.sep-req-on-a {
+  stroke: var(--night-accent);
+}
+
+.sep-req-on-b {
+  stroke: var(--night-warm);
+}
+
+.sep-dot-a {
+  fill: var(--night-accent);
+}
+
+.sep-dot-b {
+  fill: var(--night-warm);
+}
+
+.sep-req-name {
+  fill: var(--night-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sep-req-call,
+.sep-table-name {
+  fill: var(--night-muted);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+}
+
+.sep-gate {
+  stroke: var(--night-muted);
+  stroke-dasharray: 4 4;
+  opacity: 0.6;
+}
+
+.sep-gate-label,
+.sep-row-company {
+  fill: var(--night-muted);
+  font-size: 12px;
+}
+
+.sep-path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sep-path-a,
+.sep-path-x {
+  stroke: var(--night-accent);
+}
+
+.sep-path-b {
+  stroke: var(--night-warm);
+}
+
+.sep-refused {
+  opacity: 0;
+}
+
+.sep-cross {
+  fill: none;
+  stroke: var(--night-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.sep-refused-label {
+  fill: var(--night-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sep-row {
+  opacity: 0.55;
+}
+
+.sep-row-rule {
+  stroke: var(--night-line);
+}
+
+.sep-row-email {
+  fill: var(--night-ink);
+  font-size: 14px;
+}
+
+/* One 10 s loop: A's rows, then B's rows, then A reaching for B's row is refused. */
+.sep-anim {
+  animation-duration: 10s;
+  animation-iteration-count: infinite;
+  animation-timing-function: var(--ease);
+  animation-play-state: paused;
+}
+
+.sep-figure.running .sep-anim {
+  animation-play-state: running;
+}
+
+.sep-req-on-a {
+  animation-name: sep-req-a;
+}
+
+.sep-req-on-b {
+  animation-name: sep-req-b;
+}
+
+.sep-path-a {
+  animation-name: sep-path-a;
+}
+
+.sep-path-b {
+  animation-name: sep-path-b;
+}
+
+.sep-path-x {
+  animation-name: sep-path-x;
+}
+
+.sep-refused {
+  animation-name: sep-refused;
+}
+
+.sep-row-a {
+  animation-name: sep-row-a;
+}
+
+.sep-row-b {
+  animation-name: sep-row-b;
+}
+
+@keyframes sep-req-a {
+  0%,
+  1% {
+    opacity: 0;
+  }
+  4%,
+  30% {
+    opacity: 1;
+  }
+  34%,
+  68% {
+    opacity: 0;
+  }
+  71%,
+  94% {
+    opacity: 1;
+  }
+  98%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sep-req-b {
+  0%,
+  35% {
+    opacity: 0;
+  }
+  38%,
+  64% {
+    opacity: 1;
+  }
+  68%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sep-path-a {
+  0%,
+  3% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  11%,
+  30% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  34%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes sep-path-b {
+  0%,
+  37% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  45%,
+  64% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  68%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes sep-path-x {
+  0%,
+  71% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  78%,
+  94% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  98%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes sep-refused {
+  0%,
+  77% {
+    opacity: 0;
+  }
+  80%,
+  94% {
+    opacity: 1;
+  }
+  98%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sep-row-a {
+  0%,
+  9% {
+    opacity: 0.55;
+  }
+  13%,
+  30% {
+    opacity: 1;
+  }
+  34%,
+  44% {
+    opacity: 0.55;
+  }
+  48%,
+  64% {
+    opacity: 0.15;
+  }
+  68%,
+  100% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes sep-row-b {
+  0%,
+  9% {
+    opacity: 0.55;
+  }
+  13%,
+  30% {
+    opacity: 0.15;
+  }
+  34%,
+  44% {
+    opacity: 0.55;
+  }
+  48%,
+  64% {
+    opacity: 1;
+  }
+  68%,
+  100% {
+    opacity: 0.55;
+  }
+}
+
+/* Reduced motion: hold the first scene, A's request with only A's rows lit. */
+@media (prefers-reduced-motion: reduce) {
+  .sep-anim {
+    animation: none !important;
+  }
+
+  .sep-req-on-a,
+  .sep-row-a {
+    opacity: 1;
+  }
+
+  .sep-path-a {
+    stroke-dashoffset: 0;
+  }
+
+  .sep-row-b {
+    opacity: 0.15;
+  }
 }
 
 @media (min-width: 900px) {

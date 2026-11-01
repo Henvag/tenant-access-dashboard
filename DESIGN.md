@@ -47,6 +47,8 @@ The landing page has two dark surfaces, the Security section and the featured (T
 | `--night-muted` | `#9aaba5` | Body text on night (7.4:1) |
 | `--night-accent` | `#6cd2b8` | Links on night |
 | `--night-line` | `#26332f` | Rules on night |
+| `--night-raised` | `#142420` | The separation figure's panel on night |
+| `--night-warm` | `#e7b66b` | Company B in the separation figure, nothing else |
 
 - The accent goes on data and links, not on chrome, and stays under about 5% of a screen. Primary
   buttons are near-black (`--ink`), one per view; the others are `.btn-secondary` (white, `--line-strong`
@@ -106,6 +108,10 @@ The landing page has two dark surfaces, the Security section and the featured (T
   the browser default `ease`. Loading loops (spinner, typing dots) may stay linear.
 - Animate only `transform` and `opacity`. No hover lift on cards; a hover changes the border colour.
 - Everything respects `prefers-reduced-motion`.
+- The one looping animation is the separation figure in the Security section (`SeparationFigure.tsx`):
+  10 s, plays only while on screen, holds its first scene with reduced motion. Its request lines draw
+  with `stroke-dashoffset`, the single exception to transform/opacity. It shows the real mechanism
+  (one `users` table, row-level security), never a metaphor such as companies being torn apart.
 
 ## Copy
 
