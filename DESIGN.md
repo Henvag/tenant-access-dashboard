@@ -78,5 +78,7 @@ of generated-design tells and its study of real app screens), [HyperFrames](http
 
 - Screenshots are the real product, captured from the demo company with `scripts/capture-demo.mjs`.
   Never a mock dashboard built from grey bars.
+- Real brand marks (Google, Microsoft, Grafana, Outline) are welcome where they name something, small and
+  inline. Decorative icons in tinted boxes, repeated on every item, are not.
 - After a visual change, retake the tour images (`frontend/src/assets/tour/`) and check the hotspot
   positions in `ProductTour.tsx` still land on their targets.
