@@ -263,7 +263,9 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                   </td>
                   <td>
                     {view.reason ? (
-                      <span className={TONE_CLASS[view.reason.tone]}>{view.reason.text}</span>
+                      <span className={view.reason.tone === "danger" ? "reason-text reason-bad" : "reason-text"}>
+                        {view.reason.text}
+                      </span>
                     ) : (
                       <span className="muted">{"-"}</span>
                     )}
