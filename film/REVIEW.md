@@ -16,7 +16,7 @@
 ## Norwegian
 
 The Norwegian film is the same timeline over Norwegian screens, with the lines taken from the
-site's own copy where it exists ("Én innlogging for selskapets apper.", "Hver innlogging og
+site's own copy where it exists ("En innlogging for selskapets apper.", "Hver innlogging og
 avvisning logges.", "Utforsk live-demoen"). Only the policy pills and the Failed sign-in pill sit at
 different points, because their labels are longer.
 

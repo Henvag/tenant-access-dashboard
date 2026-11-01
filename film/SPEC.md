@@ -32,6 +32,6 @@ SHOTS:
 
 BANNED: dark void, glow, gradients outside the brand mark, glass, three cards in a row, a title over a dimmed screenshot, the logo in a corner, click rings, UI tilted in 3D, invented UI, em dashes, every line entering the same way, floating or breathing loops.
 
-NORWEGIAN: same shots and timings. L1 "Én innlogging for selskapets apper." L2 "Velg hvem som kan åpne hver app." L3 "Slutter noen? Slå av tilgangen deres." / "Neste innlogging i en app blir avvist." L4 "Hver innlogging og avvisning logges." ("avvisning" in red). CTA "Utforsk live-demoen".
+NORWEGIAN: same shots and timings. L1 "En innlogging for selskapets apper." L2 "Velg hvem som kan åpne hver app." L3 "Slutter noen? Slå av tilgangen deres." / "Neste innlogging i en app blir avvist." L4 "Hver innlogging og avvisning logges." ("avvisning" in red). CTA "Utforsk live-demoen".
 
 QA: 2.0 (tiles readable), 5.2 (Everyone spotlit), 10.3 (Jonas Active readable), 12.7 (Disabled status), 18.6 (Account disabled readable, cursor on it), 20.9 (mark mid-carry), 24.5 (end card complete).

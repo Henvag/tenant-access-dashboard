@@ -500,7 +500,7 @@ const no: Record<TKey, string> = {
   "app.title": "Tenant Access",
   "brand": "Tenant Access",
 
-  "landing.title": "Én innlogging for selskapets apper.",
+  "landing.title": "En innlogging for selskapets apper.",
   "landing.lede":
     "Folk bruker Google eller Microsoft. Administratorer bestemmer hvem som kan åpne Grafana, Outline og andre verktøy, alt fra ett sted.",
   "landing.featuresTitle": "Hva det gjør",
