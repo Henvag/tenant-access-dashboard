@@ -268,18 +268,16 @@ export default function Landing({
       <section className="landing-night" id="security" aria-labelledby="security-title">
         <div className="landing-night-inner">
           <SectionHead id="security-title" title={t("security.title")} lede={t("security.lede")} />
-          <div className="security-body">
-            <ul className="security-list">
-              {(["signin", "isolated", "audit", "hosting"] as const).map((key) => (
-                <li key={key}>
-                  <strong>{t(`security.${key}.title`)}</strong>
-                  <p>{t(`security.${key}.body`)}</p>
-                  {key === "hosting" ? <a href="/privacy">{t("landing.privacy")}</a> : null}
-                </li>
-              ))}
-            </ul>
-            <SeparationFigure />
-          </div>
+          <SeparationFigure />
+          <ul className="security-list">
+            {(["signin", "isolated", "audit", "hosting"] as const).map((key) => (
+              <li key={key}>
+                <strong>{t(`security.${key}.title`)}</strong>
+                <p>{t(`security.${key}.body`)}</p>
+                {key === "hosting" ? <a href="/privacy">{t("landing.privacy")}</a> : null}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

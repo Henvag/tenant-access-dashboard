@@ -108,10 +108,15 @@ The landing page has two dark surfaces, the Security section and the featured (T
   the browser default `ease`. Loading loops (spinner, typing dots) may stay linear.
 - Animate only `transform` and `opacity`. No hover lift on cards; a hover changes the border colour.
 - Everything respects `prefers-reduced-motion`.
-- The one looping animation is the separation figure in the Security section (`SeparationFigure.tsx`):
-  10 s, plays only while on screen, holds its first scene with reduced motion. Its request lines draw
-  with `stroke-dashoffset`, the single exception to transform/opacity. It shows the real mechanism
-  (one `users` table, row-level security), never a metaphor such as companies being torn apart.
+- The one story animation is the separation figure in the Security section (`SeparationFigure.tsx`).
+  Two hands grip one shared `users` table, it cracks, they pull it apart, and each company's rows
+  land on its own half with row-level security in the gap. It is meant to say it without words.
+  - GSAP is the only animation library. It is loaded with a dynamic `import("gsap")`, so it stays out
+    of the main bundle.
+  - It plays once, when half the figure is on screen, and has a Play again button. Nothing loops.
+  - With reduced motion it shows the end scene, without the hands or the button.
+  - Exceptions to transform/opacity, all inside this figure: the crack draws with
+    `stroke-dashoffset`, and the row bars shrink with the SVG `width` attribute.
 
 ## Copy
 

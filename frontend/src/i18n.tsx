@@ -70,9 +70,9 @@ const en = {
   "security.figure.companyA": "Company A",
   "security.figure.companyB": "Company B",
   "security.figure.gate": "Row-level security",
-  "security.figure.refused": "Refused",
-  "security.figure.caption":
-    "Both companies' people sit in the same table. Each request carries its company, and the database returns only that company's rows. Another company's rows never come back, even when a request asks for them.",
+    "security.figure.caption":
+    "Every company's people live in one shared table. On every request, row-level security pulls that table apart, so each company only ever gets its own rows.",
+  "security.figure.replay": "Play again",
   "faq.title": "Common questions",
   "faq.q1": "We already use Microsoft 365 or Google Workspace. Why add this?",
   "faq.a1": "Keep them. Your people still sign in with those accounts. Tenant Access sits between them and your self-hosted tools, so you choose who may open each tool and can switch someone off in one place.",
@@ -733,9 +733,9 @@ const no: Record<TKey, string> = {
   "security.figure.companyA": "Selskap A",
   "security.figure.companyB": "Selskap B",
   "security.figure.gate": "Radnivåsikkerhet",
-  "security.figure.refused": "Avvist",
-  "security.figure.caption":
-    "Begge selskapenes personer ligger i samme tabell. Hver forespørsel bærer med seg selskapet sitt, og databasen gir bare tilbake det selskapets rader. Et annet selskaps rader kommer aldri tilbake, selv når en forespørsel ber om dem.",
+    "security.figure.caption":
+    "Alle selskapers personer ligger i en felles tabell. Ved hver forespørsel trekker radnivåsikkerhet tabellen fra hverandre, så hvert selskap bare får sine egne rader.",
+  "security.figure.replay": "Spill av igjen",
   "faq.title": "Vanlige spørsmål",
   "faq.q1": "Vi bruker allerede Microsoft 365 eller Google Workspace. Hvorfor trenger vi dette?",
   "faq.a1": "Behold dem. Folk logger fortsatt inn med de kontoene. Tenant Access ligger mellom dem og verktøyene dere drifter selv, så dere velger hvem som kan åpne hvert verktøy og kan slå av en person på ett sted.",
@@ -805,7 +805,7 @@ const no: Record<TKey, string> = {
   "refresh": "Oppdater",
 
   "stats.people": "Personer",
-  "stats.peopleHint": "Har logget inn minst én gang",
+  "stats.peopleHint": "Har logget inn minst en gang",
   "stats.admins": "Administratorer",
   "stats.adminsHint": "Kan administrere dette arbeidsområdet",
   "stats.members": "Medlemmer",
@@ -1049,7 +1049,7 @@ const no: Record<TKey, string> = {
   "apps.endpoint.jwks": "Nøkler (JWKS)",
   "apps.clientId": "Klient-ID",
   "apps.clientSecret": "Klienthemmelighet",
-  "apps.secretOnce": "Kopier den nå. Den vises bare én gang, men du kan rotere den senere.",
+  "apps.secretOnce": "Kopier den nå. Den vises bare en gang, men du kan rotere den senere.",
   "apps.created": "{name} er registrert",
   "apps.rotated": "Ny hemmelighet for {name}",
   "apps.nameLabel": "Navn",
