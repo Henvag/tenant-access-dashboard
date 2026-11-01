@@ -6,7 +6,7 @@ I wanted a small, finished project that shows how I think about multi-tenant Saa
 
 [![CI](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Henvag/tenant-access-dashboard/actions/workflows/ci.yml)
 
-**Try it in a minute:** open https://tenantaccess.me and click through the product tour, or press **Explore the live demo** to land in a sample company (Nordlys Analytics) as its owner. No account needed, and the demo is read-only.
+**Try it in a minute:** open https://tenantaccess.me and watch the 25-second product film, or press **Explore the live demo** to land in a sample company (Nordlys Analytics) as its owner. No account needed, and the demo is read-only.
 
 | | URL | Role |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ Letting anonymous visitors sit in an admin seat is only fine if the seat can't d
 - The demo refuses to start if the database role is a superuser or has `BYPASSRLS`, because the admin views rely on RLS to stay inside one company.
 - Each demo sign-in moves the seeded timestamps forward so the activity always looks recent, and prunes anything older than a day.
 
-Code: [`backend/app/demo.py`](backend/app/demo.py), tests in [`backend/tests/test_demo.py`](backend/tests/test_demo.py). The landing-page tour is plain React over screenshots of that company ([`frontend/src/ProductTour.tsx`](frontend/src/ProductTour.tsx)); [`scripts/capture-demo.mjs`](scripts/capture-demo.mjs) retakes them.
+Code: [`backend/app/demo.py`](backend/app/demo.py), tests in [`backend/tests/test_demo.py`](backend/tests/test_demo.py). The landing-page film is made from that company with [HyperFrames](https://github.com/heygen-com/hyperframes); its source and capture script are in [`film/`](film/). [`scripts/capture-demo.mjs`](scripts/capture-demo.mjs) retakes the README screenshots.
 
 ## Sign-in -> tenant
 
@@ -162,7 +162,8 @@ backend/
     config.py    public URL from RENDER_EXTERNAL_URL or PUBLIC_BASE_URL
   alembic/
   tests/
-frontend/        EN/NO i18n, dashboard, landing + product tour
+frontend/        EN/NO i18n, dashboard, landing + product film
+film/            HyperFrames source of the landing-page film
 Dockerfile · docker-compose.yml · render.yaml · fly.toml
 infra/render/  Terraform twin of the Render Blueprint (optional)
 docs/ops.md    How I'd run this + threat notes
@@ -296,4 +297,4 @@ I capped the scope so I could actually finish it. No fancy role hierarchy, no on
 
 The OIDC provider is intentionally a subset: authorization code + PKCE with confidential clients, RS256, no refresh tokens, no dynamic client registration, no consent screen (the admin's access policy *is* the consent). Enough for real apps like Grafana; not a drop-in Keycloak.
 
-What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and live Grafana + Outline wired to it**, a **read-only public demo** with a product tour, basic observability, EN/NO UI, **one portable image**, a short ops write-up, and Terraform as an optional path next to the Blueprint.
+What I *did* want in the repo: RLS isolation, Google + Entra, an audit trail (including failures, access/role changes and app sign-ins), owner vs promoted admin, disable/re-enable, **an OIDC provider with per-app access policies and live Grafana + Outline wired to it**, a **read-only public demo** with a short product film, basic observability, EN/NO UI, **one portable image**, a short ops write-up, and Terraform as an optional path next to the Blueprint.

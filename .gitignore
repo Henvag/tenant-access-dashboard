@@ -27,3 +27,9 @@ override.tf.json
 
 # Local preview: built frontend copied next to the API
 backend/app/static/
+
+# Landing film: fetched or regenerated assets
+film/assets/
+film/renders/
+film/.hyperframes/
+film/poster.png

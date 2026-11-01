@@ -1,0 +1,407 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Schibsted Grotesk";
+      src: url("assets/fonts/SchibstedGrotesk-latin-var.woff2") format("woff2");
+      font-weight: 400 900;
+      font-style: normal;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      font-family: "Schibsted Grotesk", sans-serif;
+      color: #111418;
+    }
+    /* Left column: one line at a time */
+    .d-line {
+      position: absolute;
+      left: 192px;
+      width: 408px;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .d-big {
+      font-size: 50px;
+      line-height: 1.12;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .d-quiet {
+      margin-top: 22px;
+      font-size: 28px;
+      line-height: 1.3;
+      font-weight: 400;
+      color: #5f6670;
+    }
+    .d-w {
+      display: inline-block;
+      opacity: 0;
+    }
+    .d-blur {
+      filter: blur(6px);
+    }
+    .d-red {
+      color: #b42318;
+    }
+    /* The app window */
+    #d-win {
+      position: absolute;
+      left: 648px;
+      top: 173px;
+      width: 1176px;
+      height: 735px;
+      border-radius: 12px;
+      box-shadow:
+        0 1px 2px rgba(17, 20, 24, 0.06),
+        0 18px 48px rgba(17, 20, 24, 0.1);
+      background: #f7f8f8;
+    }
+    #d-clip {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    #d-cam {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1440px;
+      height: 900px;
+      transform-origin: 0 0;
+    }
+    .d-scr {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1440px;
+      height: 900px;
+      overflow: hidden;
+    }
+    .d-scr img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1440px;
+      height: 900px;
+    }
+    .d-later {
+      opacity: 0;
+    }
+    #d-audit-scroll {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1440px;
+      height: 1971px;
+    }
+    #d-audit-scroll img {
+      height: 1971px;
+    }
+    #d-audit-side {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 248px;
+      height: 900px;
+      overflow: hidden;
+    }
+    .d-veil {
+      position: absolute;
+      background: #ffffff;
+      opacity: 0;
+    }
+    #d-hover {
+      position: absolute;
+      left: 1203px;
+      top: 677px;
+      width: 164px;
+      height: 37px;
+      border-radius: 4px;
+      background: #f0f2f2;
+      mix-blend-mode: multiply;
+      opacity: 0;
+    }
+    #d-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 36px;
+      height: 46px;
+      transform-origin: 3px 2px;
+    }
+    #d-cursor svg {
+      position: absolute;
+      left: -3px;
+      top: -2px;
+      filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.28));
+    }
+    #d-mark {
+      position: absolute;
+      left: 912px;
+      top: 330px;
+      width: 96px;
+      height: 96px;
+      transform-origin: 0 0;
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="demo" data-width="1920" data-height="1080">
+    <!-- Lines -->
+    <div id="d-l1" class="d-line clip" data-start="0.2" data-duration="3.1" data-track-index="2">
+      <p class="d-big">
+        <span class="d-w d-blur">One</span> <span class="d-w d-blur">sign-in</span>
+        <span class="d-w d-blur">for</span> <span class="d-w d-blur">your</span>
+        <span class="d-w d-blur">company's</span> <span class="d-w d-blur">apps.</span>
+      </p>
+    </div>
+    <div id="d-l2" class="d-line clip" data-start="3.75" data-duration="5.0" data-track-index="2">
+      <p class="d-big">
+        <span class="d-w">Choose</span> <span class="d-w">who</span> <span class="d-w">can</span>
+        <span class="d-w">open</span> <span class="d-w">each</span> <span class="d-w">app.</span>
+      </p>
+    </div>
+    <div id="d-l3" class="d-line clip" data-start="9.1" data-duration="6.5" data-track-index="2">
+      <p id="d-l3a" class="d-big d-w d-blur">Someone leaves? Switch off their access.</p>
+      <p id="d-l3b" class="d-quiet d-w d-blur">Their next app sign-in is refused.</p>
+    </div>
+    <div id="d-l4" class="d-line clip" data-start="16.1" data-duration="4.5" data-track-index="2">
+      <p class="d-big">
+        <span class="d-w d-blur">Every</span> <span class="d-w d-blur">sign-in</span>
+        <span class="d-w d-blur">and</span> <span class="d-w d-blur d-red">refusal</span>
+        <span class="d-w d-blur">is</span> <span class="d-w d-blur">logged.</span>
+      </p>
+    </div>
+
+    <!-- The real product, captured from the demo company at 2x -->
+    <div id="d-win">
+      <div id="d-clip">
+        <div id="d-cam" data-layout-allow-overflow>
+          <div id="d-scr-overview" class="d-scr"><img src="assets/shots/overview.png" alt="" /></div>
+          <div id="d-scr-apps" class="d-scr d-later">
+            <img src="assets/shots/apps.png" alt="" />
+            <div id="d-v1" class="d-veil" style="left: 311px; top: 236px; width: 1067px; height: 86px"></div>
+            <div id="d-v2" class="d-veil" style="left: 311px; top: 322px; width: 1067px; height: 86px"></div>
+            <div id="d-v3" class="d-veil" style="left: 311px; top: 408px; width: 1067px; height: 86px"></div>
+          </div>
+          <div id="d-scr-people" class="d-scr d-later"><img src="assets/shots/people-active.png" alt="" /></div>
+          <div id="d-scr-menu" class="d-scr d-later">
+            <img src="assets/shots/people-menu.png" alt="" />
+            <div id="d-hover"></div>
+          </div>
+          <div id="d-scr-disabled" class="d-scr d-later"><img src="assets/shots/people-disabled.png" alt="" /></div>
+          <div id="d-scr-audit" class="d-scr d-later">
+            <div id="d-audit-scroll">
+              <img src="assets/shots/audit-full.png" alt="" />
+              <div id="d-va" class="d-veil" style="left: 305px; top: 237px; width: 1078px; height: 1024px"></div>
+              <div id="d-vb" class="d-veil" style="left: 305px; top: 1325px; width: 1078px; height: 64px"></div>
+              <div id="d-vc" class="d-veil" style="left: 305px; top: 1453px; width: 1078px; height: 447px"></div>
+            </div>
+            <div id="d-audit-side"><img src="assets/shots/audit.png" alt="" /></div>
+          </div>
+        </div>
+        <div id="d-cursor">
+          <svg width="36" height="46" viewBox="0 0 23.5 30" aria-hidden="true">
+            <path
+              d="M2 1.5 L2 24 L7.6 18.9 L11.2 27.2 L15 25.6 L11.5 17.5 L19 17.5 Z"
+              fill="#111418"
+              stroke="#ffffff"
+              stroke-width="1.6"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- The sidebar's brand mark, lifted out at the end and carried to the end card -->
+    <svg id="d-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <defs>
+        <linearGradient id="d-markGrad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#14b8a6" />
+          <stop offset="1" stop-color="#0f766e" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="9" fill="url(#d-markGrad)" />
+      <path
+        d="M9 16.5c0-3.6 2.9-6.5 6.5-6.5h1.2c2.4 0 4.3 1.9 4.3 4.3v.4c0 1.7-1.4 3.1-3.1 3.1H16"
+        fill="none"
+        stroke="#ecfdf8"
+        stroke-width="2.2"
+        stroke-linecap="round"
+      />
+      <circle cx="16" cy="16.5" r="2.2" fill="#ecfdf8" />
+    </svg>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const $ = (s) => document.querySelector(s);
+      const cam = $("#d-cam");
+      const cur = $("#d-cursor");
+
+      // Window and camera geometry. Content coordinates are the app's CSS pixels (1440 x 900).
+      const W = 1176;
+      const H = 735;
+      const S0 = W / 1440;
+      const BASE = { x: 0, y: 0, scale: S0 };
+      function region(cx, cy, s) {
+        let x = W / 2 - cx * s;
+        let y = H / 2 - cy * s;
+        x = Math.min(0, Math.max(W - 1440 * s, x));
+        y = Math.min(0, Math.max(H - 900 * s, y));
+        return { x, y, scale: s };
+      }
+      const R = {
+        tiles: region(589, 340, 1.84),
+        apps: region(610, 330, 1.84),
+        peopleA: region(620, 613, 1.84),
+        peopleB: region(1075, 640, 1.84),
+        audit: region(652, 450, 1.76),
+      };
+      // Points the cursor visits, from the capture's measured boxes.
+      const P = {
+        grafana: { x: 591, y: 383 },
+        navApps: { x: 76, y: 368 },
+        everyone: { x: 466, y: 262 },
+        assigned: { x: 483, y: 348 },
+        admins: { x: 457, y: 434 },
+        navPeople: { x: 76, y: 325 },
+        kebab: { x: 1358, y: 613 },
+        disable: { x: 1250, y: 695 },
+        navAudit: { x: 76, y: 455 },
+        refused: { x: 706, y: 392 },
+      };
+      const AUDIT_SCROLL = 907;
+
+      let C = BASE; // camera state
+      let K = { x: W + 60, y: H + 80 }; // cursor in window coordinates
+      let G = null; // content point the cursor rests on
+      const first = new Set();
+      function ir(key) {
+        // Only the first tween on each property set renders its start immediately.
+        if (first.has(key)) return false;
+        first.add(key);
+        return true;
+      }
+      const win = (p, c) => ({ x: c.x + c.scale * p.x, y: c.y + c.scale * p.y });
+
+      function camTo(t, d, n, ease = "power2.inOut") {
+        tl.fromTo(cam, { x: C.x, y: C.y, scale: C.scale }, { x: n.x, y: n.y, scale: n.scale, duration: d, ease, immediateRender: ir("cam") }, t);
+        if (G) {
+          // The cursor rides with the content under it.
+          const b = win(G, n);
+          tl.fromTo(cur, { x: K.x, y: K.y }, { x: b.x, y: b.y, duration: d, ease, immediateRender: ir("cur") }, t);
+          K = b;
+        }
+        C = n;
+      }
+      function cursorTo(t, d, p, from, ease = "power3.inOut") {
+        const a = from || K;
+        const b = win(p, C);
+        tl.fromTo(cur, { x: a.x, y: a.y }, { x: b.x, y: b.y, duration: d, ease, immediateRender: ir("cur") }, t);
+        K = b;
+        G = p;
+      }
+      function click(t) {
+        tl.fromTo(cur, { scale: 1 }, { scale: 0.86, duration: 0.07, ease: "power2.in", immediateRender: ir("click") }, t);
+        tl.fromTo(cur, { scale: 0.86 }, { scale: 1, duration: 0.12, ease: "power2.out", immediateRender: false }, t + 0.07);
+      }
+      function show(sel, t, d = 0.06) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: d, ease: "power1.out", immediateRender: false }, t);
+      }
+      function fade(sel, t, to, d = 0.25) {
+        const el = $(sel);
+        const from = el._to === undefined ? 0 : el._to;
+        tl.fromTo(el, { opacity: from }, { opacity: to, duration: d, ease: "power2.out", immediateRender: false }, t);
+        el._to = to;
+      }
+      // Lines
+      function wordsBlurIn(sel, t) {
+        tl.fromTo(sel + " .d-w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, ease: "power4.out", stagger: 0.067, immediateRender: false }, t);
+      }
+      function lineBlurIn(sel, t) {
+        tl.fromTo(sel, { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out", immediateRender: false }, t);
+      }
+      function lineOut(sel, t) {
+        tl.fromTo(sel, { opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(6px)", duration: 0.16, ease: "power2.in", immediateRender: false }, t);
+      }
+
+      // Shot 1: overview
+      tl.fromTo("#d-win", { scale: 0.97 }, { scale: 1, duration: 1.0, ease: "expo.out" }, 0);
+      wordsBlurIn("#d-l1", 0.25);
+      camTo(1.0, 0.6, R.tiles);
+      cursorTo(1.7, 0.7, P.grafana, { x: W + 40, y: H + 40 });
+      camTo(2.65, 0.5, BASE);
+      lineOut("#d-l1 .d-w", 3.05);
+      cursorTo(3.15, 0.45, P.navApps);
+      click(3.6);
+      show("#d-scr-apps", 3.65);
+
+      // Shot 2: apps
+      tl.fromTo("#d-l2 .d-w", { opacity: 0, color: "#c5cacd" }, { opacity: 1, color: "#c5cacd", duration: 0.12, ease: "power1.out", immediateRender: false }, 3.8);
+      tl.fromTo("#d-l2 .d-w", { color: "#c5cacd" }, { color: "#111418", duration: 0.2, ease: "power1.out", stagger: 0.08, immediateRender: false }, 3.95);
+      camTo(4.0, 0.6, R.apps);
+      cursorTo(4.75, 0.5, P.everyone, { x: 760, y: H + 50 });
+      fade("#d-v2", 5.1, 0.6);
+      fade("#d-v3", 5.1, 0.6);
+      cursorTo(5.85, 0.4, P.assigned);
+      fade("#d-v1", 6.15, 0.6);
+      fade("#d-v2", 6.15, 0);
+      cursorTo(6.85, 0.4, P.admins);
+      fade("#d-v2", 7.15, 0.6);
+      fade("#d-v3", 7.15, 0);
+      fade("#d-v1", 7.95, 0);
+      fade("#d-v2", 7.95, 0);
+      camTo(8.0, 0.5, BASE);
+      lineOut("#d-l2 .d-w", 8.5);
+      cursorTo(8.5, 0.45, P.navPeople);
+      click(8.95);
+      show("#d-scr-people", 9.0);
+
+      // Shot 3: people. Jonas is active, then switched off.
+      lineBlurIn("#d-l3a", 9.15);
+      camTo(9.3, 0.6, R.peopleA);
+      camTo(10.55, 0.6, R.peopleB);
+      cursorTo(11.0, 0.55, P.kebab, { x: W + 40, y: 520 });
+      click(11.6);
+      show("#d-scr-menu", 11.65, 0.06);
+      cursorTo(11.9, 0.4, P.disable);
+      tl.fromTo("#d-hover", { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, 12.25);
+      click(12.45);
+      show("#d-scr-disabled", 12.5, 0.12);
+      lineBlurIn("#d-l3b", 12.7);
+      camTo(13.2, 0.6, R.peopleA);
+      camTo(15.0, 0.5, BASE);
+      lineOut("#d-l3a, #d-l3b", 15.35);
+      cursorTo(15.5, 0.45, P.navAudit);
+      click(15.95);
+      show("#d-scr-audit", 16.0);
+
+      // Shot 4: audit. Scroll to Jonas's refused sign-in.
+      wordsBlurIn("#d-l4", 16.2);
+      camTo(16.3, 0.6, R.audit);
+      tl.fromTo("#d-audit-scroll", { y: 0 }, { y: -AUDIT_SCROLL, duration: 1.1, ease: "power2.inOut" }, 16.95);
+      fade("#d-va", 18.0, 0.6, 0.3);
+      fade("#d-vb", 18.0, 0.6, 0.3);
+      fade("#d-vc", 18.0, 0.6, 0.3);
+      cursorTo(18.3, 0.6, P.refused, { x: 700, y: H + 50 });
+      camTo(20.0, 0.5, BASE);
+      lineOut("#d-l4 .d-w", 20.3);
+
+      // Hand-off: the sidebar's mark lifts out and lands where the end card holds it.
+      const mx = 648 + S0 * 22.4;
+      const my = 173 + S0 * 21.6;
+      const ms = (S0 * 28) / 96;
+      tl.fromTo("#d-mark", { x: mx - 912, y: my - 330, scale: ms }, { x: 0, y: 0, scale: 1, duration: 0.65, ease: "power2.inOut" }, 20.55);
+      tl.fromTo("#d-mark", { opacity: 0 }, { opacity: 1, duration: 0.01, immediateRender: false }, 20.55);
+      tl.fromTo("#d-win", { opacity: 1, scale: 1, filter: "blur(0px)" }, { opacity: 0, scale: 0.95, filter: "blur(8px)", duration: 0.45, ease: "power2.in", immediateRender: false }, 20.6);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["demo"] = tl;
+    })();
+  </script>
+</template>

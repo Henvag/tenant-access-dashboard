@@ -280,6 +280,15 @@ export function IconPlay(props: IconProps) {
   );
 }
 
+export function IconPause(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 9v6M14 9v6" />
+    </svg>
+  );
+}
+
 export function IconChevronLeft(props: IconProps) {
   return (
     <svg {...base(props)}>
