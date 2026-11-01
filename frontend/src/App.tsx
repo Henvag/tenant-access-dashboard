@@ -28,7 +28,8 @@ function readEntryState(): EntryState {
   const inviteToken = params.get("invite");
 
   for (const key of ["error", "app", "reason", "continue", "invite", "_"]) params.delete(key);
-  const clean = `${window.location.pathname}${params.size ? `?${params}` : ""}`;
+  // Keep the hash so a link such as tenantaccess.me/#pricing still lands on its section.
+  const clean = `${window.location.pathname}${params.size ? `?${params}` : ""}${window.location.hash}`;
   window.history.replaceState(null, "", clean);
 
   return {

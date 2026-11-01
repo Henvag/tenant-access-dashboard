@@ -22,18 +22,37 @@ of generated-design tells and its study of real app screens), [HyperFrames](http
 
 ## Colour
 
+The palette is called Fjord: pale green-grey grounds, near-black type and one deep green accent.
+
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` | `#f7f8f8` | Page ground, also the sidebar |
+| `--bg` | `#f5f7f6` | Page ground, also the sidebar |
 | `--surface` | `#ffffff` | Cards and panels |
-| `--surface-2` | `#f0f2f2` | Inputs, segmented controls, avatars |
-| `--ink` | `#111418` | Text and the primary button |
-| `--muted` | `#5f6670` | Secondary text (passes 4.5:1 on `--bg`) |
-| `--line` | `#e3e6e7` | Borders and row rules |
-| `--accent` | `#0f766e` | Links, focus rings, data that matters |
+| `--surface-2` | `#ecf0ef` | Inputs, segmented controls, avatars |
+| `--ink` | `#0f1715` | Text and the primary button |
+| `--ink-2` | `#29332f` | Leads and body copy under a heading |
+| `--muted` | `#56625e` | Secondary text (5.9:1 on `--bg`) |
+| `--line` | `#dbe2e0` | Borders and row rules |
+| `--line-strong` | `#c2cbc8` | Secondary button borders, hovered cards |
+| `--accent` | `#0a6455` | Links, focus rings, the brand mark, data that matters |
+| `--accent-soft` | `#e1efea` | Accent pills and step numbers |
 | `--danger` | `#b42318` | Refusals and destructive actions only |
 
-- The accent goes on data and links, not on chrome. Primary buttons are near-black (`--ink`).
+The landing page has one dark field, the Security section, and inside it only the night tokens:
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--night` | `#0f1a17` | Ground of the Security section |
+| `--night-ink` | `#e8efec` | Headings and titles on night |
+| `--night-muted` | `#9aaba5` | Body text on night (7.4:1) |
+| `--night-accent` | `#6cd2b8` | Links on night |
+| `--night-line` | `#26332f` | Rules on night |
+
+- The accent goes on data and links, not on chrome, and stays under about 5% of a screen. Primary
+  buttons are near-black (`--ink`), one per view; the others are `.btn-secondary` (white, `--line-strong`
+  border).
+- The brand mark is a flat `--accent` square with a pale glyph (`BrandMark.tsx`, `public/favicon.svg`).
+  No gradient.
 - Status pills are a pale tint with dark text of the same hue. Never a saturated fill with white text.
 - One status colour per row. A refusal reason is red text, an ordinary reason is plain text.
 - Avatars are neutral initials. No colour per person.
@@ -51,11 +70,27 @@ of generated-design tells and its study of real app screens), [HyperFrames](http
 
 ## Layout
 
+- The landing page is one page. Sign-in and registration stay on it, beside the hero; nothing moves to a
+  page of its own.
+- Landing sections share one column, `min(1100px, 100% - 2.5rem)`, the same as the nav bar.
 - The sidebar sits on the page ground with a single rule on its right edge. The active item is a neutral
   grey fill.
 - Tables use 12px grey sentence-case headers and 1px row rules. No zebra stripes, no header band.
 - Every view must work at 390px wide with no horizontal page scroll. Wide tables scroll inside
   `.table-wrap`.
+
+## Landing navigation
+
+- A sticky bar on the page ground with one bottom rule and no blur: the mark and name, links to the
+  sections in the same order as they appear on the page (How it works, Apps, Security, Pricing, FAQ), the
+  EN/NO switch, a quiet "Sign in" link and the one dark button, "Explore the live demo".
+- The link of the section on screen carries `aria-current` and is drawn in `--ink` with a 2px `--accent`
+  rule on the bar's bottom edge. The others are `--muted`.
+- Links are plain `#id` anchors, so the address can be shared (`tenantaccess.me/#pricing`). Scrolling is
+  smooth unless reduced motion is on, and `scroll-padding-top` keeps the bar off each heading.
+- Below 900px the links fold into a menu under the bar, in the same order. Escape closes it.
+- When a section is added, removed or moved, change `SECTIONS` in `Landing.tsx` so the nav keeps the
+  page's order.
 
 ## Motion
 
