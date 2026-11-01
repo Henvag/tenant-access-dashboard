@@ -108,6 +108,9 @@ The orange “Verifying you are human…” screen is fine for a **Register** pa
 
 ## What the app already does for Cloudflare
 
-Audit logging prefers `CF-Connecting-IP` when present (`app/http_client.py`), so People /
+Audit logging and rate limits use `CF-Connecting-IP` (`app/http_client.py`), so People /
 Audit show the visitor’s real IP instead of a Cloudflare anycast address once the
-orange cloud is on.
+orange cloud is on. The header is only trusted when the address Render saw connecting
+is in Cloudflare's published ranges; a direct request to the `onrender.com` origin
+can't choose its own IP. If Cloudflare adds ranges (https://www.cloudflare.com/ips/),
+update the list in that file.

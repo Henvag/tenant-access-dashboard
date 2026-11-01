@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import hmac
 import os
 import re
 
@@ -46,6 +47,7 @@ app = FastAPI(
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,
+    max_age=settings.session_max_age_seconds,
     same_site="lax",
     https_only=settings.is_production,
 )
@@ -89,7 +91,8 @@ async def outline_database_url(authorization: str | None = Header(default=None))
     """Token-gated helper so Outline can reuse dashboard Postgres credentials
     against a dedicated `outline` database (free tier = one Postgres instance)."""
     token = os.environ.get("OUTLINE_DB_BOOTSTRAP_TOKEN", "")
-    if not token or authorization != f"Bearer {token}":
+    expected = f"Bearer {token}".encode()
+    if not token or not hmac.compare_digest((authorization or "").encode(), expected):
         raise HTTPException(status_code=404, detail="Not found")
     # Outline needs owner rights on its own database, not the restricted app role.
     raw = os.environ.get("MIGRATION_DATABASE_URL") or os.environ.get("DATABASE_URL", "")

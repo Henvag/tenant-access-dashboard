@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     # common = work + personal; consumers = personal Microsoft accounts only
     entra_tenant_id: str = "common"
     session_secret: str = "change-me"
+    # Encrypts stored AI provider keys. Separate from SESSION_SECRET (see agents/secrets.py).
+    data_encryption_key: str = ""
+    # Sign-in cookie lifetime. Starlette's default is 14 days.
+    session_max_age_seconds: int = 12 * 60 * 60
     frontend_origin: str = "http://localhost:5173"
     environment: str = "development"
     # Render sets RENDER_EXTERNAL_URL; on Fly (or others) set PUBLIC_BASE_URL.
