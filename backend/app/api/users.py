@@ -1,15 +1,16 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
-from app.auth.audit import record_role_change, record_user_access_change
+from app.auth.audit import record_admin_event, record_role_change, record_user_access_change
+from app.auth.deletion import forget_person
 from app.auth.partners import MAX_OUTSIDE_ADMINS, count_outside_admins
 from app.db import get_db
-from app.models import Tenant, User, UserRole
+from app.models import AuditEventType, Tenant, User, UserRole
 from app.oauth.logout import notify_disabled_user
 from app.schemas.user import TenantUserOut, UserPatch
 
@@ -73,6 +74,39 @@ async def patch_user(
     out = _to_out(target, owner_id)
     await db.commit()
     return out
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: UUID,
+    request: Request,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Owner only. The person's audit events stay, without their email or IP."""
+    owner_id = await _owner_id(db, admin.tenant_id)
+    if owner_id is None or admin.id != owner_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="owner_required")
+    target = await db.scalar(
+        select(User).where(User.id == user_id, User.tenant_id == admin.tenant_id)
+    )
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found")
+    if target.id == owner_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cannot_delete_owner")
+
+    # Same as switching off: apps with back-channel logout end their sessions now.
+    logout = await notify_disabled_user(db, target)
+    await forget_person(db, target)
+    await record_admin_event(
+        db,
+        actor=admin,
+        event_type=AuditEventType.user_deleted,
+        request=request,
+        details={"logout_notified": logout["notified"], "logout_failed": logout["failed"]},
+    )
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 async def _owner_id(db: AsyncSession, tenant_id: UUID) -> UUID | None:

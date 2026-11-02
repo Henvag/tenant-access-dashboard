@@ -70,7 +70,8 @@ const DENIAL_REASON_KEYS: Record<string, TKey> = {
 function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>) => string): Presentation {
   const code = event.error_code ?? undefined;
   const app = event.details?.app ?? "-";
-  const by = event.details?.by ?? "";
+  // An emptied address means that person was deleted.
+  const by = event.details?.by === "" ? t("audit.deletedPersonLower") : (event.details?.by ?? "");
 
   switch (event.event_type) {
     case "app_login":
@@ -230,7 +231,8 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
     case "partner_invited":
     case "partner_invite_revoked":
     case "partner_joined": {
-      const email = event.details?.email ?? event.email;
+      const raw = event.details?.email ?? event.email;
+      const email = raw === "" ? t("audit.deletedPerson") : raw;
       const keys = {
         partner_invited: ["audit.partnerInvited", "audit.partnerInvitedDetail", "neutral"],
         partner_invite_revoked: [
@@ -249,6 +251,14 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         warn: false,
       };
     }
+    case "user_deleted":
+      return {
+        labelKey: "audit.userDeleted",
+        tone: "warn",
+        reason: { text: t("reason.byAdmin"), tone: "neutral" },
+        sentence: t("audit.userDeletedDetail"),
+        warn: false,
+      };
     case "company_switched":
       return {
         labelKey: "audit.companySwitched",
@@ -332,17 +342,28 @@ export default function AuditTable({ events, emptyTitle, emptyBody, compact = fa
                   onClick={() => toggle(event.id)}
                 >
                   <td className="col-person">
-                    <div className="person">
-                      <Avatar name={event.display_name} email={event.email} size="sm" />
-                      <div className="person-text">
-                        <span className="person-name">
-                          <span className="name-text">
-                            {event.display_name || event.email.split("@")[0]}
+                    {event.email === "" ? (
+                      <div className="person">
+                        <Avatar name={t("audit.deletedPerson")} email="" size="sm" />
+                        <div className="person-text">
+                          <span className="person-name">
+                            <span className="name-text muted">{t("audit.deletedPerson")}</span>
                           </span>
-                        </span>
-                        <span className="person-email">{event.email}</span>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="person">
+                        <Avatar name={event.display_name} email={event.email} size="sm" />
+                        <div className="person-text">
+                          <span className="person-name">
+                            <span className="name-text">
+                              {event.display_name || event.email.split("@")[0]}
+                            </span>
+                          </span>
+                          <span className="person-email">{event.email}</span>
+                        </div>
+                      </div>
+                    )}
                   </td>
                   <td>
                     <span className={TONE_CLASS[view.tone]}>{t(view.labelKey)}</span>

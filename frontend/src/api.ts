@@ -93,6 +93,7 @@ export type AuditEventType =
   | "partner_invite_revoked"
   | "partner_joined"
   | "company_switched"
+  | "user_deleted"
   | "app_login"
   | "app_login_denied";
 
@@ -242,6 +243,11 @@ export function setUserDisabled(userId: string, disabled: boolean): Promise<Tena
     method: "PATCH",
     body: JSON.stringify({ disabled }),
   });
+}
+
+/** Owner only. Audit events about the person stay, without their email or IP. */
+export function deleteUser(userId: string): Promise<void> {
+  return request<void>(`/users/${userId}`, { method: "DELETE" });
 }
 
 export function setUserRole(userId: string, role: UserRole): Promise<TenantUser> {
@@ -530,6 +536,11 @@ export async function uploadCompanyLogo(file: File): Promise<void> {
 
 export function clearCompanyLogo(): Promise<void> {
   return request<void>("/company/logo", { method: "DELETE" });
+}
+
+/** Owner only. ``confirm`` is the company's email domain, typed by the owner. */
+export function deleteCompany(confirm: string): Promise<void> {
+  return request<void>("/company", { method: "DELETE", body: JSON.stringify({ confirm }) });
 }
 
 export async function fetchCompanyLogo(): Promise<string | null> {

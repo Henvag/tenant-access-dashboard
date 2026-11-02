@@ -4258,3 +4258,17 @@ a.tile:active {
   color: var(--danger);
   font-size: 0.75rem;
 }
+
+/* Delete company (Organization, owner only) */
+.danger-card {
+  border-color: #f6c5bf;
+}
+
+.danger-card .card-head {
+  margin-bottom: 0;
+}
+
+.danger-card .card-head > div {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
