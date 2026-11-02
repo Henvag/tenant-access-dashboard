@@ -663,6 +663,29 @@ const en = {
   "error.outside_admin_limit": "You can have up to 3 outside admins, counting open invites.",
   "error.outside_admin_role_fixed": "Outside admins are always admins. Switch them off to remove their access.",
   "error.company_not_found": "You're no longer a member of that company.",
+  "people.delete": "Delete",
+  "people.deleteConfirm":
+    "Delete {email}? Their account and app access are removed, and their name, email and IP address are removed from the audit log. This can't be undone. If they can still sign in with your company's domain, they come back as a new member, so disable them instead if you only want to keep them out.",
+  "audit.deletedPerson": "Deleted person",
+  "audit.deletedPersonLower": "a deleted person",
+  "audit.userDeleted": "Person deleted",
+  "audit.userDeletedDetail":
+    "A person was deleted. Their earlier events stay, without name, email or IP address.",
+  "danger.title": "Delete company",
+  "danger.hint":
+    "Removes the company and everything in it: people, apps, app access, the audit log, domains and webhooks. Card billing stops at once, and paid time left is not refunded.",
+  "danger.open": "Delete company",
+  "danger.modalTitle": "Delete {name}?",
+  "danger.modalHint":
+    "This can't be undone. Everyone is signed out, and outside admins lose access too.",
+  "danger.confirmLabel": "Type {domain} to confirm",
+  "danger.confirm": "Delete company",
+  "danger.working": "Deleting…",
+  "error.cannot_delete_owner":
+    "The owner can't be deleted. To close the company, delete it under Organization.",
+  "error.confirm_mismatch": "That doesn't match the company's domain.",
+  "error.billing_cancel_failed":
+    "We couldn't stop billing at Stripe, so nothing was deleted. Try again in a minute.",
 } as const;
 
 export type TKey = keyof typeof en;
@@ -1328,6 +1351,29 @@ const no: Record<TKey, string> = {
   "error.outside_admin_limit": "Dere kan ha opptil 3 eksterne administratorer, åpne invitasjoner medregnet.",
   "error.outside_admin_role_fixed": "Eksterne administratorer er alltid administratorer. Slå dem av for å fjerne tilgangen.",
   "error.company_not_found": "Du er ikke lenger med i det selskapet.",
+  "people.delete": "Slett",
+  "people.deleteConfirm":
+    "Slette {email}? Kontoen og app-tilgangen fjernes, og navn, e-post og IP-adresse fjernes fra revisjonsloggen. Dette kan ikke angres. Hvis personen fortsatt kan logge inn med selskapets domene, kommer de tilbake som nytt medlem, så deaktiver dem i stedet hvis du bare vil holde dem ute.",
+  "audit.deletedPerson": "Slettet person",
+  "audit.deletedPersonLower": "en slettet person",
+  "audit.userDeleted": "Person slettet",
+  "audit.userDeletedDetail":
+    "En person ble slettet. De tidligere hendelsene blir liggende, uten navn, e-post eller IP-adresse.",
+  "danger.title": "Slett selskapet",
+  "danger.hint":
+    "Fjerner selskapet og alt i det: personer, apper, app-tilganger, revisjonsloggen, domener og webhooks. Kortbetalingen stopper med en gang, og betalt tid som er igjen refunderes ikke.",
+  "danger.open": "Slett selskapet",
+  "danger.modalTitle": "Slette {name}?",
+  "danger.modalHint":
+    "Dette kan ikke angres. Alle logges ut, og eksterne administratorer mister også tilgangen.",
+  "danger.confirmLabel": "Skriv {domain} for å bekrefte",
+  "danger.confirm": "Slett selskapet",
+  "danger.working": "Sletter…",
+  "error.cannot_delete_owner":
+    "Eieren kan ikke slettes. For å legge ned selskapet, slett det under Organisasjon.",
+  "error.confirm_mismatch": "Det stemmer ikke med selskapets domene.",
+  "error.billing_cancel_failed":
+    "Vi fikk ikke stoppet betalingen hos Stripe, så ingenting ble slettet. Prøv igjen om litt.",
 };
 
 const DICTIONARIES: Record<Lang, Record<TKey, string>> = { en, no };

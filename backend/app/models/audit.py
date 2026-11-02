@@ -36,6 +36,7 @@ class AuditEventType(str, enum.Enum):
     partner_invite_revoked = "partner_invite_revoked"
     partner_joined = "partner_joined"
     company_switched = "company_switched"
+    user_deleted = "user_deleted"
 
 
 class AuditEvent(Base):

@@ -164,6 +164,26 @@ def downgrade_to_free(tenant: Tenant) -> None:
     tenant.plan_expires_at = None
 
 
+def cancel_subscription(tenant: Tenant) -> None:
+    """Stop card billing for a company that is about to be deleted.
+
+    A subscription Stripe no longer knows, or one already cancelled, has nothing
+    left to stop. Any other failure stops the deletion, so nobody keeps paying
+    for a company that is gone. Vipps annual payments have no subscription.
+    """
+    if not tenant.stripe_subscription_id:
+        return
+    _configure()
+    try:
+        stripe.Subscription.cancel(tenant.stripe_subscription_id)
+    except stripe.InvalidRequestError:
+        return
+    except stripe.StripeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="billing_cancel_failed"
+        ) from exc
+
+
 def parse_webhook(payload: bytes, sig_header: str) -> dict[str, Any]:
     if not settings.stripe_webhook_secret:
         raise HTTPException(

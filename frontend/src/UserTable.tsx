@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { setUserDisabled, setUserRole, TenantUser, UserRole } from "./api";
+import { deleteUser, setUserDisabled, setUserRole, TenantUser, UserRole } from "./api";
 import Avatar from "./Avatar";
 import { formatTimestamp, isWithinDays, messageForApiError, relativeTime } from "./format";
 import { TKey, useLang } from "./i18n";
@@ -17,6 +17,7 @@ type Props = {
   compact?: boolean;
   canManage?: boolean;
   onUserUpdated?: (user: TenantUser) => void;
+  onUserDeleted?: (userId: string) => void;
 };
 
 function activity(user: TenantUser): { key: TKey; tone: string } {
@@ -61,6 +62,7 @@ export default function UserTable({
   compact = false,
   canManage = false,
   onUserUpdated,
+  onUserDeleted,
 }: Props) {
   const { lang, t } = useLang();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -86,6 +88,21 @@ export default function UserTable({
       return;
     }
     void runAction(user.id, () => setUserDisabled(user.id, nextDisabled));
+  }
+
+  async function removeUser(user: TenantUser) {
+    if (!window.confirm(t("people.deleteConfirm", { email: user.email }))) return;
+    setBusyId(user.id);
+    setActionError(null);
+    try {
+      await deleteUser(user.id);
+      onUserDeleted?.(user.id);
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "generic";
+      setActionError(messageForApiError(code, lang));
+    } finally {
+      setBusyId(null);
+    }
   }
 
   function changeRole(user: TenantUser, role: UserRole) {
@@ -160,6 +177,15 @@ export default function UserTable({
                 label: user.disabled ? t("people.enable") : t("people.disable"),
                 danger: !user.disabled,
                 onSelect: () => toggleDisabled(user),
+              });
+            }
+            // Only the owner deletes, and never the owner's own row.
+            if (actorIsOwner && !isYou && !user.is_owner) {
+              items.push({
+                key: "delete",
+                label: t("people.delete"),
+                danger: true,
+                onSelect: () => void removeUser(user),
               });
             }
 

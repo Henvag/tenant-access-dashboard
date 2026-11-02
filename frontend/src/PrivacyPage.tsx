@@ -33,7 +33,7 @@ type Copy = {
 const COPY: Record<Lang, Copy> = {
   en: {
     title: "Privacy and hosting",
-    updated: "Last updated 1 November 2026.",
+    updated: "Last updated 2 November 2026.",
     lead: "What Tenant Access stores, where it is stored, and who else handles it.",
     back: "Back to Tenant Access",
     roleTitle: "Who is responsible",
@@ -61,13 +61,13 @@ const COPY: Record<Lang, Copy> = {
       ["OpenAI, Anthropic or Google", "Answers questions in Ask and agents, with the company details the question needs", "Only if the company adds its own key"],
     ],
     keepTitle: "How long we keep it",
-    keep: "People, apps and audit events stay until they are removed. Your plan decides how far back the audit log shows (14, 90 or 365 days), but older events are not deleted. Switching a person off stops every sign-in at once, and the record stays so the audit log still makes sense.",
+    keep: "People, apps and audit events stay until the owner deletes them. Your plan decides how far back the audit log shows (14, 90 or 365 days), but older events are not deleted. Switching a person off stops every sign-in at once, and the record stays so the audit log still makes sense.",
     rightsTitle: "Seeing, correcting or deleting your data",
-    rights: "Ask the owner of your company first. Owners can change your role or switch you off under People. Deleting a person or a whole company is not self-service yet, so the owner has to ask the operator of Tenant Access.",
+    rights: "Ask the owner of your company first. Owners can change your role, switch you off or delete you under People, and can delete the whole company under Organization. Deleting a person removes their account and app access, and removes their name, email and IP address from the audit log; the events themselves stay. Deleting a company removes everything stored for it at once. Stripe keeps its own payment records for accounting.",
   },
   no: {
     title: "Personvern og drift",
-    updated: "Sist oppdatert 1. november 2026.",
+    updated: "Sist oppdatert 2. november 2026.",
     lead: "Hva Tenant Access lagrer, hvor det lagres, og hvem andre som behandler det.",
     back: "Tilbake til Tenant Access",
     roleTitle: "Hvem som har ansvaret",
@@ -95,9 +95,9 @@ const COPY: Record<Lang, Copy> = {
       ["OpenAI, Anthropic eller Google", "Svarer på spørsmål i Spør og agenter, med de selskapsopplysningene spørsmålet trenger", "Bare hvis selskapet legger inn sin egen nøkkel"],
     ],
     keepTitle: "Hvor lenge vi lagrer det",
-    keep: "Personer, apper og revisjonshendelser blir liggende til de fjernes. Planen bestemmer hvor langt tilbake revisjonsloggen viser (14, 90 eller 365 dager), men eldre hendelser slettes ikke. Når en person slås av, stoppes all innlogging med en gang, og oppføringen blir liggende slik at revisjonsloggen fortsatt gir mening.",
+    keep: "Personer, apper og revisjonshendelser blir liggende til eieren sletter dem. Planen bestemmer hvor langt tilbake revisjonsloggen viser (14, 90 eller 365 dager), men eldre hendelser slettes ikke. Når en person slås av, stoppes all innlogging med en gang, og oppføringen blir liggende slik at revisjonsloggen fortsatt gir mening.",
     rightsTitle: "Se, rette eller slette opplysningene dine",
-    rights: "Spør eieren av selskapet ditt først. Eiere kan endre rollen din eller slå deg av under Personer. Å slette en person eller et helt selskap er ikke selvbetjent ennå, så eieren må be den som drifter Tenant Access om det.",
+    rights: "Spør eieren av selskapet ditt først. Eiere kan endre rollen din, slå deg av eller slette deg under Personer, og kan slette hele selskapet under Organisasjon. Når en person slettes, fjernes kontoen og app-tilgangen, og navn, e-post og IP-adresse fjernes fra revisjonsloggen; selve hendelsene blir liggende. Når et selskap slettes, fjernes alt som er lagret for det med en gang. Stripe beholder sine egne betalingsopplysninger for regnskapet.",
   },
 };
 

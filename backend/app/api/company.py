@@ -1,16 +1,24 @@
-"""Company logo stored on the tenant row (Render disk does not persist files)."""
+"""Company logo stored on the tenant row (Render disk does not persist files), and
+deleting the whole company."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+import logging
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_admin
+from app.auth.deletion import delete_company
+from app.billing import stripe_service
 from app.db import get_db
+from app.demo import is_demo_tenant
 from app.models import CompanyInviteToken, Tenant, User
 
 router = APIRouter(tags=["company"])
+logger = logging.getLogger("app.company")
 
 MAX_LOGO_BYTES = 200_000
 ALLOWED_TYPES = {
@@ -109,3 +117,34 @@ async def public_invite_logo(token: str, db: AsyncSession = Depends(get_db)) -> 
     if tenant is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="invite_not_found")
     return _logo_response(tenant)
+
+
+class DeleteCompanyIn(BaseModel):
+    # The company's email domain, typed by the owner.
+    confirm: str
+
+
+@router.delete("/company", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_whole_company(
+    body: DeleteCompanyIn,
+    request: Request,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Owner only. Cancels card billing, then removes the company and everything in it."""
+    _require_owner(user)
+    if is_demo_tenant(user.tenant_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="demo_read_only")
+    tenant = await db.get(Tenant, user.tenant_id)
+    if tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tenant_missing")
+    if body.confirm.strip().lower() != tenant.workspace_domain:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="confirm_mismatch")
+
+    stripe_service.cancel_subscription(tenant)
+    tenant_id = tenant.id
+    await delete_company(db, tenant_id)
+    await db.commit()
+    request.session.clear()
+    logger.info("company deleted by its owner", extra={"tenant_id": str(tenant_id)})
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

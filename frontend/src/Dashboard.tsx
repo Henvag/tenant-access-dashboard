@@ -50,6 +50,7 @@ import {
   IconUsers,
 } from "./Icons";
 import LanguageToggle from "./LanguageToggle";
+import DeleteCompanyPanel from "./DeleteCompanyPanel";
 import DomainsPanel from "./DomainsPanel";
 import OrganizationPanel from "./OrganizationPanel";
 import PartnersPanel from "./PartnersPanel";
@@ -471,6 +472,9 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                 <WebhooksPanel />
               </>
             ) : null}
+            {actorIsOwner && !me.demo ? (
+              <DeleteCompanyPanel name={me.tenant_name} domain={me.workspace_domain} />
+            ) : null}
           </>
         ) : !isAdmin ? (
           <>
@@ -600,6 +604,10 @@ export default function Dashboard({ me, denial = null, entryError = null }: Prop
                   setUsers((current) =>
                     (current ?? []).map((u) => (u.id === updated.id ? updated : u)),
                   );
+                  void listAuditEvents(50).then(setEvents).catch(() => undefined);
+                }}
+                onUserDeleted={(userId) => {
+                  setUsers((current) => (current ?? []).filter((u) => u.id !== userId));
                   void listAuditEvents(50).then(setEvents).catch(() => undefined);
                 }}
                 emptyTitle={isFiltering ? t("people.noMatches") : t("people.emptyTitle")}

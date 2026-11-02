@@ -154,6 +154,13 @@ Small companies often have an IT firm look after their tools. Under **People**, 
 - A **company switcher** in the sidebar writes a new session for the other row after re-checking the lookup, and the switch is audited in the company being entered.
 - Outside admins don't use the company's seats and are always admins, never owner, so the client can switch them off like anyone else. An invite never attaches a second identity to an address the company already has (the same rule that blocks nOAuth).
 
+## Deleting people and companies
+
+Only the owner deletes, and it can't be undone:
+
+- **A person** (People, row menu). Their account row goes, and the database cascades their app grants, sign-in codes and company membership. Apps with back-channel logout are told at once, as when someone is switched off. Audit events about them stay, so the company can still see what happened, but their email, IP address and browser are blanked in those rows, in other events' details and in the 30-day webhook delivery log. The dashboard shows them as "Deleted person".
+- **The whole company** (Organization, typed confirmation of the domain). Card billing is cancelled at Stripe first; if that fails, nothing is deleted. Then the tenant row goes and every table cascades, outside admins' memberships included. Stripe keeps its own payment records for accounting.
+
 ## What I used
 
 | | | Why I picked it |
