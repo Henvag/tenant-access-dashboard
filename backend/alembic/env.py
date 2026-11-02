@@ -37,11 +37,25 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
+# asyncpg waits forever by default, for a query and for the server to close the
+# connection. On deploy that turns a stuck lock or a connection Neon never closes
+# into a container that hangs until Render gives up (15 minutes), with the old
+# version unable to start on the migrated database. These limits make it fail
+# fast instead, so start.sh can retry.
+MIGRATION_CONNECT_ARGS = {
+    # Seconds for any one statement, and for closing the connection.
+    "command_timeout": 120,
+    # Give up waiting for a lock that the running app or another session holds.
+    "server_settings": {"lock_timeout": "30s"},
+}
+
+
 async def run_async_migrations() -> None:
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=MIGRATION_CONNECT_ARGS,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

@@ -54,7 +54,8 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 
 ## Ops habits
 
-- **Migrations** run on container start (`start.sh` / Alembic). Treat schema changes as part of the deploy.
+- **Migrations** run on container start (`start.sh` / Alembic). Treat schema changes as part of the deploy. Each statement has a 2 minute limit, lock waits give up after 30 s, and the whole run gets 3 minutes and one retry, so a stuck migration fails the deploy quickly instead of hanging until Render's 15 minute port check.
+- **A deploy that fails after migrating**: Render falls back to the previous version, but that version can't start, because Alembic doesn't know the database's newer revision (`Can't locate revision`). Don't roll the database back. Redeploy the new commit (Manual Deploy › Deploy latest commit); its migration is already done, so it starts normally. This happened once, on 2 November 2026 with `022_deletion`: the migration committed, then the process hung and never opened its port.
 - **Database**: free Neon Postgres (Render free Postgres expired after 30 days). Set `DATABASE_URL` on both the dashboard and Outline services to Neon's *direct* (non-pooled) connection string; `config.py` translates `sslmode`/`channel_binding` for asyncpg. Neon free keeps point-in-time restore for a short window only, so export with `pg_dump` before risky changes.
 - **Cold starts**: Render free sleeps (~30 s wake). Fly with `min_machines_running = 0` wakes faster but still not zero. For a real SLA: keep one machine warm or pay for always-on.
 - **Two hosts, one DB (demo)**: Fly can reuse Render's external `DATABASE_URL`. Fine for a portfolio; in production I'd give each environment its own database and secrets.
