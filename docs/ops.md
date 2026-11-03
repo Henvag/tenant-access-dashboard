@@ -54,8 +54,14 @@ Browser ──HTTPS──▶ App (FastAPI + React, one origin)
 
 ## Ops habits
 
-- **Migrations** run on container start (`start.sh` / Alembic). Treat schema changes as part of the deploy. Each statement has a 2 minute limit, lock waits give up after 30 s, and the whole run gets 3 minutes and one retry, so a stuck migration fails the deploy quickly instead of hanging until Render's 15 minute port check.
-- **A deploy that fails after migrating**: Render falls back to the previous version, but that version can't start, because Alembic doesn't know the database's newer revision (`Can't locate revision`). Don't roll the database back. Redeploy the new commit (Manual Deploy › Deploy latest commit); its migration is already done, so it starts normally. This happened once, on 2 November 2026 with `022_deletion`: the migration committed, then the process hung and never opened its port.
+- **Migrations** run on container start. `start.sh` first runs `python -m app.preflight`, which reads the database's revision:
+  - Already at this version's head: the server starts straight away.
+  - Behind: the app is loaded and its startup run once (role check, OAuth setup) before Alembic touches anything, so a version that can't start leaves the database alone.
+  - At a revision this version doesn't know: a newer version migrated it and was rolled back. The server starts without migrating.
+
+  Each migration statement has a 2 minute limit, lock waits give up after 30 s, and the whole run gets 3 minutes and one retry, so a stuck migration fails the deploy quickly instead of hanging until Render's 15 minute port check. If loading or starting the app takes over a minute in production, every thread's stack is printed to the log once a minute.
+- **Migrations must keep the previous version working**: add tables, columns with defaults and enum values; rename or drop only in a later release. That is what lets the previous version run on a newer database after a rollback.
+- **A deploy that fails after migrating**: Render keeps or falls back to the previous version. Versions from 3 November 2026 on start on the newer database. Older ones stop with `Can't locate revision`. For those, set `alembic_version` back to the previous revision; this is only safe when the migration only added things. This happened on 2 and 3 November 2026 with `022_deletion`: three deploys migrated, or found nothing to migrate, and then never opened their port, while the same image started normally in a container limited to the free plan's 0.1 CPU and 512 MB. Until the cause is known, deploy a migration only while you can watch the deploy log.
 - **Database**: free Neon Postgres (Render free Postgres expired after 30 days). Set `DATABASE_URL` on both the dashboard and Outline services to Neon's *direct* (non-pooled) connection string; `config.py` translates `sslmode`/`channel_binding` for asyncpg. Neon free keeps point-in-time restore for a short window only, so export with `pg_dump` before risky changes.
 - **Cold starts**: Render free sleeps (~30 s wake). Fly with `min_machines_running = 0` wakes faster but still not zero. For a real SLA: keep one machine warm or pay for always-on.
 - **Two hosts, one DB (demo)**: Fly can reuse Render's external `DATABASE_URL`. Fine for a portfolio; in production I'd give each environment its own database and secrets.
