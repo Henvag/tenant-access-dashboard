@@ -91,6 +91,12 @@ The landing page has two dark surfaces, the Security section and the featured (T
 - Links are plain `#id` anchors, so the address can be shared (`tenantaccess.me/#pricing`). Scrolling is
   smooth unless reduced motion is on, and `scroll-padding-top` keeps the bar off each heading.
 - Below 900px the links fold into a menu under the bar, in the same order. Escape closes it.
+- The bar gets out of the way while reading. Once the page is 96px down it slides up out of view as
+  the reader scrolls down (320ms, `--ease`). Any scroll up of 8px or more brings it back.
+  - It always shows at the top of the page, while the menu is open, while one of its own links is
+    scrolling the page, and whenever keyboard focus is inside it.
+  - With reduced motion it fades out and back in place instead of sliding.
+  - Never hide it for good: it holds the section links, Sign in and the demo button.
 
 ## Landing pricing
 

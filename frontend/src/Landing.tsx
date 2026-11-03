@@ -334,14 +334,23 @@ function SectionHead({ id, title, lede }: { id: string; title: string; lede?: st
   );
 }
 
+/** Past this scroll depth the bar may hide; above it, it always shows. */
+const NAV_HIDE_AFTER = 96;
+/** How far the page must travel in one direction before the bar hides or comes back. */
+const NAV_TRAVEL = 8;
+
 /**
  * Sticky bar. Its links follow the order of the sections below and the link
  * of the section on screen is marked. Below 900px the links fold into a menu.
+ * It slides away while the reader scrolls down and comes back on any scroll up.
  */
 function LandingNav({ onSignIn }: { onSignIn: () => void }) {
   const { t } = useLang();
   const [active, setActive] = useState<SectionId | null>(null);
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  // True while the page scrolls to a section picked from the bar, so the bar stays put.
+  const holding = useRef(false);
 
   useEffect(() => {
     const targets = SECTIONS.map(({ id }) => document.getElementById(id)).filter(
@@ -368,6 +377,33 @@ function LandingNav({ onSignIn }: { onSignIn: () => void }) {
   }, []);
 
   useEffect(() => {
+    let lastY = window.scrollY;
+    let travel = 0; // distance moved in the current direction
+    const onScroll = () => {
+      const y = window.scrollY;
+      const step = y - lastY;
+      lastY = y;
+      if (y < NAV_HIDE_AFTER) {
+        travel = 0;
+        setHidden(false);
+        return;
+      }
+      if (holding.current || step === 0) {
+        travel = 0;
+        return;
+      }
+      travel = Math.sign(step) === Math.sign(travel) ? travel + step : step;
+      if (travel > NAV_TRAVEL) setHidden(true);
+      else if (travel < -NAV_TRAVEL) setHidden(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Opening or closing the menu always leaves the bar in view.
+  useEffect(() => setHidden(false), [open]);
+
+  useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -376,10 +412,26 @@ function LandingNav({ onSignIn }: { onSignIn: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const close = () => setOpen(false);
+  /** Close the menu, and keep the bar in view while the page scrolls to the picked section. */
+  const close = () => {
+    setOpen(false);
+    setHidden(false);
+    holding.current = true;
+    let timer = 0;
+    const release = () => {
+      holding.current = false;
+      window.clearTimeout(timer);
+      window.removeEventListener("scrollend", release);
+    };
+    window.addEventListener("scrollend", release);
+    // Browsers without scrollend, or a link to where the page already is.
+    timer = window.setTimeout(release, 1200);
+  };
+
+  const classes = ["site-nav", open ? "open" : "", hidden && !open ? "is-hidden" : ""].filter(Boolean).join(" ");
 
   return (
-    <header className={open ? "site-nav open" : "site-nav"}>
+    <header className={classes}>
       <div className="site-nav-bar">
         <a className="site-nav-brand" href="#top" aria-label={t("landing.nav.top")} onClick={close}>
           <BrandMark size={28} />
