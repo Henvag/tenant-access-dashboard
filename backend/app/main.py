@@ -1,7 +1,16 @@
+import faulthandler
+import os
+import sys
+
+# In production, if loading or starting the app takes over a minute, print every
+# thread's stack to stderr once a minute so the deploy log shows where it is
+# stuck. Cancelled once startup completes.
+if os.environ.get("ENVIRONMENT", "").lower() == "production":
+    faulthandler.dump_traceback_later(60, repeat=True, file=sys.stderr)
+
 import asyncio
 from contextlib import asynccontextmanager, suppress
 import hmac
-import os
 import re
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Response, status
@@ -44,6 +53,7 @@ async def lifespan(app: FastAPI):
         from app.webhooks.worker import run_forever
 
         sender = asyncio.create_task(run_forever(SessionLocal))
+    faulthandler.cancel_dump_traceback_later()
     yield
     if sender is not None:
         sender.cancel()
