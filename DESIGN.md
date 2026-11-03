@@ -93,10 +93,14 @@ The landing page has two dark surfaces, the Security section and the featured (T
 - Below 900px the links fold into a menu under the bar, in the same order. Escape closes it.
 - The bar gets out of the way while reading. Once the page is 96px down it slides up out of view as
   the reader scrolls down (320ms, `--ease`). Any scroll up of 8px or more brings it back.
+  - Its actions stay on screen, like a booking bar on a hotel site. The demo button (and on a phone
+    the menu button) moves down by exactly as much as the bar moves up, on the same curve, so it
+    never moves. Left alone on the page it gets `--shadow`, and the dark button a faint white ring so
+    it still reads on the night Security section.
   - It always shows at the top of the page, while the menu is open, while one of its own links is
     scrolling the page, and whenever keyboard focus is inside it.
-  - With reduced motion it fades out and back in place instead of sliding.
-  - Never hide it for good: it holds the section links, Sign in and the demo button.
+  - With reduced motion it goes and comes back at once instead of sliding. Its actions still stay put.
+  - Never hide it for good: it holds the section links and Sign in.
 
 ## Landing pricing
 

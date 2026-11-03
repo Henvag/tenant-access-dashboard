@@ -447,8 +447,11 @@ html:has(.landing) {
 }
 
 /* Sticky bar: solid ground and one rule, no blur. It slides away while scrolling down and comes
-   back on scroll up; keyboard focus inside it always brings it back. */
+   back on scroll up; keyboard focus inside it always brings it back. Its actions (the demo button,
+   and the menu button on a phone) stay where they are: they move down by exactly as much as the bar
+   moves up, on the same curve, so they never move. */
 .site-nav {
+  --site-nav-h: 65px; /* the 64px bar and its 1px rule */
   position: sticky;
   top: 0;
   z-index: 30;
@@ -457,29 +460,42 @@ html:has(.landing) {
   transition: transform 0.32s var(--ease);
 }
 
-.site-nav.is-hidden {
-  transform: translateY(-100%);
+.site-nav-cta {
+  transition: transform 0.32s var(--ease);
 }
 
-.site-nav.is-hidden:focus-within {
-  transform: none;
+.site-nav-cta .btn-nav,
+.site-nav-cta .site-nav-toggle {
+  transition:
+    background-color 0.15s var(--ease),
+    box-shadow 0.32s var(--ease);
 }
 
-/* Reduced motion: no slide. The bar fades out in place and fades back. */
+.site-nav.is-hidden:not(:focus-within) {
+  transform: translateY(calc(-1 * var(--site-nav-h)));
+}
+
+.site-nav.is-hidden:not(:focus-within) .site-nav-cta {
+  transform: translateY(var(--site-nav-h));
+}
+
+/* Left alone on the page, the buttons get a lift, and the dark one a faint ring, so it still reads
+   on the night Security section, where the button and the ground are nearly the same colour. */
+.site-nav.is-hidden:not(:focus-within) .site-nav-cta .btn-nav {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.18),
+    var(--shadow);
+}
+
+.site-nav.is-hidden:not(:focus-within) .site-nav-toggle {
+  box-shadow: var(--shadow);
+}
+
+/* Reduced motion: no slide. The bar goes and comes back at once; its actions still stay put. */
 @media (prefers-reduced-motion: reduce) {
-  .site-nav {
-    transition: opacity 0.15s linear;
-  }
-
-  .site-nav.is-hidden {
-    transform: none;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .site-nav.is-hidden:focus-within {
-    opacity: 1;
-    pointer-events: auto;
+  .site-nav,
+  .site-nav-cta {
+    transition: none;
   }
 }
 
