@@ -446,13 +446,41 @@ html:has(.landing) {
   outline-offset: 2px;
 }
 
-/* Sticky bar: solid ground and one rule, no blur. */
+/* Sticky bar: solid ground and one rule, no blur. It slides away while scrolling down and comes
+   back on scroll up; keyboard focus inside it always brings it back. */
 .site-nav {
   position: sticky;
   top: 0;
   z-index: 30;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
+  transition: transform 0.32s var(--ease);
+}
+
+.site-nav.is-hidden {
+  transform: translateY(-100%);
+}
+
+.site-nav.is-hidden:focus-within {
+  transform: none;
+}
+
+/* Reduced motion: no slide. The bar fades out in place and fades back. */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav {
+    transition: opacity 0.15s linear;
+  }
+
+  .site-nav.is-hidden {
+    transform: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .site-nav.is-hidden:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .site-nav-bar {
