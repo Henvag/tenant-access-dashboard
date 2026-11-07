@@ -33,7 +33,7 @@ type Copy = {
 const COPY: Record<Lang, Copy> = {
   en: {
     title: "Privacy and hosting",
-    updated: "Last updated 2 November 2026.",
+    updated: "Last updated 3 November 2026.",
     lead: "What Tenant Access stores, where it is stored, and who else handles it.",
     back: "Back to Tenant Access",
     roleTitle: "Who is responsible",
@@ -47,7 +47,7 @@ const COPY: Record<Lang, Copy> = {
       ["Billing", "Stripe customer and subscription IDs. Card and Vipps details stay with Stripe."],
       ["Ask and agents", "Only if a company turns them on: its own AI provider key, stored encrypted."],
     ],
-    storeNote: "We never see or store passwords. There are no tracking or advertising cookies. One sign-in cookie keeps you signed in and expires after 12 hours.",
+    storeNote: "We never see or store passwords. There are no tracking or advertising cookies. One sign-in cookie keeps you signed in and expires after 12 hours. We count visits with Cloudflare Web Analytics, which uses no cookies and stores nothing on your device. It sees the page, the site you came from, your country and browser type, and does not identify you or follow you to other sites. Fonts are served from tenantaccess.me, not Google.",
     whereTitle: "Where it is stored",
     where: "The service runs on Render and the database on Neon, both in Oregon, USA (AWS us-west-2). Traffic to tenantaccess.me passes through Cloudflare. This means data is stored outside the EU and EEA today.",
     whoTitle: "Who else handles it",
@@ -55,7 +55,7 @@ const COPY: Record<Lang, Copy> = {
     who: [
       ["Render", "Runs the service", "Always"],
       ["Neon", "Hosts the database", "Always"],
-      ["Cloudflare", "DNS and network protection", "Always"],
+      ["Cloudflare", "DNS, network protection and cookieless visit counts", "Always"],
       ["Google, Microsoft", "Confirms who you are at sign-in", "When you sign in with them"],
       ["Stripe", "Card and Vipps payments", "Paying companies only"],
       ["OpenAI, Anthropic or Google", "Answers questions in Ask and agents, with the company details the question needs", "Only if the company adds its own key"],
@@ -67,7 +67,7 @@ const COPY: Record<Lang, Copy> = {
   },
   no: {
     title: "Personvern og drift",
-    updated: "Sist oppdatert 2. november 2026.",
+    updated: "Sist oppdatert 3. november 2026.",
     lead: "Hva Tenant Access lagrer, hvor det lagres, og hvem andre som behandler det.",
     back: "Tilbake til Tenant Access",
     roleTitle: "Hvem som har ansvaret",
@@ -81,7 +81,7 @@ const COPY: Record<Lang, Copy> = {
       ["Betaling", "Kunde- og abonnements-ID fra Stripe. Kort- og Vipps-opplysninger blir hos Stripe."],
       ["Spør og agenter", "Bare hvis selskapet slår dem på: selskapets egen nøkkel til en AI-leverandør, lagret kryptert."],
     ],
-    storeNote: "Vi ser og lagrer aldri passord. Det finnes ingen sporings- eller reklamekapsler. En innloggingskapsel holder deg innlogget og utløper etter 12 timer.",
+    storeNote: "Vi ser og lagrer aldri passord. Det finnes ingen sporings- eller reklamekapsler. En innloggingskapsel holder deg innlogget og utløper etter 12 timer. Vi teller besøk med Cloudflare Web Analytics, som ikke bruker kapsler og ikke lagrer noe på enheten din. Den ser siden, nettstedet du kom fra, landet og nettlesertypen din, og identifiserer deg ikke eller følger deg til andre nettsteder. Skrifttypene leveres fra tenantaccess.me, ikke Google.",
     whereTitle: "Hvor det lagres",
     where: "Tjenesten kjører hos Render og databasen hos Neon, begge i Oregon, USA (AWS us-west-2). Trafikk til tenantaccess.me går gjennom Cloudflare. Det betyr at opplysningene i dag lagres utenfor EU og EØS.",
     whoTitle: "Hvem andre som behandler det",
@@ -89,7 +89,7 @@ const COPY: Record<Lang, Copy> = {
     who: [
       ["Render", "Kjører tjenesten", "Alltid"],
       ["Neon", "Drifter databasen", "Alltid"],
-      ["Cloudflare", "DNS og nettverksbeskyttelse", "Alltid"],
+      ["Cloudflare", "DNS, nettverksbeskyttelse og besøkstall uten kapsler", "Alltid"],
       ["Google, Microsoft", "Bekrefter hvem du er ved innlogging", "Når du logger inn med dem"],
       ["Stripe", "Kort- og Vipps-betaling", "Bare betalende selskaper"],
       ["OpenAI, Anthropic eller Google", "Svarer på spørsmål i Spør og agenter, med de selskapsopplysningene spørsmålet trenger", "Bare hvis selskapet legger inn sin egen nøkkel"],
