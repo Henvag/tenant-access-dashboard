@@ -28,7 +28,7 @@ SHOTS:
 2. 3.7 to 9.0: apps. L2 "Choose who can open each app." Push to the app list; the cursor visits Everyone, Assigned people, Admins only, each row spotlit. Pull back; click People (9.0).
 3. 9.0 to 16.0: people. L3 "Someone leaves? Switch off their access." Push to Jonas Lie, not yet disabled. Pan to his menu; click; Disable; the row turns Disabled. Quiet line "Their next app sign-in is refused." Pan back to "Jonas Lie, Disabled". Pull back; click Audit (16.0).
 4. 16.0 to 21.3: audit. L4 "Every sign-in and refusal is logged." Push to the table, scroll to Jonas: "Failed sign-in, Account disabled" and "Access disabled, By admin"; other rows veiled; cursor points at the Failed sign-in row. Pull back; the sidebar's brand mark lifts out and carries to centre while the window blurs away.
-5. 21.2 to 25.0: end card. Mark centred at 912, 330 (96 px). "Tenant Access" wipes in below, then the "Explore the live demo" button and tenantaccess.me. Held 3 s.
+5. 21.2 to 25.0: end card. Mark centred at 912, 330 (96 px), hanging from a string through the ring in its bow; the string drops in and the key swings once (3.2°, -2°, 1°, -0.4°, rest by 2.3 s), then holds still. "Tenant Access" wipes in below, then the "Explore the live demo" button and tenantaccess.me. Held 3 s.
 
 BANNED: dark void, glow, gradients outside the brand mark, glass, three cards in a row, a title over a dimmed screenshot, the logo in a corner, click rings, UI tilted in 3D, invented UI, em dashes, every line entering the same way, floating or breathing loops.
 

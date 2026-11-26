@@ -53,8 +53,10 @@ The landing page has two dark surfaces, the Security section and the featured (T
 - The accent goes on data and links, not on chrome, and stays under about 5% of a screen. Primary
   buttons are near-black (`--ink`), one per view; the others are `.btn-secondary` (white, `--line-strong`
   border).
-- The brand mark is a flat `--accent` square with a pale glyph (`BrandMark.tsx`, `public/favicon.svg`).
-  No gradient.
+- The brand mark is the T-key: the T of Tenant drawn as a key, with a ring in the bow and one tooth at
+  the tip, pale on a flat `--accent` square (`BrandMark.tsx`, `public/favicon.svg`, and the film's
+  `demo.html` and `endcard.html`). No gradient. In motion it hangs from the ring and swings once, then
+  settles; it never sways in a loop.
 - Status pills are a pale tint with dark text of the same hue. Never a saturated fill with white text.
 - One status colour per row. A refusal reason is red text, an ordinary reason is plain text.
 - Avatars are neutral initials. No colour per person.

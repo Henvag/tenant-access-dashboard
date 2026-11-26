@@ -12,12 +12,27 @@
       font-family: "Schibsted Grotesk", sans-serif;
       color: #111418;
     }
+    /* The key hangs on a string from the top of the frame. The pivot is the string's anchor (960, 0). */
+    #e-hanger {
+      position: absolute;
+      inset: 0;
+      transform-origin: 960px 0px;
+    }
     #e-mark {
       position: absolute;
       left: 912px;
       top: 330px;
       width: 96px;
       height: 96px;
+    }
+    #e-string {
+      position: absolute;
+      left: 959px;
+      top: 0;
+      width: 2px;
+      height: 361px; /* down to the ring in the bow: 330 + 31 */
+      background: #8d9895;
+      transform-origin: 50% 0;
     }
     #e-word {
       position: absolute;
@@ -76,23 +91,13 @@
     data-height="1080"
     data-composition-variables='[{"id":"lang","type":"enum","label":"Language","default":"en","options":[{"value":"en","label":"English"},{"value":"no","label":"Norsk"}]}]'
   >
-    <svg id="e-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <defs>
-        <linearGradient id="e-markGrad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#14b8a6" />
-          <stop offset="1" stop-color="#0f766e" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="9" fill="url(#e-markGrad)" />
-      <path
-        d="M9 16.5c0-3.6 2.9-6.5 6.5-6.5h1.2c2.4 0 4.3 1.9 4.3 4.3v.4c0 1.7-1.4 3.1-3.1 3.1H16"
-        fill="none"
-        stroke="#ecfdf8"
-        stroke-width="2.2"
-        stroke-linecap="round"
-      />
-      <circle cx="16" cy="16.5" r="2.2" fill="#ecfdf8" />
+    <div id="e-hanger">
+      <svg id="e-mark" viewBox="0 0 256 256" aria-hidden="true">
+      <rect width="256" height="256" rx="72" fill="#0a6455" />
+      <path fill="#e8f5f0" fill-rule="evenodd" d="M71.84 60.92H184.16A12.48 12.48 0 0 1 196.64 73.40V92.12A12.48 12.48 0 0 1 184.16 104.60H143.60V160.76H171.68V176.36H159.20V195.08H112.40V104.60H71.84A12.48 12.48 0 0 1 59.36 92.12V73.40A12.48 12.48 0 0 1 71.84 60.92ZM128 74.18A8.58 8.58 0 1 0 128 91.34A8.58 8.58 0 1 0 128 74.18Z" />
     </svg>
+      <div id="e-string"></div>
+    </div>
     <h1 id="e-word"><span>Tenant Access</span></h1>
     <div id="e-cta">
       <span id="e-button"><span class="e-only-en" lang="en">Explore the live demo</span><span class="e-only-no" lang="nb">Utforsk live-demoen</span></span>
@@ -104,6 +109,13 @@
       const vars = window.__hyperframes && window.__hyperframes.getVariables ? window.__hyperframes.getVariables() : {};
       document.querySelector(".e-scene").setAttribute("data-lang", vars.lang === "no" ? "no" : "en");
       const tl = gsap.timeline({ paused: true });
+      // The string drops onto the ring as the mark lands, then the key swings once and settles. No loop.
+      tl.fromTo("#e-string", { scaleY: 0 }, { scaleY: 1, duration: 0.25, ease: "power2.out", immediateRender: false }, 0);
+      tl.fromTo("#e-hanger", { rotation: 0 }, { rotation: 3.2, duration: 0.32, ease: "sine.out", immediateRender: false }, 0.1);
+      tl.to("#e-hanger", { rotation: -2.0, duration: 0.55, ease: "sine.inOut" }, 0.42);
+      tl.to("#e-hanger", { rotation: 1.0, duration: 0.5, ease: "sine.inOut" }, 0.97);
+      tl.to("#e-hanger", { rotation: -0.4, duration: 0.45, ease: "sine.inOut" }, 1.47);
+      tl.to("#e-hanger", { rotation: 0, duration: 0.4, ease: "sine.out" }, 1.92);
       tl.fromTo("#e-word span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out", immediateRender: false }, 0.15);
       tl.fromTo("#e-cta", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out", immediateRender: false }, 0.65);
       // Hold: the CTA stays still until the film ends.
