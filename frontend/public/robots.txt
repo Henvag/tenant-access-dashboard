@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /auth/
+
+Sitemap: https://tenantaccess.me/sitemap.xml
