@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { deleteUser, setUserDisabled, setUserRole, TenantUser, UserRole } from "./api";
 import Avatar from "./Avatar";
+import DisableDialog from "./DisableDialog";
 import { formatTimestamp, isWithinDays, messageForApiError, relativeTime } from "./format";
 import { TKey, useLang } from "./i18n";
 import { IconShield, IconShieldOutline } from "./Icons";
@@ -67,6 +68,7 @@ export default function UserTable({
   const { lang, t } = useLang();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmDisable, setConfirmDisable] = useState<TenantUser | null>(null);
 
   async function runAction(userId: string, action: () => Promise<TenantUser>) {
     setBusyId(userId);
@@ -83,11 +85,11 @@ export default function UserTable({
   }
 
   function toggleDisabled(user: TenantUser) {
-    const nextDisabled = !user.disabled;
-    if (nextDisabled && !window.confirm(t("people.disableConfirm", { email: user.email }))) {
+    if (!user.disabled) {
+      setConfirmDisable(user);
       return;
     }
-    void runAction(user.id, () => setUserDisabled(user.id, nextDisabled));
+    void runAction(user.id, () => setUserDisabled(user.id, false));
   }
 
   async function removeUser(user: TenantUser) {
@@ -131,6 +133,17 @@ export default function UserTable({
   return (
     <div className="table-wrap">
       {actionError ? <p className="banner error">{actionError}</p> : null}
+      {confirmDisable ? (
+        <DisableDialog
+          user={confirmDisable}
+          onCancel={() => setConfirmDisable(null)}
+          onConfirm={() => {
+            const target = confirmDisable;
+            setConfirmDisable(null);
+            void runAction(target.id, () => setUserDisabled(target.id, true));
+          }}
+        />
+      ) : null}
       <table className={compact ? "table compact" : "table"}>
         <thead>
           <tr>

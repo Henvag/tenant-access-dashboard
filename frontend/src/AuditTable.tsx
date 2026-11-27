@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { AuditEvent } from "./api";
+import { AuditEvent, OffboardApp } from "./api";
 import Avatar from "./Avatar";
 import { formatTimestamp, relativeTime } from "./format";
 import { TKey, useLang } from "./i18n";
@@ -66,6 +66,32 @@ const DENIAL_REASON_KEYS: Record<string, TKey> = {
   app_disabled: "reason.app_disabled",
   user_disabled: "reason.user_disabled",
 };
+
+/** "Disabled by anna@x. Signed out of Grafana. Still open in Gitea …" for disable, enable and delete. */
+function offboardSentence(
+  event: AuditEvent,
+  base: string,
+  byKey: TKey,
+  t: (key: TKey, vars?: Record<string, string>) => string,
+): string {
+  // Older entries have no `by`, and a deleted admin's address is emptied.
+  const by = event.details?.by;
+  const parts = [by ? t(byKey, { by }) : base];
+  const apps: OffboardApp[] = Array.isArray(event.details?.apps) ? event.details.apps : [];
+  const names = (result: OffboardApp["result"]) =>
+    apps.filter((a) => a.result === result).map((a) => a.app).join(", ");
+  const groups: [OffboardApp["result"], TKey][] = [
+    ["logged_out", "audit.loggedOutOf"],
+    ["failed", "audit.logoutFailedFor"],
+    ["not_supported", "audit.endsOnItsOwnIn"],
+  ];
+  for (const [result, key] of groups) {
+    const list = names(result);
+    if (list) parts.push(t(key, { apps: list }));
+  }
+  if (parts.length === 1) return parts[0];
+  return `${parts.map((part) => part.replace(/\.$/, "")).join(". ")}.`;
+}
 
 function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>) => string): Presentation {
   const code = event.error_code ?? undefined;
@@ -149,7 +175,7 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         labelKey: "audit.userDisabled",
         tone: "warn",
         reason: { text: t("reason.byAdmin"), tone: "neutral" },
-        sentence: t("audit.userDisabledDetail"),
+        sentence: offboardSentence(event, t("audit.userDisabledDetail"), "audit.disabledBy", t),
         warn: true,
       };
     case "user_enabled":
@@ -157,7 +183,7 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         labelKey: "audit.userEnabled",
         tone: "ok",
         reason: { text: t("reason.byAdmin"), tone: "neutral" },
-        sentence: t("audit.userEnabledDetail"),
+        sentence: offboardSentence(event, t("audit.userEnabledDetail"), "audit.enabledBy", t),
         warn: false,
       };
     case "role_changed": {
@@ -256,7 +282,7 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         labelKey: "audit.userDeleted",
         tone: "warn",
         reason: { text: t("reason.byAdmin"), tone: "neutral" },
-        sentence: t("audit.userDeletedDetail"),
+        sentence: offboardSentence(event, t("audit.userDeletedDetail"), "audit.deletedBy", t),
         warn: false,
       };
     case "company_switched":

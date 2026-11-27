@@ -42,6 +42,16 @@ class TenantUserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PersonAppOut(BaseModel):
+    name: str
+    client_id: str
+    # False when they only signed in before and have since lost access.
+    has_access: bool
+    # The app registered a logout URL, so disabling ends their session there now.
+    can_log_out: bool
+    last_used_at: datetime | None
+
+
 class UserPatch(BaseModel):
     """One change per request: either access (disabled) or role."""
 
