@@ -62,6 +62,11 @@ class OAuthClient(Base):
         default=AccessPolicy.everyone,
     )
     backchannel_logout_uri: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # Admin credential for apps without back-channel logout (see app/oauth/connectors.py).
+    signout_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    signout_base_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    signout_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # encrypted
+    signout_key_hint: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),

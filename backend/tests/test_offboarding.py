@@ -5,6 +5,7 @@ import json
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
+import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
 from itsdangerous import TimestampSigner
@@ -189,3 +190,165 @@ async def test_person_apps_is_admin_only(app_session_factory, client, sent_logou
     response = await client.get(f"/users/{anna.id}/apps", cookies=_cookie(anna))
 
     assert response.status_code == 403
+
+
+# ---------- sign-out connectors (Grafana, Outline, Gitea) ----------
+
+
+class FakeApps:
+    """Grafana, Outline and Gitea admin APIs, recording what we asked them to do."""
+
+    def __init__(self, email: str):
+        self.email = email
+        self.calls: list[str] = []
+        self.reject_key = False
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        host, path = request.url.host, request.url.path
+        self.calls.append(f"{request.method} {host}{path}")
+        if self.reject_key:
+            return httpx.Response(401, json={"message": "invalid"})
+        if host == "grafana.example":
+            if path == "/api/users":
+                return httpx.Response(200, json=[])
+            if path == "/api/users/lookup":
+                return httpx.Response(200, json={"id": 7, "email": self.email})
+            if path == "/api/admin/users/7/logout":
+                return httpx.Response(200, json={"message": "User auth token revoked"})
+        if host == "outline.example":
+            if path == "/api/auth.info":
+                return httpx.Response(200, json={"data": {"user": {"role": "admin"}}})
+            if path == "/api/users.list":
+                return httpx.Response(200, json={"data": [{"id": "o-1", "email": self.email}]})
+            if path in ("/api/users.suspend", "/api/users.activate"):
+                return httpx.Response(200, json={"data": {}})
+        if host == "gitea.example":
+            if path == "/api/v1/admin/users" and request.method == "GET":
+                page = request.url.params.get("page", "1")
+                users = [{"login": "anna", "email": self.email, "source_id": 2, "login_name": "anna"}]
+                return httpx.Response(200, json=users if page == "1" else [])
+            if path == "/api/v1/admin/users/anna":
+                self.calls.append(f"BODY {request.content.decode()}")
+                return httpx.Response(200, json={})
+        return httpx.Response(404)
+
+
+@pytest.fixture
+def fake_apps(monkeypatch) -> FakeApps:
+    from app.oauth import connectors
+
+    fake = FakeApps(email="")
+
+    async def public(_url: str) -> None:
+        return None
+
+    monkeypatch.setattr(connectors, "assert_public_host", public)
+    monkeypatch.setattr(connectors, "_transport", httpx.MockTransport(fake.handler))
+    return fake
+
+
+async def _app_id(factory, tenant: Tenant, name: str):
+    async with factory() as session:
+        await set_tenant_rls(session, tenant.id)
+        return await session.scalar(
+            select(OAuthClient.id).where(OAuthClient.tenant_id == tenant.id, OAuthClient.name == name)
+        )
+
+
+async def test_saving_a_signout_key_checks_it_first(app_session_factory, client, fake_apps):
+    tenant, owner, _anna = await _seed(app_session_factory)
+    grafana_id = await _app_id(app_session_factory, tenant, "Grafana")
+    body = {"kind": "grafana", "base_url": "https://grafana.example/", "secret": "admin:hunter2"}
+
+    fake_apps.reject_key = True
+    rejected = await client.put(f"/apps/{grafana_id}/signout", json=body, cookies=_cookie(owner))
+    assert rejected.status_code == 400
+    assert rejected.json()["detail"] == "signout_key_rejected"
+
+    fake_apps.reject_key = False
+    saved = await client.put(f"/apps/{grafana_id}/signout", json=body, cookies=_cookie(owner))
+    assert saved.status_code == 200
+    out = saved.json()
+    assert out["signout_kind"] == "grafana"
+    assert out["signout_base_url"] == "https://grafana.example"
+    assert out["signout_key_hint"] == "admin"
+    assert "hunter2" not in saved.text
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, tenant.id)
+        stored = await session.get(OAuthClient, grafana_id)
+        assert stored.signout_secret and "hunter2" not in stored.signout_secret
+
+    cleared = await client.delete(f"/apps/{grafana_id}/signout", cookies=_cookie(owner))
+    assert cleared.json()["signout_kind"] is None
+
+
+async def test_signout_rejects_private_addresses(app_session_factory, client):
+    tenant, owner, _anna = await _seed(app_session_factory)
+    grafana_id = await _app_id(app_session_factory, tenant, "Grafana")
+    body = {"kind": "grafana", "base_url": "https://127.0.0.1", "secret": "admin:x"}
+
+    response = await client.put(f"/apps/{grafana_id}/signout", json=body, cookies=_cookie(owner))
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "signout_url_private"
+
+
+async def test_disable_signs_out_through_connectors_and_enable_restores(
+    app_session_factory, client, fake_apps, sent_logouts
+):
+    tenant, owner, anna = await _seed(app_session_factory)
+    fake_apps.email = anna.email
+    for name, kind, secret in (
+        ("Grafana", "grafana", "admin:pw"),
+        ("Outline", "outline", "ol_api_key"),
+        ("Gitea", "gitea", "gitea_token"),
+    ):
+        app_id = await _app_id(app_session_factory, tenant, name)
+        saved = await client.put(
+            f"/apps/{app_id}/signout",
+            json={"kind": kind, "base_url": f"https://{name.lower()}.example", "secret": secret},
+            cookies=_cookie(owner),
+        )
+        assert saved.status_code == 200, saved.text
+
+    listed = await client.get(f"/users/{anna.id}/apps", cookies=_cookie(owner))
+    assert all(a["can_log_out"] for a in listed.json())
+
+    fake_apps.calls.clear()
+    disabled = await client.patch(
+        f"/users/{anna.id}", json={"disabled": True}, cookies=_cookie(owner)
+    )
+    assert disabled.status_code == 200
+    # Connectors replace back-channel logout for these apps.
+    assert sent_logouts == []
+    assert "POST grafana.example/api/admin/users/7/logout" in fake_apps.calls
+    assert "POST outline.example/api/users.suspend" in fake_apps.calls
+    assert any('"prohibit_login":true' in c for c in fake_apps.calls)
+
+    fake_apps.calls.clear()
+    enabled = await client.patch(
+        f"/users/{anna.id}", json={"disabled": False}, cookies=_cookie(owner)
+    )
+    assert enabled.status_code == 200
+    assert "POST outline.example/api/users.activate" in fake_apps.calls
+    assert any('"prohibit_login":false' in c for c in fake_apps.calls)
+    assert not any("grafana" in c for c in fake_apps.calls)
+
+    async with app_session_factory() as session:
+        await set_tenant_rls(session, tenant.id)
+        events = {
+            e.event_type: e.details
+            for e in await session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.tenant_id == tenant.id,
+                    AuditEvent.event_type.in_(
+                        [AuditEventType.user_disabled, AuditEventType.user_enabled]
+                    ),
+                )
+            )
+        }
+    off = {a["app"]: a["result"] for a in events[AuditEventType.user_disabled]["apps"]}
+    assert off == {"Gitea": "suspended", "Grafana": "logged_out", "Outline": "suspended"}
+    on = {a["app"]: a["result"] for a in events[AuditEventType.user_enabled]["apps"]}
+    assert on == {"Gitea": "restored", "Outline": "restored"}

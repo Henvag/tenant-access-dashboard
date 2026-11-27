@@ -110,7 +110,13 @@ export type AuditEvent = {
   created_at: string;
 };
 
-export type OffboardResult = "logged_out" | "failed" | "not_supported";
+export type OffboardResult =
+  | "logged_out"
+  | "suspended"
+  | "restored"
+  | "no_account"
+  | "failed"
+  | "not_supported";
 
 /** One app in a disable or delete audit entry. */
 export type OffboardApp = { app: string; client_id: string; result: OffboardResult };
@@ -124,6 +130,9 @@ export type RegisteredApp = {
   redirect_uris: string[];
   launch_url: string | null;
   backchannel_logout_uri: string | null;
+  signout_kind: SignoutKind | null;
+  signout_base_url: string | null;
+  signout_key_hint: string | null;
   access_policy: AccessPolicy;
   disabled: boolean;
   created_at: string;
@@ -146,6 +155,23 @@ export type AppInput = {
   backchannel_logout_uri?: string | null;
   access_policy: AccessPolicy;
 };
+
+export type SignoutKind = "grafana" | "outline" | "gitea";
+
+/** Store an admin key the server uses to sign people out of this app. Checked before saving. */
+export function setAppSignout(
+  appId: string,
+  input: { kind: SignoutKind; base_url: string; secret: string },
+): Promise<RegisteredApp> {
+  return request<RegisteredApp>(`/apps/${appId}/signout`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function clearAppSignout(appId: string): Promise<RegisteredApp> {
+  return request<RegisteredApp>(`/apps/${appId}/signout`, { method: "DELETE" });
+}
 
 export function listApps(): Promise<RegisteredApp[]> {
   return request<RegisteredApp[]>("/apps");

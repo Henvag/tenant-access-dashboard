@@ -35,6 +35,14 @@ export function messageForAppDenial(denial: AppDenial, lang: Lang): string {
 }
 
 const API_ERROR_KEYS: Record<string, TKey> = {
+  signout_https_required: "error.signout_https_required",
+  signout_url_invalid: "error.signout_url_invalid",
+  signout_url_private: "error.signout_url_private",
+  signout_dns_failed: "error.signout_dns_failed",
+  signout_unreachable: "error.signout_unreachable",
+  signout_key_rejected: "error.signout_key_rejected",
+  signout_not_admin: "error.signout_not_admin",
+  signout_app_error: "error.signout_app_error",
   tenant_exists: "error.tenant_exists",
   name_required: "error.name_required",
   domain_url: "error.domain_url",

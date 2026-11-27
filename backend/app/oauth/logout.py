@@ -27,7 +27,8 @@ from app.models import (
     User,
     UserRole,
 )
-from app.oauth import keys
+from app.agents.secrets import decrypt_secret
+from app.oauth import connectors, keys
 from app.config import settings
 
 logger = logging.getLogger("app.logout")
@@ -48,7 +49,18 @@ class PersonApp:
 
     @property
     def can_log_out(self) -> bool:
-        return bool(self.client.backchannel_logout_uri)
+        return bool(self.client.backchannel_logout_uri) or _connector(self.client) is not None
+
+
+def _connector(client: OAuthClient) -> connectors.Connector | None:
+    if not (client.signout_kind and client.signout_base_url and client.signout_secret):
+        return None
+    try:
+        secret = decrypt_secret(client.signout_secret)
+    except ValueError:
+        logger.warning("sign-out key for %s can't be decrypted", client.client_id)
+        return None
+    return connectors.Connector(client.signout_kind, client.signout_base_url, secret)
 
 
 async def apps_for_person(db: AsyncSession, user: User) -> list[PersonApp]:
@@ -107,28 +119,94 @@ async def apps_for_person(db: AsyncSession, user: User) -> list[PersonApp]:
 
 
 async def end_app_sessions(db: AsyncSession, user: User) -> list[dict[str, str]]:
-    """Send back-channel logout to the person's apps. One result per app, for the audit log."""
+    """End the person's sessions in each of their apps. One result per app, for the audit log.
+
+    An app's sign-out connector wins over its back-channel logout URL: the
+    connector also covers sessions the app started before the URL was set.
+    """
     apps = await apps_for_person(db, user)
-    targets = [a for a in apps if a.can_log_out]
-    outcome: dict[str, bool] = {}
-    if targets:
+    backchannel = [
+        a for a in apps if _connector(a.client) is None and a.client.backchannel_logout_uri
+    ]
+    via_connector = [(a, _connector(a.client)) for a in apps]
+    via_connector = [(a, c) for a, c in via_connector if c is not None]
+
+    async def _backchannel_all() -> list[bool]:
+        if not backchannel:
+            return []
         key = await keys.active_key(db)
         async with httpx.AsyncClient(timeout=3.0) as client:
-            results = await asyncio.gather(
-                *[_post_logout(client, key, user, a.client) for a in targets]
+            return await asyncio.gather(
+                *[_post_logout(client, key, user, a.client) for a in backchannel]
             )
-        outcome = {a.client.client_id: ok for a, ok in zip(targets, results)}
 
-    summary = []
-    for app in apps:
-        if not app.can_log_out:
-            result = NOT_SUPPORTED
-        elif outcome.get(app.client.client_id):
-            result = LOGGED_OUT
-        else:
-            result = LOGOUT_FAILED
-        summary.append({"app": app.client.name, "client_id": app.client.client_id, "result": result})
-    return summary
+    backchannel_ok, connector_results = await asyncio.gather(
+        _backchannel_all(),
+        asyncio.gather(*[connectors.sign_out(c, user.email) for _a, c in via_connector]),
+    )
+    outcome: dict[str, str] = {
+        a.client.client_id: LOGGED_OUT if ok else LOGOUT_FAILED
+        for a, ok in zip(backchannel, backchannel_ok)
+    }
+    outcome.update(
+        {a.client.client_id: result for (a, _c), result in zip(via_connector, connector_results)}
+    )
+    return [
+        {
+            "app": app.client.name,
+            "client_id": app.client.client_id,
+            "result": outcome.get(app.client.client_id, NOT_SUPPORTED),
+        }
+        for app in apps
+    ]
+
+
+async def restore_app_access(db: AsyncSession, user: User) -> list[dict[str, str]]:
+    """Lift the suspensions our last disable of this person made. RLS must be set."""
+    last = await db.scalar(
+        select(AuditEvent)
+        .where(
+            AuditEvent.tenant_id == user.tenant_id,
+            AuditEvent.user_id == user.id,
+            AuditEvent.event_type == AuditEventType.user_disabled,
+        )
+        .order_by(AuditEvent.created_at.desc())
+        .limit(1)
+    )
+    entries = (last.details or {}).get("apps") if last else None
+    suspended = {
+        e.get("client_id")
+        for e in entries or []
+        if isinstance(e, dict) and e.get("result") == connectors.SUSPENDED
+    }
+    if not suspended:
+        return []
+    clients = list(
+        (
+            await db.scalars(
+                select(OAuthClient).where(
+                    OAuthClient.tenant_id == user.tenant_id,
+                    OAuthClient.client_id.in_(suspended),
+                )
+            )
+        ).all()
+    )
+    targets = [(c, _connector(c)) for c in clients]
+    results = await asyncio.gather(
+        *[
+            connectors.restore(conn, user.email) if conn else _missing()
+            for _c, conn in targets
+        ]
+    )
+    return [
+        {"app": c.name, "client_id": c.client_id, "result": result}
+        for (c, _conn), result in zip(targets, results)
+    ]
+
+
+async def _missing() -> str:
+    # The admin removed the app's key since: someone has to un-suspend by hand.
+    return connectors.FAILED
 
 
 def offboarding_details(actor: User, apps: list[dict[str, str]]) -> dict:
@@ -136,7 +214,9 @@ def offboarding_details(actor: User, apps: list[dict[str, str]]) -> dict:
     return {
         "by": actor.email,
         "apps": apps,
-        "logout_notified": sum(1 for a in apps if a["result"] == LOGGED_OUT),
+        "logout_notified": sum(
+            1 for a in apps if a["result"] in (LOGGED_OUT, connectors.SUSPENDED)
+        ),
         "logout_failed": sum(1 for a in apps if a["result"] == LOGOUT_FAILED),
     }
 

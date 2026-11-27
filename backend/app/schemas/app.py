@@ -2,6 +2,8 @@ from datetime import datetime
 from urllib.parse import urlsplit
 from uuid import UUID
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 from app.models import AccessPolicy
@@ -26,6 +28,10 @@ class AppOut(BaseModel):
     redirect_uris: list[str]
     launch_url: str | None
     backchannel_logout_uri: str | None = None
+    # Sign-out connector (Grafana, Outline, Gitea). The key itself never leaves the server.
+    signout_kind: str | None = None
+    signout_base_url: str | None = None
+    signout_key_hint: str | None = None
     access_policy: AccessPolicy
     disabled: bool
     created_at: datetime
@@ -149,3 +155,10 @@ class MyAppOut(BaseModel):
     name: str
     launch_url: str | None
     access_policy: AccessPolicy
+
+
+class SignoutIn(BaseModel):
+    kind: Literal["grafana", "outline", "gitea"]
+    base_url: str = Field(min_length=1, max_length=2048)
+    # Grafana: "username:password" of a server admin. Outline: API key. Gitea: admin token.
+    secret: str = Field(min_length=1, max_length=1000)
