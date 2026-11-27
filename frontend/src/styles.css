@@ -4316,3 +4316,29 @@ a.tile:active {
   flex: 1 1 18rem;
   min-width: 0;
 }
+
+/* Disable dialog: the person's apps */
+.offboard-heading {
+  margin: 0.25rem 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.offboard-list .app-row {
+  padding: 0.65rem 0.25rem;
+}
+
+.offboard-list .app-row-main {
+  align-items: center;
+}
+
+.offboard-list .hint {
+  margin: 0.1rem 0 0;
+}
+
+.offboard-list .pill {
+  white-space: normal;
+  text-align: right;
+  max-width: 14rem;
+}

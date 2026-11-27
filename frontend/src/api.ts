@@ -105,9 +105,15 @@ export type AuditEvent = {
   idp: "google" | "microsoft";
   error_code: string | null;
   ip_address: string | null;
-  details: Record<string, string> | null;
+  // Mostly strings. Disable and delete entries also carry `apps`.
+  details: Record<string, any> | null;
   created_at: string;
 };
+
+export type OffboardResult = "logged_out" | "failed" | "not_supported";
+
+/** One app in a disable or delete audit entry. */
+export type OffboardApp = { app: string; client_id: string; result: OffboardResult };
 
 export type AccessPolicy = "everyone" | "admins" | "assigned";
 
@@ -236,6 +242,20 @@ export function getMe(): Promise<Me> {
 
 export function listUsers(): Promise<TenantUser[]> {
   return request<TenantUser[]>("/users");
+}
+
+/** An app this person can open, or has signed in to before. */
+export type PersonApp = {
+  name: string;
+  client_id: string;
+  has_access: boolean;
+  /** The app registered a logout URL, so disabling ends their session there right away. */
+  can_log_out: boolean;
+  last_used_at: string | null;
+};
+
+export function listPersonApps(userId: string): Promise<PersonApp[]> {
+  return request<PersonApp[]>(`/users/${userId}/apps`);
 }
 
 export function setUserDisabled(userId: string, disabled: boolean): Promise<TenantUser> {

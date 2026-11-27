@@ -11,8 +11,8 @@ from app.auth.deletion import forget_person
 from app.auth.partners import MAX_OUTSIDE_ADMINS, count_outside_admins
 from app.db import get_db
 from app.models import AuditEventType, Tenant, User, UserRole
-from app.oauth.logout import notify_disabled_user
-from app.schemas.user import TenantUserOut, UserPatch
+from app.oauth.logout import apps_for_person, end_app_sessions, offboarding_details
+from app.schemas.user import PersonAppOut, TenantUserOut, UserPatch
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -29,6 +29,30 @@ async def list_users(
         .order_by(User.role.asc(), User.email.asc())
     )
     return [_to_out(user, owner_id) for user in result.all()]
+
+
+@router.get("/{user_id}/apps", response_model=list[PersonAppOut])
+async def list_person_apps(
+    user_id: UUID,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> list[PersonAppOut]:
+    """What disabling this person would cut off: their apps and whether each logs out now."""
+    target = await db.scalar(
+        select(User).where(User.id == user_id, User.tenant_id == admin.tenant_id)
+    )
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found")
+    return [
+        PersonAppOut(
+            name=app.client.name,
+            client_id=app.client.client_id,
+            has_access=app.has_access,
+            can_log_out=app.can_log_out,
+            last_used_at=app.last_used_at,
+        )
+        for app in await apps_for_person(db, target)
+    ]
 
 
 @router.patch("/{user_id}", response_model=TenantUserOut)
@@ -96,14 +120,14 @@ async def delete_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cannot_delete_owner")
 
     # Same as switching off: apps with back-channel logout end their sessions now.
-    logout = await notify_disabled_user(db, target)
+    apps = await end_app_sessions(db, target)
     await forget_person(db, target)
     await record_admin_event(
         db,
         actor=admin,
         event_type=AuditEventType.user_deleted,
         request=request,
-        details={"logout_notified": logout["notified"], "logout_failed": logout["failed"]},
+        details=offboarding_details(admin, apps),
     )
     await db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -159,8 +183,7 @@ async def _apply_disabled(
                     detail="cannot_disable_last_admin",
                 )
         target.disabled_at = datetime.now(UTC)
-        logout = await notify_disabled_user(db, target)
-        details = {"logout_notified": logout["notified"], "logout_failed": logout["failed"]}
+        details = offboarding_details(actor, await end_app_sessions(db, target))
     else:
         if target.external and (
             await count_outside_admins(db, actor.tenant_id) >= MAX_OUTSIDE_ADMINS
@@ -170,7 +193,7 @@ async def _apply_disabled(
                 detail="outside_admin_limit",
             )
         target.disabled_at = None
-        details = None
+        details = {"by": actor.email}
 
     await record_user_access_change(
         db,
