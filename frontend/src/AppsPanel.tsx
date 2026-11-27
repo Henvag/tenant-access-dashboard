@@ -13,6 +13,7 @@ import {
   setAppGrants,
   TenantUser,
 } from "./api";
+import SignoutSection from "./SignoutSection";
 import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
 import { isPersonalWorkspace, messageForApiError, planNearLimit } from "./format";
@@ -355,6 +356,13 @@ export default function AppsPanel({
               });
               upsert(updated);
               setDialog(null);
+            }}
+          />
+          <SignoutSection
+            app={dialog.app}
+            onUpdated={(updated) => {
+              upsert(updated);
+              setDialog({ ...dialog, app: updated });
             }}
           />
         </Modal>

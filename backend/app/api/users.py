@@ -11,7 +11,12 @@ from app.auth.deletion import forget_person
 from app.auth.partners import MAX_OUTSIDE_ADMINS, count_outside_admins
 from app.db import get_db
 from app.models import AuditEventType, Tenant, User, UserRole
-from app.oauth.logout import apps_for_person, end_app_sessions, offboarding_details
+from app.oauth.logout import (
+    apps_for_person,
+    end_app_sessions,
+    offboarding_details,
+    restore_app_access,
+)
 from app.schemas.user import PersonAppOut, TenantUserOut, UserPatch
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -194,6 +199,9 @@ async def _apply_disabled(
             )
         target.disabled_at = None
         details = {"by": actor.email}
+        restored = await restore_app_access(db, target)
+        if restored:
+            details["apps"] = restored
 
     await record_user_access_change(
         db,

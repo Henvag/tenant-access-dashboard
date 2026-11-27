@@ -24,6 +24,8 @@ from app.models import (
     User,
     UserRole,
 )
+from app.agents.secrets import encrypt_secret, key_hint
+from app.oauth import connectors
 from app.oauth.service import hash_secret, new_client_id, new_client_secret
 from app.schemas.app import (
     AppCreate,
@@ -34,6 +36,7 @@ from app.schemas.app import (
     GrantsOut,
     MyAppOut,
     SecretOut,
+    SignoutIn,
 )
 
 router = APIRouter(prefix="/apps", tags=["apps"])
@@ -66,6 +69,9 @@ def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
         redirect_uris=list(client.redirect_uris),
         launch_url=client.launch_url,
         backchannel_logout_uri=client.backchannel_logout_uri,
+        signout_kind=client.signout_kind,
+        signout_base_url=client.signout_base_url,
+        signout_key_hint=client.signout_key_hint,
         access_policy=client.access_policy,
         disabled=client.disabled,
         created_at=client.created_at,
@@ -212,6 +218,53 @@ async def patch_app(
         client.access_policy = payload.access_policy
     if payload.disabled is not None:
         client.disabled_at = datetime.now(UTC) if payload.disabled else None
+    await db.flush()
+    counts = await _grant_counts(db, [client.id])
+    out = _to_out(client, counts.get(client.id, 0))
+    await db.commit()
+    return out
+
+
+@router.put("/{app_id}/signout", response_model=AppOut)
+async def set_signout(
+    app_id: UUID,
+    payload: SignoutIn,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AppOut:
+    """Store an admin credential for the app, after checking that it works."""
+    client = await _load(db, app_id, admin.tenant_id)
+    secret = payload.secret.strip()
+    try:
+        base_url = connectors.clean_base_url(payload.base_url)
+        await connectors.verify(connectors.Connector(payload.kind, base_url, secret))
+    except connectors.ConnectorError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.code) from exc
+    client.signout_kind = payload.kind
+    client.signout_base_url = base_url
+    client.signout_secret = encrypt_secret(secret)
+    # Grafana's credential is username:password; show the username, never the password.
+    client.signout_key_hint = (
+        secret.split(":", 1)[0][:8] if payload.kind == "grafana" else key_hint(secret)
+    )
+    await db.flush()
+    counts = await _grant_counts(db, [client.id])
+    out = _to_out(client, counts.get(client.id, 0))
+    await db.commit()
+    return out
+
+
+@router.delete("/{app_id}/signout", response_model=AppOut)
+async def clear_signout(
+    app_id: UUID,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AppOut:
+    client = await _load(db, app_id, admin.tenant_id)
+    client.signout_kind = None
+    client.signout_base_url = None
+    client.signout_secret = None
+    client.signout_key_hint = None
     await db.flush()
     counts = await _grant_counts(db, [client.id])
     out = _to_out(client, counts.get(client.id, 0))

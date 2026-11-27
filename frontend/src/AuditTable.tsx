@@ -82,7 +82,10 @@ function offboardSentence(
     apps.filter((a) => a.result === result).map((a) => a.app).join(", ");
   const groups: [OffboardApp["result"], TKey][] = [
     ["logged_out", "audit.loggedOutOf"],
-    ["failed", "audit.logoutFailedFor"],
+    ["suspended", "audit.suspendedIn"],
+    ["restored", "audit.restoredIn"],
+    ["no_account", "audit.noAccountIn"],
+    ["failed", event.event_type === "user_enabled" ? "audit.restoreFailedIn" : "audit.logoutFailedFor"],
     ["not_supported", "audit.endsOnItsOwnIn"],
   ];
   for (const [result, key] of groups) {
