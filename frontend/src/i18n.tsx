@@ -6,7 +6,7 @@ const STORAGE_KEY = "tenant-access.lang";
 
 const en = {
   "app.loading": "Loading your workspace…",
-  "app.title": "Tenant Access",
+  "app.title": "Tenant Access: sign-in and access control for self-hosted tools",
   "brand": "Tenant Access",
 
   "landing.title": "Sign-in and access control for the tools you run yourself.",
@@ -692,7 +692,7 @@ export type TKey = keyof typeof en;
 
 const no: Record<TKey, string> = {
   "app.loading": "Laster arbeidsområdet ditt…",
-  "app.title": "Tenant Access",
+  "app.title": "Tenant Access: innlogging og tilgangsstyring for verktøy dere drifter selv",
   "brand": "Tenant Access",
 
   "landing.title": "Innlogging og tilgangsstyring for verktøyene dere drifter selv.",
