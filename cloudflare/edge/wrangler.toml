@@ -1,0 +1,22 @@
+# Cloudflare Worker that serves Tenant Access's public pages from the edge.
+# See README.md in this folder. Remove the routes to switch it off.
+name = "tenant-access-edge"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+# Exact paths only, so sign-in, /oauth, /.well-known and the API never pass through
+# this Worker. A path with a query string (such as /?continue=...) doesn't match
+# either and goes straight to Render.
+routes = [
+  { pattern = "tenantaccess.me/", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/no", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/privacy", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/personvern", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/billing/plans", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/assets/*", zone_name = "tenantaccess.me" },
+]
+
+[[kv_namespaces]]
+binding = "PAGES"
+id = "019148b4e2c14c0da5eb67e959d49e7a"

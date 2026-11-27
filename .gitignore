@@ -8,6 +8,7 @@ __pycache__/
 htmlcov/
 node_modules/
 dist/
+dist-ssr/
 *.egg-info/
 .DS_Store
 
@@ -33,3 +34,4 @@ film/assets/
 film/renders/
 film/.hyperframes/
 film/poster.png
+.wrangler/

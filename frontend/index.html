@@ -16,6 +16,19 @@
     <meta property="og:image:height" content="640" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      // A visitor who chose Norwegian, or whose browser is Norwegian, opens the Norwegian
+      // address before anything is drawn. Same check as detectLang() in src/i18n.tsx.
+      (function () {
+        var pairs = { "/": "/no", "/privacy": "/personvern" };
+        var to = pairs[location.pathname];
+        if (!to) return;
+        var lang = null;
+        try { lang = localStorage.getItem("tenant-access.lang"); } catch (e) {}
+        if (lang !== "en" && lang !== "no") lang = /^(nb|nn|no)\b/i.test(navigator.language || "") ? "no" : "en";
+        if (lang === "no") location.replace(to + location.search + location.hash);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -9,6 +9,7 @@
 !**/.env.example
 frontend/node_modules
 frontend/dist
+frontend/dist-ssr
 backend/.venv
 *.md
 .cursor

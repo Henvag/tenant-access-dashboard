@@ -12,6 +12,7 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 import hmac
 import re
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -130,12 +131,22 @@ async def outline_database_url(authorization: str | None = Header(default=None))
     return PlainTextResponse(rewritten)
 
 
-def _mount_frontend() -> None:
-    index = STATIC_DIR / "index.html"
+# The public pages, prerendered at build time (frontend/scripts/prerender.mjs), by the
+# path they answer. Keep in step with frontend/src/routes.ts.
+PAGES = {
+    "": "index.html",
+    "no": "no/index.html",
+    "privacy": "privacy/index.html",
+    "personvern": "personvern/index.html",
+}
+
+
+def mount_frontend(app: FastAPI, static_dir: Path) -> None:
+    index = static_dir / "index.html"
     if not index.is_file():
         return
 
-    assets = STATIC_DIR / "assets"
+    assets = static_dir / "assets"
     if assets.is_dir():
         app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
@@ -143,21 +154,33 @@ def _mount_frontend() -> None:
     # revalidate it. no-store left the previously cached index.html in place,
     # so sign-in kept opening that older shell.
     index_headers = {"Cache-Control": "no-cache, must-revalidate"}
+    static_root = static_dir.resolve()
+
+    def page_file(name: str):
+        # A build without the prerender step only has index.html; it draws every page.
+        candidate = static_dir / PAGES[name]
+        return candidate if candidate.is_file() else index
+
+    not_found = static_dir / "404.html"
 
     @app.get("/")
     async def spa_root():
-        return FileResponse(index, headers=index_headers)
+        return FileResponse(page_file(""), headers=index_headers)
 
     @app.get("/{full_path:path}")
     async def spa_fallback(full_path: str):
-        candidate = (STATIC_DIR / full_path).resolve()
-        try:
-            candidate.relative_to(STATIC_DIR.resolve())
-        except ValueError:
-            return FileResponse(index, headers=index_headers)
-        if candidate.is_file():
+        page = full_path.strip("/")
+        if page in PAGES:
+            return FileResponse(page_file(page), headers=index_headers)
+        candidate = (static_dir / full_path).resolve()
+        if candidate.is_relative_to(static_root) and candidate.is_file():
             return FileResponse(candidate)
-        return FileResponse(index, headers=index_headers)
+        # A real 404, so search engines don't index unknown addresses as the front page.
+        return FileResponse(
+            not_found if not_found.is_file() else index,
+            status_code=status.HTTP_404_NOT_FOUND,
+            headers=index_headers,
+        )
 
 
-_mount_frontend()
+mount_frontend(app, STATIC_DIR)

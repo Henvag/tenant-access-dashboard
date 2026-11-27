@@ -42,12 +42,42 @@ function readEntryState(): EntryState {
 
 // Read once at module load: the function mutates the URL, so it must not run twice
 // (React StrictMode double-invokes state initialisers in development).
-const ENTRY: EntryState = readEntryState();
+export const ENTRY: EntryState = readEntryState();
+
+export function hasEntryState(entry: EntryState = ENTRY): boolean {
+  return Boolean(entry.errorCode || entry.denial || entry.continueApp || entry.inviteToken);
+}
+
+/**
+ * Remembered while this browser has a session, so a returning user sees the loading
+ * screen rather than the front page while /auth/me answers. Everyone else gets the front
+ * page at once (it is already in the prerendered HTML) instead of waiting on the server.
+ */
+const SIGNED_IN_KEY = "tenant-access.signed-in";
+
+export function rememberedSignedIn(): boolean {
+  try {
+    return window.localStorage.getItem(SIGNED_IN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberSignedIn(value: boolean) {
+  try {
+    if (value) window.localStorage.setItem(SIGNED_IN_KEY, "1");
+    else window.localStorage.removeItem(SIGNED_IN_KEY);
+  } catch {
+    // ignore storage errors (private mode etc.)
+  }
+}
 
 export default function App() {
   const { t } = useLang();
   const [session, setSession] = useState<Session>({ status: "loading" });
   const entry = ENTRY;
+  // Decided once: switching from the front page to a splash midway would flicker.
+  const [showLandingWhileLoading] = useState(() => !rememberedSignedIn() && !entry.continueApp);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,9 +85,11 @@ export default function App() {
     function loadSession() {
       getMe()
         .then((me) => {
+          rememberSignedIn(true);
           if (!cancelled) setSession({ status: "ready", me });
         })
         .catch(() => {
+          rememberSignedIn(false);
           if (!cancelled) setSession({ status: "anonymous" });
         });
     }
@@ -77,16 +109,7 @@ export default function App() {
     };
   }, []);
 
-  if (session.status === "loading") {
-    return (
-      <div className="splash" aria-busy="true">
-        <BrandMark size={40} />
-        <p>{t("app.loading")}</p>
-      </div>
-    );
-  }
-
-  if (session.status === "anonymous") {
+  if (session.status === "anonymous" || (session.status === "loading" && showLandingWhileLoading)) {
     return (
       <Landing
         initialErrorCode={entry.errorCode}
@@ -95,6 +118,15 @@ export default function App() {
         inviteToken={entry.inviteToken}
         initialTab={entry.errorCode === "no_tenant" ? "register" : "signin"}
       />
+    );
+  }
+
+  if (session.status === "loading") {
+    return (
+      <div className="splash" aria-busy="true">
+        <BrandMark size={40} />
+        <p>{t("app.loading")}</p>
+      </div>
     );
   }
 
