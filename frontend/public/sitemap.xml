@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://tenantaccess.me/</loc></url>
-  <url><loc>https://tenantaccess.me/privacy</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://tenantaccess.me/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/no" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/" />
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/no</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/no" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/" />
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/privacy" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/personvern" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/privacy" />
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/personvern</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/privacy" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/personvern" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/privacy" />
+  </url>
 </urlset>

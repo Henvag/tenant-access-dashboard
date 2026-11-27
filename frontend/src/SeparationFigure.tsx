@@ -85,9 +85,11 @@ export default function SeparationFigure() {
   const { t } = useLang();
   const root = useRef<HTMLElement | null>(null);
   const timeline = useRef<{ restart: () => void; kill: () => void } | null>(null);
-  const [reduced] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  // Read after the first render, so the prerendered page and the first client render match.
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
 
   useEffect(() => {
     const el = root.current;

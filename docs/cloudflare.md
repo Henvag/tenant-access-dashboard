@@ -114,3 +114,10 @@ orange cloud is on. The header is only trusted when the address Render saw conne
 is in Cloudflare's published ranges; a direct request to the `onrender.com` origin
 can't choose its own IP. If Cloudflare adds ranges (https://www.cloudflare.com/ips/),
 update the list in that file.
+
+## Edge copy of the public pages
+
+While Render's free plan sleeps, the front page, `/no`, `/privacy` and `/personvern` can be
+served from a small Cloudflare Worker that only handles those exact addresses. Sign-in,
+OIDC and API paths never pass through it. Setup and the off switch are in
+[cloudflare/edge/README.md](../cloudflare/edge/README.md).

@@ -1,3 +1,4 @@
+import { matchPage, PageId, pagePath } from "./routes";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type Lang = "en" | "no";
@@ -6,6 +7,9 @@ const STORAGE_KEY = "tenant-access.lang";
 
 const en = {
   "app.loading": "Loading your workspace…",
+  "notFound.title": "Page not found",
+  "notFound.body": "There is nothing at this address. It may have moved, or the link has a typo.",
+  "notFound.back": "Go to the front page",
   "app.title": "Tenant Access: sign-in and access control for self-hosted tools",
   "brand": "Tenant Access",
 
@@ -692,6 +696,9 @@ export type TKey = keyof typeof en;
 
 const no: Record<TKey, string> = {
   "app.loading": "Laster arbeidsområdet ditt…",
+  "notFound.title": "Fant ikke siden",
+  "notFound.body": "Det finnes ingenting på denne adressen. Den kan ha blitt flyttet, eller lenken har en skrivefeil.",
+  "notFound.back": "Gå til forsiden",
   "app.title": "Tenant Access: innlogging og tilgangsstyring for verktøy dere drifter selv",
   "brand": "Tenant Access",
 
@@ -1390,7 +1397,16 @@ export function translate(lang: Lang, key: TKey, vars?: Vars): string {
   );
 }
 
-function detectLang(): Lang {
+/** The tab title of each page. The prerendered HTML uses the same titles. */
+export function pageTitle(page: PageId | "notFound", lang: Lang): string {
+  if (page === "notFound") return `${translate(lang, "notFound.title")} · Tenant Access`;
+  if (page === "privacy") return `${translate(lang, "landing.privacy")} · Tenant Access`;
+  return translate(lang, "app.title");
+}
+
+/** The saved choice, else the browser's language. index.html runs the same check before
+ * the page draws, to send a Norwegian visitor from / to /no. */
+export function detectLang(): Lang {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === "en" || stored === "no") return stored;
@@ -1410,12 +1426,19 @@ type LangContextValue = {
 
 const LangContext = createContext<LangContextValue | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(detectLang);
+type ProviderProps = {
+  children: ReactNode;
+  /** The language the address asks for, such as /no. Wins over the saved choice. */
+  initialLang?: Lang;
+};
+
+export function LanguageProvider({ children, initialLang }: ProviderProps) {
+  const [lang, setLangState] = useState<Lang>(() => initialLang ?? detectLang());
 
   useEffect(() => {
     document.documentElement.lang = LOCALES[lang];
-    document.title = translate(lang, "app.title");
+    const match = matchPage(window.location.pathname);
+    document.title = pageTitle(match ? match.page : "notFound", lang);
   }, [lang]);
 
   const setLang = useCallback((next: Lang) => {
@@ -1424,6 +1447,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // ignore
+    }
+    // A page with an address per language moves to the other address, so the URL
+    // always says which language is on screen. No reload: the page just re-renders.
+    const match = matchPage(window.location.pathname);
+    if (match && match.lang !== next) {
+      const { search, hash } = window.location;
+      window.history.replaceState(window.history.state, "", `${pagePath(match.page, next)}${search}${hash}`);
     }
   }, []);
 

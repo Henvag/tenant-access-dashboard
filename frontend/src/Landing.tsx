@@ -12,6 +12,7 @@ import AppMark from "./AppMark";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { TKey, useLang } from "./i18n";
+import { pagePath } from "./routes";
 import {
   IconCheck,
   IconClose,
@@ -274,7 +275,7 @@ export default function Landing({
               <li key={key}>
                 <strong>{t(`security.${key}.title`)}</strong>
                 <p>{t(`security.${key}.body`)}</p>
-                {key === "hosting" ? <a href="/privacy">{t("landing.privacy")}</a> : null}
+                {key === "hosting" ? <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a> : null}
               </li>
             ))}
           </ul>
@@ -294,7 +295,7 @@ export default function Landing({
                 {n === 4 ? (
                   <>
                     {" "}
-                    <a href="/privacy">{t("landing.privacy")}</a>
+                    <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a>
                   </>
                 ) : null}
               </p>
@@ -319,7 +320,7 @@ export default function Landing({
           <BrandMark size={20} />
           <span>{t("brand")}</span>
         </a>
-        <a href="/privacy">{t("landing.privacy")}</a>
+        <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a>
       </footer>
     </main>
   );

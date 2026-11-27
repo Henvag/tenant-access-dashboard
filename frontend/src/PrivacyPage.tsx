@@ -1,6 +1,7 @@
 import BrandMark from "./BrandMark";
 import { Lang, useLang } from "./i18n";
 import LanguageToggle from "./LanguageToggle";
+import { pagePath } from "./routes";
 
 type Row = [string, string];
 
@@ -30,7 +31,7 @@ type Copy = {
  * subprocessor or what the database stores changes, change it here in both
  * languages in the same pull request.
  */
-const COPY: Record<Lang, Copy> = {
+export const PRIVACY_COPY: Record<Lang, Copy> = {
   en: {
     title: "Privacy and hosting",
     updated: "Last updated 3 November 2026.",
@@ -103,12 +104,12 @@ const COPY: Record<Lang, Copy> = {
 
 export default function PrivacyPage() {
   const { lang } = useLang();
-  const c = COPY[lang];
+  const c = PRIVACY_COPY[lang];
 
   return (
     <main className="legal">
       <header className="legal-top">
-        <a className="brand legal-brand" href="/">
+        <a className="brand legal-brand" href={pagePath("home", lang)}>
           <BrandMark size={28} />
           <span className="brand-name">Tenant Access</span>
         </a>
@@ -168,7 +169,7 @@ export default function PrivacyPage() {
         <p>{c.rights}</p>
 
         <p className="legal-back">
-          <a href="/">{c.back}</a>
+          <a href={pagePath("home", lang)}>{c.back}</a>
         </p>
       </article>
     </main>
