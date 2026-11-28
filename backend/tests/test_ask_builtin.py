@@ -185,3 +185,30 @@ def test_cloudflare_payload_is_openai_shaped() -> None:
     payload = openai_payload("@cf/google/gemma-4-26b-a4b-it", "sys", [{"role": "user", "content": "Hei"}])
     assert payload["messages"][0] == {"role": "system", "content": "sys"}
     assert payload["model"] == "@cf/google/gemma-4-26b-a4b-it"
+
+
+async def test_cloudflare_call_turns_thinking_off_and_retries_without_it() -> None:
+    import httpx
+
+    from app.agents import providers
+
+    seen: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content)
+        seen.append(body)
+        if "chat_template_kwargs" in body:
+            return httpx.Response(400, json={"errors": [{"message": "unknown field"}]})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "Hei"}}]})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        answer = await providers._cloudflare(
+            client, "@cf/google/gemma-4-26b-a4b-it", "token", "acct", "sys",
+            [{"role": "user", "content": "Hei"}],
+        )
+    assert answer == "Hei"
+    assert seen[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert seen[0]["max_tokens"] == providers.BUILTIN_MAX_OUTPUT_TOKENS
+    assert "chat_template_kwargs" not in seen[1]

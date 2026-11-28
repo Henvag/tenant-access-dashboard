@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
 import httpx
@@ -23,8 +24,13 @@ DEFAULT_MODEL = {
 }
 
 MAX_OUTPUT_TOKENS = 4096
-# Built-in Ask answers are short; a lower cap keeps each question cheap.
-BUILTIN_MAX_OUTPUT_TOKENS = 1024
+logger = logging.getLogger(__name__)
+# Built-in Ask answers are short, but Gemma 4 is a reasoning model: any thinking
+# counts toward this cap, so it must leave room for the answer after it.
+BUILTIN_MAX_OUTPUT_TOKENS = 3072
+# Ask about workspace facts doesn't need step-by-step thinking. Turning it off
+# makes answers faster and cheaper and stops them being cut off.
+BUILTIN_EXTRA = {"chat_template_kwargs": {"enable_thinking": False}}
 
 
 def provider_label(provider: str) -> str:
@@ -98,18 +104,7 @@ async def complete(
 ) -> str:
     async with httpx.AsyncClient(timeout=45.0) as client:
         if provider == "cloudflare":
-            # Workers AI speaks the OpenAI chat format. api_key is the account's API token.
-            response = await client.post(
-                f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}"},
-                json={
-                    **openai_payload(model, system, _alternating(messages)),
-                    "max_tokens": BUILTIN_MAX_OUTPUT_TOKENS,
-                },
-            )
-            _raise_for_status("cloudflare", response)
-            data = response.json()
-            return str(data["choices"][0]["message"]["content"] or "")
+            return await _cloudflare(client, model, api_key, account_id, system, messages)
         if provider == "openai":
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -143,6 +138,39 @@ async def complete(
         parts = data.get("content") or []
         texts = [part.get("text", "") for part in parts if part.get("type") == "text"]
         return "\n".join(text for text in texts if text)
+
+
+async def _cloudflare(
+    client: httpx.AsyncClient,
+    model: str,
+    api_key: str,
+    account_id: str,
+    system: str,
+    messages: list[dict[str, str]],
+) -> str:
+    """Workers AI speaks the OpenAI chat format. api_key is the account's API token."""
+    url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions"
+    body = {
+        **openai_payload(model, system, _alternating(messages)),
+        "max_tokens": BUILTIN_MAX_OUTPUT_TOKENS,
+    }
+    response = await client.post(
+        url, headers={"Authorization": f"Bearer {api_key}"}, json={**body, **BUILTIN_EXTRA}
+    )
+    if response.status_code == 400:
+        # A model that doesn't take the thinking switch: ask again without it.
+        logger.warning("cloudflare_ai_rejected_extra body=%s", response.text[:300])
+        response = await client.post(url, headers={"Authorization": f"Bearer {api_key}"}, json=body)
+    if response.status_code >= 300:
+        logger.warning(
+            "cloudflare_ai_failed status=%s body=%s", response.status_code, response.text[:300]
+        )
+    _raise_for_status("cloudflare", response)
+    choice = response.json()["choices"][0]
+    content = str((choice.get("message") or {}).get("content") or "")
+    if not content.strip():
+        logger.warning("cloudflare_ai_empty_answer finish_reason=%s", choice.get("finish_reason"))
+    return content
 
 
 def _raise_for_status(provider: str, response: httpx.Response) -> None:
