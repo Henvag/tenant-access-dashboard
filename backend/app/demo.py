@@ -51,8 +51,10 @@ REFRESH_AFTER = timedelta(hours=1)
 _ADVISORY_LOCK = 7_340_221
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-# Writes a demo session may still make: starting the demo again.
-_DEMO_WRITE_ALLOWED = frozenset({"/auth/demo"})
+# Writes a demo session may still make: starting the demo again, and trying Ask
+# (capped at DEMO_ASK_DAILY questions a day across all visitors).
+_DEMO_WRITE_ALLOWED = frozenset({"/auth/demo", "/ask/chat"})
+DEMO_ASK_DAILY = 30
 
 
 @dataclass(frozen=True)

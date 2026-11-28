@@ -23,6 +23,7 @@ from app.api.deps import get_current_user, require_admin
 from app.billing.plans import limits_for_tenant
 from app.config import settings
 from app.db import get_db
+from app.demo import DEMO_ASK_DAILY, is_demo_tenant
 from app.models import Tenant, User, UserRole
 
 router = APIRouter(prefix="/ask", tags=["ask"])
@@ -45,6 +46,13 @@ def ask_available(tenant: Tenant) -> bool:
 
 def _today():
     return datetime.now(UTC).date()
+
+
+def _daily_limit(tenant: Tenant) -> int:
+    # The public demo shares one small pool between every visitor.
+    if is_demo_tenant(tenant.id):
+        return DEMO_ASK_DAILY
+    return limits_for_tenant(tenant).ask_daily_questions
 
 
 def _used_today(tenant: Tenant) -> int:
@@ -80,11 +88,13 @@ def _status(user: User) -> AskStatusOut:
         source=source,
         model=(tenant.ask_model if own_key else BUILTIN_LABEL) if source else None,
         key_hint=tenant.ask_key_hint if own_key and is_admin else None,
-        can_turn_off=tenant.owner_user_id is not None and tenant.owner_user_id == user.id,
+        can_turn_off=tenant.owner_user_id is not None
+        and tenant.owner_user_id == user.id
+        and not is_demo_tenant(tenant.id),
     )
     if source == "builtin":
         out.used_today = _used_today(tenant)
-        out.daily_limit = limits_for_tenant(tenant).ask_daily_questions
+        out.daily_limit = _daily_limit(tenant)
     return out
 
 
@@ -190,7 +200,7 @@ async def _reserve_question(db: AsyncSession, tenant: Tenant) -> bool:
     One UPDATE, so two people asking at once can't both take the last question.
     """
     today = _today()
-    limit = limits_for_tenant(tenant).ask_daily_questions
+    limit = _daily_limit(tenant)
     same_day = Tenant.ask_usage_day == today
     result = await db.execute(
         update(Tenant)
