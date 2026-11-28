@@ -11,6 +11,7 @@ from app.auth.deletion import forget_person
 from app.auth.partners import MAX_OUTSIDE_ADMINS, count_outside_admins
 from app.db import get_db
 from app.models import AuditEventType, Tenant, User, UserRole
+from app.provisioning import service as provisioning
 from app.oauth.logout import (
     apps_for_person,
     end_app_sessions,
@@ -203,6 +204,7 @@ async def _apply_disabled(
         if restored:
             details["apps"] = restored
 
+    await provisioning.schedule_person(db, target)
     await record_user_access_change(
         db,
         actor=actor,
@@ -264,6 +266,7 @@ async def _apply_role(
 
     from_role = target.role
     target.role = new_role
+    await provisioning.schedule_person(db, target)
     await record_role_change(
         db,
         actor=actor,

@@ -14,6 +14,7 @@ import {
   TenantUser,
 } from "./api";
 import SignoutSection from "./SignoutSection";
+import ProvisioningSection from "./ProvisioningSection";
 import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
 import { isPersonalWorkspace, messageForApiError, planNearLimit } from "./format";
@@ -151,6 +152,23 @@ export default function AppsPanel({
         label: t("apps.manageAccess"),
         onSelect: () => setDialog({ kind: "access", app }),
       });
+    }
+    // Slack-style apps have no sign-in through us: no secret, nothing to switch off.
+    if (isAccountsOnly(app)) {
+      items.push({
+        key: "delete",
+        label: t("apps.delete"),
+        danger: true,
+        onSelect: () => {
+          if (!window.confirm(t("apps.deleteConfirm", { name: app.name }))) return;
+          void run(app.id, async () => {
+            await deleteApp(app.id);
+            setApps((current) => (current ?? []).filter((a) => a.id !== app.id));
+            onChanged?.();
+          });
+        },
+      });
+      return items;
     }
     items.push({
       key: "rotate",
@@ -330,6 +348,11 @@ export default function AppsPanel({
             onSubmit={async (input, templateId) => {
               const created = await createApp(input);
               upsert(created);
+              if (templateById(templateId).accountsOnly) {
+                // No sign-in to set up: go straight to the provisioning token.
+                setDialog({ kind: "edit", app: created });
+                return;
+              }
               setDialog({
                 kind: "secret",
                 app: created,
@@ -358,13 +381,24 @@ export default function AppsPanel({
               setDialog(null);
             }}
           />
-          <SignoutSection
-            app={dialog.app}
-            onUpdated={(updated) => {
-              upsert(updated);
-              setDialog({ ...dialog, app: updated });
-            }}
-          />
+          {isAccountsOnly(dialog.app) || dialog.app.provision_kind ? (
+            <ProvisioningSection
+              app={dialog.app}
+              onUpdated={(updated) => {
+                upsert(updated);
+                setDialog({ ...dialog, app: updated });
+              }}
+            />
+          ) : null}
+          {isAccountsOnly(dialog.app) ? null : (
+            <SignoutSection
+              app={dialog.app}
+              onUpdated={(updated) => {
+                upsert(updated);
+                setDialog({ ...dialog, app: updated });
+              }}
+            />
+          )}
         </Modal>
       ) : null}
 
@@ -432,6 +466,11 @@ export default function AppsPanel({
 
 // ---------- form ----------
 
+/** An app people don't sign in to through us; we only manage their account there. */
+function isAccountsOnly(app: RegisteredApp): boolean {
+  return app.redirect_uris.length === 0;
+}
+
 function AppForm({
   tenantName,
   initial,
@@ -451,6 +490,7 @@ function AppForm({
   const [policy, setPolicy] = useState<AccessPolicy>(initial?.access_policy ?? "everyone");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const accountsOnly = initial ? isAccountsOnly(initial) : false;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -459,12 +499,14 @@ function AppForm({
     try {
       await onSubmit({
         name: name.trim(),
-        redirect_uris: redirects
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean),
+        redirect_uris: accountsOnly
+          ? undefined
+          : redirects
+              .split(/\r?\n/)
+              .map((line) => line.trim())
+              .filter(Boolean),
         launch_url: launchUrl.trim() || null,
-        backchannel_logout_uri: logoutUrl.trim() || null,
+        backchannel_logout_uri: accountsOnly ? null : logoutUrl.trim() || null,
         access_policy: policy,
       });
     } catch (err) {
@@ -490,18 +532,20 @@ function AppForm({
           required
         />
       </label>
-      <label className="field">
-        <span>{t("apps.redirects")}</span>
-        <textarea
-          value={redirects}
-          onChange={(e) => setRedirects(e.target.value)}
-          placeholder="https://grafana.example.com/login/generic_oauth"
-          rows={3}
-          required
-          spellCheck={false}
-        />
-        <small>{t("apps.redirectsHint")}</small>
-      </label>
+      {accountsOnly ? null : (
+        <label className="field">
+          <span>{t("apps.redirects")}</span>
+          <textarea
+            value={redirects}
+            onChange={(e) => setRedirects(e.target.value)}
+            placeholder="https://grafana.example.com/login/generic_oauth"
+            rows={3}
+            required
+            spellCheck={false}
+          />
+          <small>{t("apps.redirectsHint")}</small>
+        </label>
+      )}
       <label className="field">
         <span>{t("apps.launchUrl")}</span>
         <input
@@ -512,18 +556,20 @@ function AppForm({
         />
         <small>{t("apps.launchUrlHint")}</small>
       </label>
-      <label className="field">
-        <span>{t("apps.logoutUrl")}</span>
-        <input
-          value={logoutUrl}
-          onChange={(e) => setLogoutUrl(e.target.value)}
-          placeholder="https://grafana.example.com/logout/backchannel"
-          type="url"
-        />
-        <small>{t("apps.logoutUrlHint")}</small>
-      </label>
+      {accountsOnly ? null : (
+        <label className="field">
+          <span>{t("apps.logoutUrl")}</span>
+          <input
+            value={logoutUrl}
+            onChange={(e) => setLogoutUrl(e.target.value)}
+            placeholder="https://grafana.example.com/logout/backchannel"
+            type="url"
+          />
+          <small>{t("apps.logoutUrlHint")}</small>
+        </label>
+      )}
       <fieldset className="field policy-field">
-        <legend>{t("apps.policy")}</legend>
+        <legend>{t(accountsOnly ? "apps.policyAccounts" : "apps.policy")}</legend>
         {(["everyone", "admins", "assigned"] as AccessPolicy[]).map((value) => (
           <label key={value} className={policy === value ? "radio-card active" : "radio-card"}>
             <input

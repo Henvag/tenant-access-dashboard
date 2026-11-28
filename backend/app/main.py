@@ -54,12 +54,18 @@ async def lifespan(app: FastAPI):
         from app.webhooks.worker import run_forever
 
         sender = asyncio.create_task(run_forever(SessionLocal))
+    provisioner = None
+    if settings.provisioning_worker_enabled:
+        from app.provisioning.worker import run_forever as run_provisioning
+
+        provisioner = asyncio.create_task(run_provisioning(SessionLocal))
     faulthandler.cancel_dump_traceback_later()
     yield
-    if sender is not None:
-        sender.cancel()
-        with suppress(asyncio.CancelledError):
-            await sender
+    for task in (sender, provisioner):
+        if task is not None:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
 
 
 app = FastAPI(

@@ -104,12 +104,14 @@ function ConfigureForm({
   lang: "en" | "no";
   t: (key: TKey, vars?: Record<string, string | number>) => string;
 }) {
+  const accountsOnly = template.accountsOnly;
   const guided = template.redirectPath !== null;
   const [name, setName] = useState(template.defaultName);
   const [baseUrl, setBaseUrl] = useState("");
   const [redirects, setRedirects] = useState("");
   const [launchUrl, setLaunchUrl] = useState("");
-  const [policy, setPolicy] = useState<AccessPolicy>("everyone");
+  // Accounts cost money in Slack: start with only the people you pick.
+  const [policy, setPolicy] = useState<AccessPolicy>(accountsOnly ? "assigned" : "everyone");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advanced, setAdvanced] = useState(!guided);
@@ -132,7 +134,10 @@ function ConfigureForm({
         .filter(Boolean);
       let launch = launchUrl.trim() || null;
 
-      if (guided && !advanced) {
+      if (accountsOnly) {
+        redirectList = [];
+        launch = accountsOnly.launchUrl;
+      } else if (guided && !advanced) {
         const base = normalizeBaseUrl(baseUrl);
         if (!base) {
           setError(messageForApiError("domain_url", lang));
@@ -198,7 +203,9 @@ function ConfigureForm({
         </label>
       ) : null}
 
-      {(advanced || !guided) && (
+      {accountsOnly ? <p className="hint">{t("catalog.slack.next")}</p> : null}
+
+      {!accountsOnly && (advanced || !guided) && (
         <>
           <label className="field">
             <span>{t("apps.redirects")}</span>
@@ -236,7 +243,7 @@ function ConfigureForm({
       ) : null}
 
       <fieldset className="field policy-field">
-        <legend>{t("apps.policy")}</legend>
+        <legend>{t(accountsOnly ? "apps.policyAccounts" : "apps.policy")}</legend>
         {(["everyone", "admins", "assigned"] as AccessPolicy[]).map((value) => (
           <label key={value} className={policy === value ? "radio-card active" : "radio-card"}>
             <input

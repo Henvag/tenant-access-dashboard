@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_admin
@@ -16,18 +16,24 @@ from app.billing.plans import limits_for_tenant
 from app.domain import is_personal_workspace, normalize_workspace_domain
 from app.models import (
     AccessPolicy,
+    AppAccount,
     AppGrant,
     AuditEventType,
     OAuthClient,
     OAuthClientLookup,
     PendingAppGrant,
+    ProvisionOutbox,
     User,
     UserRole,
 )
 from app.agents.secrets import encrypt_secret, key_hint
 from app.oauth import connectors
+from app.provisioning import scim
+from app.provisioning import service as provisioning
 from app.oauth.service import hash_secret, new_client_id, new_client_secret
 from app.schemas.app import (
+    AccountOut,
+    AccountsOut,
     AppCreate,
     AppCreatedOut,
     AppOut,
@@ -35,6 +41,7 @@ from app.schemas.app import (
     GrantsIn,
     GrantsOut,
     MyAppOut,
+    ProvisionIn,
     SecretOut,
     SignoutIn,
 )
@@ -72,6 +79,8 @@ def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
         signout_kind=client.signout_kind,
         signout_base_url=client.signout_base_url,
         signout_key_hint=client.signout_key_hint,
+        provision_kind=client.provision_kind,
+        provision_key_hint=client.provision_key_hint,
         access_policy=client.access_policy,
         disabled=client.disabled,
         created_at=client.created_at,
@@ -214,11 +223,16 @@ async def patch_app(
         client.backchannel_logout_uri = None
     elif payload.backchannel_logout_uri is not None:
         client.backchannel_logout_uri = payload.backchannel_logout_uri
+    policy_changed = (
+        payload.access_policy is not None and payload.access_policy != client.access_policy
+    )
     if payload.access_policy is not None:
         client.access_policy = payload.access_policy
     if payload.disabled is not None:
         client.disabled_at = datetime.now(UTC) if payload.disabled else None
     await db.flush()
+    if policy_changed:
+        await provisioning.schedule_app(db, client)
     counts = await _grant_counts(db, [client.id])
     out = _to_out(client, counts.get(client.id, 0))
     await db.commit()
@@ -270,6 +284,108 @@ async def clear_signout(
     out = _to_out(client, counts.get(client.id, 0))
     await db.commit()
     return out
+
+
+@router.put("/{app_id}/provisioning", response_model=AppOut)
+async def set_provisioning(
+    app_id: UUID,
+    payload: ProvisionIn,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AppOut:
+    """Store the app's provisioning token after checking it, then check everyone."""
+    client = await _load(db, app_id, admin.tenant_id)
+    token = payload.token.strip()
+    try:
+        await scim.verify(payload.kind, token)
+    except scim.ScimError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.code) from exc
+    client.provision_kind = payload.kind
+    client.provision_secret = encrypt_secret(token)
+    client.provision_key_hint = key_hint(token)
+    await db.flush()
+    await provisioning.schedule_app(db, client)
+    counts = await _grant_counts(db, [client.id])
+    out = _to_out(client, counts.get(client.id, 0))
+    await db.commit()
+    return out
+
+
+@router.delete("/{app_id}/provisioning", response_model=AppOut)
+async def clear_provisioning(
+    app_id: UUID,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AppOut:
+    """Stop managing accounts. Accounts already in the app stay as they are."""
+    client = await _load(db, app_id, admin.tenant_id)
+    client.provision_kind = None
+    client.provision_secret = None
+    client.provision_key_hint = None
+    await db.execute(delete(AppAccount).where(AppAccount.client_pk == client.id))
+    await db.flush()
+    counts = await _grant_counts(db, [client.id])
+    out = _to_out(client, counts.get(client.id, 0))
+    await db.commit()
+    return out
+
+
+@router.post("/{app_id}/provisioning/sync", response_model=AccountsOut)
+async def sync_provisioning(
+    app_id: UUID,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AccountsOut:
+    """Check everyone again now, including accounts that failed."""
+    client = await _load(db, app_id, admin.tenant_id)
+    if not provisioning.is_enabled(client):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="provision_not_set_up")
+    await provisioning.schedule_app(db, client)
+    out = await _accounts(db, client)
+    await db.commit()
+    return out
+
+
+@router.get("/{app_id}/accounts", response_model=AccountsOut)
+async def list_accounts(
+    app_id: UUID,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AccountsOut:
+    client = await _load(db, app_id, admin.tenant_id)
+    return await _accounts(db, client)
+
+
+async def _accounts(db: AsyncSession, client: OAuthClient) -> AccountsOut:
+    rows = (
+        await db.scalars(
+            select(AppAccount)
+            .where(AppAccount.client_pk == client.id)
+            .order_by(AppAccount.email)
+        )
+    ).all()
+    queued = set(
+        (
+            await db.scalars(
+                select(ProvisionOutbox.account_id).where(
+                    ProvisionOutbox.account_id.in_([r.id for r in rows])
+                )
+            )
+        ).all()
+    ) if rows else set()
+    return AccountsOut(
+        accounts=[
+            AccountOut(
+                email=r.email,
+                user_id=r.user_id,
+                status=r.status,
+                last_error=r.last_error,
+                synced_at=r.synced_at,
+                queued=r.id in queued,
+            )
+            for r in rows
+        ]
+    )
 
 
 @router.delete("/{app_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -452,6 +568,11 @@ async def set_grants(
                 details={"app": client.name, "by": admin.email},
             )
 
+    for user_id in (wanted - set(existing)) | removed_ids:
+        target = users.get(user_id) or (removed_users.get(user_id) if removed_ids else None)
+        if target is not None:
+            await provisioning.schedule_person(db, target, [client])
+
     existing_pending = {
         p.email: p
         for p in (
@@ -492,6 +613,9 @@ async def set_grants(
             request=request,
             details={"app": client.name, "by": admin.email, "pending": True},
         )
+
+    for email in wanted_emails ^ set(existing_pending):
+        await provisioning.schedule_email(db, client, email)
 
     await db.commit()
     return GrantsOut(

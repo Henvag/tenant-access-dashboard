@@ -120,8 +120,8 @@ def email_from_oidc_claims(claims: dict) -> str:
     return ""
 
 
-async def _fulfill_pending_app_grants(session: AsyncSession, user: User) -> None:
-    """Turn pending email grants into real AppGrant rows on first login."""
+async def _fulfill_pending_app_grants(session: AsyncSession, user: User) -> bool:
+    """Turn pending email grants into real AppGrant rows on first login. True if any."""
     pending = list(
         (
             await session.scalars(
@@ -130,7 +130,7 @@ async def _fulfill_pending_app_grants(session: AsyncSession, user: User) -> None
         ).all()
     )
     if not pending:
-        return
+        return False
     existing_client_pks = set(
         (
             await session.scalars(
@@ -150,6 +150,7 @@ async def _fulfill_pending_app_grants(session: AsyncSession, user: User) -> None
             )
             existing_client_pks.add(row.client_pk)
         await session.delete(row)
+    return True
 
 
 async def upsert_user_from_oidc(
@@ -202,6 +203,7 @@ async def upsert_user_from_oidc(
             raise LoginError("identity_conflict")
 
     now = datetime.now(UTC)
+    is_new = user is None
     if user is None:
         user_count = (
             await session.scalar(
@@ -245,7 +247,12 @@ async def upsert_user_from_oidc(
     if tenant.owner_user_id is None and user.role == UserRole.admin:
         tenant.owner_user_id = user.id
 
-    await _fulfill_pending_app_grants(session, user)
+    fulfilled = await _fulfill_pending_app_grants(session, user)
+    if is_new or fulfilled:
+        # Accounts in apps with provisioning (Slack) follow the new access.
+        from app.provisioning.service import schedule_person
+
+        await schedule_person(session, user)
     await remember_membership(session, user)
     return user
 

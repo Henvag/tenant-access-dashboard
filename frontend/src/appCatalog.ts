@@ -6,6 +6,7 @@ export type AppTemplateId =
   | "portainer"
   | "gitea"
   | "bookstack"
+  | "slack"
   | "custom";
 
 export type AppTemplate = {
@@ -23,6 +24,11 @@ export type AppTemplate = {
   launchPath: string | null;
   /** Tip key used after create (needs {url} = origin). */
   tipKey: TKey;
+  /**
+   * People don't sign in through us; we only create and deactivate their account
+   * in the app. No redirect URIs, no client secret to hand over.
+   */
+  accountsOnly?: { launchUrl: string };
 };
 
 export const APP_CATALOG: AppTemplate[] = [
@@ -80,6 +86,18 @@ export const APP_CATALOG: AppTemplate[] = [
     redirectPath: "/oidc/callback",
     launchPath: "/",
     tipKey: "apps.bookstackTip",
+  },
+  {
+    id: "slack",
+    defaultName: "Slack",
+    markName: "Slack",
+    titleKey: "catalog.slack.title",
+    bodyKey: "catalog.slack.body",
+    pathHintKey: "catalog.slack.path",
+    redirectPath: null,
+    launchPath: null,
+    tipKey: "apps.redirectTip",
+    accountsOnly: { launchUrl: "https://app.slack.com" },
   },
   {
     id: "custom",
