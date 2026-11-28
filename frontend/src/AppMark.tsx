@@ -3,6 +3,7 @@ import outlineLogo from "./assets/outline.png";
 import portainerLogo from "./assets/portainer.svg";
 import giteaLogo from "./assets/gitea.svg";
 import bookstackLogo from "./assets/bookstack.svg";
+import slackLogo from "./assets/slack.svg";
 import { IconPlug } from "./Icons";
 
 const KNOWN_LOGOS: { match: RegExp; src: string; alt: string }[] = [
@@ -11,6 +12,7 @@ const KNOWN_LOGOS: { match: RegExp; src: string; alt: string }[] = [
   { match: /portainer/i, src: portainerLogo, alt: "Portainer" },
   { match: /gitea/i, src: giteaLogo, alt: "Gitea" },
   { match: /bookstack/i, src: bookstackLogo, alt: "BookStack" },
+  { match: /slack/i, src: slackLogo, alt: "Slack" },
 ];
 
 type Props = {
