@@ -198,3 +198,11 @@ def test_logout_token_carries_the_backchannel_event() -> None:
     assert decoded.claims["sub"] == str(user.id)
     assert decoded.claims["events"][_LOGOUT_EVENT] == {}
     assert "nonce" not in decoded.claims
+
+
+def test_norwegian_questions_pick_the_right_sections() -> None:
+    assert "activity" in topics_for("Hva har skjedd nylig?", is_admin=True)
+    assert "activity" in topics_for("Er det noen mislykkede innlogginger?", is_admin=True)
+    assert "people" in topics_for("Hvem har ikke logget inn den siste uken?", is_admin=True)
+    assert "product" in topics_for("Hva skjer hvis jeg slår av en person som slutter?", is_admin=True)
+    assert "billing" in topics_for("Hva får vi hvis vi oppgraderer?", is_admin=True)
