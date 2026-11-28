@@ -4434,3 +4434,21 @@ a.tile:active {
 .provision-list .hint {
   margin: 0;
 }
+
+/* SAML certificate: long base64, keep it to a few lines and let it scroll. */
+.kv-row code.saml-cert {
+  white-space: pre;
+  overflow: auto;
+  max-height: 7.5em;
+  font-size: 11px;
+}
+
+/* Shown first in the settings dialog, with the form below it. */
+.signout-section.saml-setup {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  padding-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}

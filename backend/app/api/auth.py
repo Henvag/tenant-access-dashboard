@@ -38,7 +38,7 @@ from app.demo import (
 )
 from app.models import User
 from app.models.user import IdentityProvider
-from app.oauth.pending import PENDING_AUTHORIZE_KEY
+from app.oauth.pending import PENDING_KEYS, resume_path
 from app.rate_limit import rate_limit_auth
 from app.schemas.user import MeOut
 
@@ -232,13 +232,12 @@ async def callback(
         await db.commit()
         return _frontend_redirect(error=code)
 
-    # An app sign-in (/oauth/authorize) may have parked its request before login.
-    pending_authorize = request.session.get(PENDING_AUTHORIZE_KEY)
+    # An app sign-in (OpenID Connect or SAML) may have parked its request before login.
     write_login_session(request.session, user)
-    if pending_authorize:
+    pending = resume_path(request.session)
+    if pending:
         return RedirectResponse(
-            f"{settings.public_origin}/oauth/authorize?{pending_authorize}",
-            status_code=status.HTTP_302_FOUND,
+            f"{settings.public_origin}{pending}", status_code=status.HTTP_302_FOUND
         )
     return _frontend_redirect()
 
@@ -341,7 +340,8 @@ async def switch(
         raise HTTPException(status_code=code, detail=exc.code) from None
     await db.commit()
     # A parked app sign-in belonged to the previous company; drop it.
-    request.session.pop(PENDING_AUTHORIZE_KEY, None)
+    for key in PENDING_KEYS:
+        request.session.pop(key, None)
     write_login_session(request.session, target)
     return {"tenant_id": str(target.tenant_id)}
 

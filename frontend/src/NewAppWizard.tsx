@@ -7,7 +7,7 @@ import {
   templateById,
   urlsFromTemplate,
 } from "./appCatalog";
-import { AccessPolicy, AppInput } from "./api";
+import { AccessPolicy, AppInput, SamlNameId } from "./api";
 import AppMark from "./AppMark";
 import { messageForApiError } from "./format";
 import { TKey, useLang } from "./i18n";
@@ -105,13 +105,19 @@ function ConfigureForm({
   t: (key: TKey, vars?: Record<string, string | number>) => string;
 }) {
   const accountsOnly = template.accountsOnly;
+  const saml = template.saml;
   const guided = template.redirectPath !== null;
   const [name, setName] = useState(template.defaultName);
   const [baseUrl, setBaseUrl] = useState("");
   const [redirects, setRedirects] = useState("");
   const [launchUrl, setLaunchUrl] = useState("");
+  const [entityId, setEntityId] = useState(saml?.entityId ?? "");
+  const [acsUrl, setAcsUrl] = useState("");
+  const [nameid, setNameid] = useState<SamlNameId>(saml?.nameid ?? "email");
   // Accounts cost money in Slack: start with only the people you pick.
-  const [policy, setPolicy] = useState<AccessPolicy>(accountsOnly ? "assigned" : "everyone");
+  const [policy, setPolicy] = useState<AccessPolicy>(
+    accountsOnly || template.id === "slack" ? "assigned" : "everyone",
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advanced, setAdvanced] = useState(!guided);
@@ -128,6 +134,30 @@ function ConfigureForm({
     setPending(true);
     setError(null);
     try {
+      if (saml) {
+        let acs = acsUrl.trim();
+        let launch = launchUrl.trim() || null;
+        if (saml.acsPath) {
+          const base = normalizeBaseUrl(baseUrl);
+          if (!base) {
+            setError(messageForApiError("domain_url", lang));
+            setPending(false);
+            return;
+          }
+          acs = `${base}${saml.acsPath}`;
+          launch = base;
+        }
+        await onSubmit({
+          name: name.trim(),
+          launch_url: launch,
+          access_policy: policy,
+          protocol: "saml",
+          saml_entity_id: entityId.trim(),
+          saml_acs_url: acs,
+          saml_nameid: nameid,
+        });
+        return;
+      }
       let redirectList = redirects
         .split(/\r?\n/)
         .map((line) => line.trim())
@@ -188,6 +218,68 @@ function ConfigureForm({
         />
       </label>
 
+      {saml?.acsPath ? (
+        <label className="field">
+          <span>{t("catalog.slack.workspace")}</span>
+          <input
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder="https://acme.slack.com"
+            type="url"
+            required
+            spellCheck={false}
+          />
+          <small>{t("catalog.slack.workspaceHint")}</small>
+        </label>
+      ) : null}
+
+      {saml && !saml.acsPath ? (
+        <>
+          <label className="field">
+            <span>{t("apps.samlEntityId")}</span>
+            <input
+              value={entityId}
+              onChange={(e) => setEntityId(e.target.value)}
+              placeholder="https://app.example.com/saml/metadata"
+              required
+              spellCheck={false}
+            />
+            <small>{t("apps.samlEntityIdHint")}</small>
+          </label>
+          <label className="field">
+            <span>{t("apps.samlAcsUrl")}</span>
+            <input
+              value={acsUrl}
+              onChange={(e) => setAcsUrl(e.target.value)}
+              placeholder="https://app.example.com/saml/acs"
+              type="url"
+              required
+              spellCheck={false}
+            />
+            <small>{t("apps.samlAcsUrlHint")}</small>
+          </label>
+          <label className="field">
+            <span>{t("apps.samlNameId")}</span>
+            <select value={nameid} onChange={(e) => setNameid(e.target.value as SamlNameId)}>
+              <option value="email">{t("apps.samlNameIdEmail")}</option>
+              <option value="persistent">{t("apps.samlNameIdPersistent")}</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>{t("apps.launchUrl")}</span>
+            <input
+              value={launchUrl}
+              onChange={(e) => setLaunchUrl(e.target.value)}
+              placeholder="https://app.example.com"
+              type="url"
+            />
+            <small>{t("apps.launchUrlHint")}</small>
+          </label>
+        </>
+      ) : null}
+
+      {saml?.acsPath ? <p className="hint">{t("catalog.slack.next")}</p> : null}
+
       {guided ? (
         <label className="field">
           <span>{t("catalog.baseUrl")}</span>
@@ -205,7 +297,7 @@ function ConfigureForm({
 
       {accountsOnly ? <p className="hint">{t("catalog.slack.next")}</p> : null}
 
-      {!accountsOnly && (advanced || !guided) && (
+      {!accountsOnly && !saml && (advanced || !guided) && (
         <>
           <label className="field">
             <span>{t("apps.redirects")}</span>

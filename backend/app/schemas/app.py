@@ -4,7 +4,7 @@ from uuid import UUID
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models import AccessPolicy
 
@@ -35,6 +35,16 @@ class AppOut(BaseModel):
     # Account provisioning (Slack). The token itself never leaves the server.
     provision_kind: str | None = None
     provision_key_hint: str | None = None
+    # "oidc" or "saml". For SAML apps, what the app sends and where we answer,
+    # plus the values the admin pastes into the app.
+    protocol: str = "oidc"
+    saml_entity_id: str | None = None
+    saml_acs_url: str | None = None
+    saml_nameid: str | None = None
+    saml_sso_url: str | None = None
+    saml_issuer: str | None = None
+    saml_metadata_url: str | None = None
+    saml_certificate_url: str | None = None
     access_policy: AccessPolicy
     disabled: bool
     created_at: datetime
@@ -83,6 +93,31 @@ def _clean_logout(value: str | None) -> str | None:
     return cleaned
 
 
+def _clean_entity_id(value: str | None) -> str | None:
+    """SAML entity IDs are usually URLs but may be URNs (urn:amazon:webservices)."""
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    if len(value) > 2048 or any(ch.isspace() for ch in value):
+        raise ValueError("must be a URL or URN without spaces")
+    return value
+
+
+def _clean_acs(value: str | None) -> str | None:
+    cleaned = _clean_launch(value)
+    if cleaned is None:
+        return None
+    host = urlsplit(cleaned).hostname or ""
+    if not cleaned.startswith("https://") and host not in {"localhost", "127.0.0.1"}:
+        raise ValueError("ACS URL must be https")
+    return cleaned
+
+
+SamlNameId = Literal["email", "persistent"]
+
+
 class AppCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     # Empty for an app people don't sign in to through us, only get an account in (Slack).
@@ -90,11 +125,36 @@ class AppCreate(BaseModel):
     launch_url: str | None = None
     backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy = AccessPolicy.everyone
+    protocol: Literal["oidc", "saml"] = "oidc"
+    saml_entity_id: str | None = None
+    saml_acs_url: str | None = None
+    saml_nameid: SamlNameId = "email"
 
     @field_validator("name")
     @classmethod
     def _name(cls, value: str) -> str:
         return _clean_name(value) or ""
+
+    @field_validator("saml_entity_id")
+    @classmethod
+    def _entity(cls, value: str | None) -> str | None:
+        return _clean_entity_id(value)
+
+    @field_validator("saml_acs_url")
+    @classmethod
+    def _acs(cls, value: str | None) -> str | None:
+        return _clean_acs(value)
+
+    @model_validator(mode="after")
+    def _saml_fields(self) -> "AppCreate":
+        if self.protocol == "saml":
+            if not self.saml_entity_id or not self.saml_acs_url:
+                raise ValueError("SAML apps need an entity ID and an ACS URL")
+            if self.redirect_uris:
+                raise ValueError("SAML apps have no redirect URIs")
+        elif self.saml_entity_id or self.saml_acs_url:
+            raise ValueError("entity ID and ACS URL are only for SAML apps")
+        return self
 
     @field_validator("redirect_uris")
     @classmethod
@@ -119,6 +179,10 @@ class AppPatch(BaseModel):
     backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy | None = None
     disabled: bool | None = None
+    # SAML apps only.
+    saml_entity_id: str | None = None
+    saml_acs_url: str | None = None
+    saml_nameid: SamlNameId | None = None
     # Distinguish "not sent" from "clear it".
     clear_launch_url: bool = False
     clear_backchannel_logout_uri: bool = False
@@ -142,6 +206,16 @@ class AppPatch(BaseModel):
     @classmethod
     def _logout(cls, value: str | None) -> str | None:
         return _clean_logout(value)
+
+    @field_validator("saml_entity_id")
+    @classmethod
+    def _entity(cls, value: str | None) -> str | None:
+        return _clean_entity_id(value)
+
+    @field_validator("saml_acs_url")
+    @classmethod
+    def _acs(cls, value: str | None) -> str | None:
+        return _clean_acs(value)
 
 
 class GrantsIn(BaseModel):

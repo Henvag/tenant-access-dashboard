@@ -37,7 +37,7 @@ from app.models import (
     User,
 )
 from app.oauth import keys
-from app.oauth.pending import PENDING_AUTHORIZE_KEY
+from app.oauth.pending import PENDING_AUTHORIZE_KEY, PENDING_SAML_KEY, resume_path
 from app.oauth.service import (
     SUPPORTED_SCOPES,
     TOKEN_TTL,
@@ -163,6 +163,7 @@ async def authorize(request: Request, db: AsyncSession = Depends(get_db)):
     identities = read_login_session(request.session)
     if identities is None:
         # Park the full request; /auth/callback resumes it after sign-in.
+        request.session.pop(PENDING_SAML_KEY, None)
         request.session[PENDING_AUTHORIZE_KEY] = str(request.url.query)
         return _frontend({"continue": client.name})
 
@@ -245,13 +246,10 @@ async def resume_authorize(request: Request):
     because the session cookie was missing on that hop, the SPA may still have
     a valid login. The frontend sends the user here to finish the RP redirect.
     """
-    pending = request.session.get(PENDING_AUTHORIZE_KEY)
+    pending = resume_path(request.session)
     if not pending:
         return _frontend({})
-    return RedirectResponse(
-        f"{settings.public_origin}/oauth/authorize?{pending}",
-        status_code=status.HTTP_302_FOUND,
-    )
+    return RedirectResponse(f"{settings.public_origin}{pending}", status_code=status.HTTP_302_FOUND)
 
 
 # ---------- token ----------
