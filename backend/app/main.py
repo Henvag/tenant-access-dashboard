@@ -138,6 +138,8 @@ PAGES = {
     "no": "no/index.html",
     "privacy": "privacy/index.html",
     "personvern": "personvern/index.html",
+    "dpa": "dpa/index.html",
+    "databehandleravtale": "databehandleravtale/index.html",
 }
 
 

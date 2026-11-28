@@ -320,7 +320,10 @@ export default function Landing({
           <BrandMark size={20} />
           <span>{t("brand")}</span>
         </a>
-        <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a>
+        <span className="landing-footer-links">
+          <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a>
+          <a href={pagePath("dpa", lang)}>{t("landing.dpa")}</a>
+        </span>
       </footer>
     </main>
   );
