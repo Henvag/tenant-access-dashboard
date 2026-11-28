@@ -5,18 +5,30 @@ import filmEn from "./assets/film/tenant-access-en.mp4";
 import filmNo from "./assets/film/tenant-access-no.mp4";
 import posterEn from "./assets/film/poster-en.webp";
 import posterNo from "./assets/film/poster-no.webp";
+import askEn from "./assets/film/ask-en.mp4";
+import askNo from "./assets/film/ask-no.mp4";
+import askPosterEn from "./assets/film/ask-poster-en.webp";
+import askPosterNo from "./assets/film/ask-poster-no.webp";
 
-const FILMS = { en: { src: filmEn, poster: posterEn }, no: { src: filmNo, poster: posterNo } };
+type Film = { src: string; poster: string };
+
+const FILMS = {
+  product: { en: { src: filmEn, poster: posterEn }, no: { src: filmNo, poster: posterNo } },
+  ask: { en: { src: askEn, poster: askPosterEn }, no: { src: askNo, poster: askPosterNo } },
+} satisfies Record<string, Record<"en" | "no", Film>>;
+
+const SUMMARY = { product: "film.summary", ask: "askFilm.summary" } as const;
 
 /**
- * The 25-second product film in the page's language, made from the demo company with HyperFrames
- * (see film/README.md).
+ * A short product film in the page's language, made from the demo company with HyperFrames
+ * (see film/README.md): "product" is the 25-second tour, "ask" the Ask clip.
  * Muted and looping; it plays only while on screen and waits for a click when the visitor
  * prefers reduced motion.
  */
-export default function ProductFilm() {
+export default function ProductFilm({ name = "product" }: { name?: keyof typeof FILMS }) {
   const { lang, t } = useLang();
-  const film = FILMS[lang];
+  const film = FILMS[name][lang];
+  const summaryId = `film-summary-${name}`;
   const videoRef = useRef<HTMLVideoElement>(null);
   const heldByVisitor = useRef(false);
   const [playing, setPlaying] = useState(false);
@@ -70,12 +82,12 @@ export default function ProductFilm() {
         loop
         playsInline
         preload="metadata"
-        aria-describedby="film-summary"
+        aria-describedby={summaryId}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
-      <figcaption id="film-summary" className="sr-only">
-        {t("film.summary")}
+      <figcaption id={summaryId} className="sr-only">
+        {t(SUMMARY[name])}
       </figcaption>
       <button type="button" className="film-toggle" onClick={toggle} aria-label={label}>
         {playing ? <IconPause width={14} height={14} /> : <IconPlay width={14} height={14} />}

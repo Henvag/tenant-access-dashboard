@@ -51,3 +51,21 @@ the real product: screens are captured from the read-only demo company, nothing 
    ```
 
 `assets/` and `renders/` are not committed.
+
+## The Ask clip
+
+`ask.html` is a separate 9.6-second clip for the landing page: the question "Who hasn't signed
+in this week?" typed into the Ask page and the built-in model's real answer. It needs no local
+database, because the public demo lets visitors try Ask.
+
+```sh
+FILM_LANG=en node scripts/capture-ask.mjs   # uses one of the demo's 30 questions a day
+FILM_LANG=no node scripts/capture-ask.mjs
+sh scripts/render-ask.sh en                 # renders/tenant-access-ask-en.mp4
+sh scripts/render-ask.sh no
+```
+
+Read the answer in `assets/ask/<lang>/geo.json` before rendering; take it again if it is wrong.
+If the answer's height changed a lot, update `bubble` at the top of the script in `ask.html`.
+Encode as for the film, to `../frontend/src/assets/film/ask-<lang>.mp4` and
+`ask-poster-<lang>.webp` (the poster from the answer, around 6.5 s).
