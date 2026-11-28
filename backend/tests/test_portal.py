@@ -206,3 +206,13 @@ def test_norwegian_questions_pick_the_right_sections() -> None:
     assert "people" in topics_for("Hvem har ikke logget inn den siste uken?", is_admin=True)
     assert "product" in topics_for("Hva skjer hvis jeg slår av en person som slutter?", is_admin=True)
     assert "billing" in topics_for("Hva får vi hvis vi oppgraderer?", is_admin=True)
+
+
+def test_ask_shows_times_in_norwegian_time() -> None:
+    from datetime import UTC, datetime
+
+    from app.agents.context import _when
+
+    assert _when(datetime(2026, 11, 28, 7, 55, tzinfo=UTC)) == "2026-11-28 08:55 CET"
+    assert _when(datetime(2026, 7, 1, 7, 55, tzinfo=UTC)) == "2026-07-01 09:55 CEST"
+    assert _when(None) == "never"

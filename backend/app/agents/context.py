@@ -7,7 +7,8 @@ if the question needs them, to save free-tier tokens and latency.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -194,10 +195,17 @@ def topics_for(question: str, *, is_admin: bool) -> set[str]:
     return found
 
 
+# Customers are Norwegian firms, so Ask talks in Norwegian time (CET in winter,
+# CEST in summer). The model is told the zone so it can say so.
+LOCAL_TZ = ZoneInfo("Europe/Oslo")
+
+
 def _when(value: datetime | None) -> str:
     if value is None:
         return "never"
-    return value.strftime("%Y-%m-%d %H:%M UTC")
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M %Z")
 
 
 def _deep_link_guide(*, is_admin: bool) -> str:
@@ -254,6 +262,8 @@ async def workspace_briefing(
 
     lines: list[str] = [
         PRODUCT_PRIMER if "product" in topics else SHORT_PRIMER,
+        "",
+        f"Now: {_when(datetime.now(UTC))}. All times below are Norwegian time (Europe/Oslo).",
         "",
         "This workspace:",
         (

@@ -12,3 +12,4 @@ itsdangerous>=2.2.0
 python-dotenv>=1.0.1
 stripe>=11.0.0
 signxml>=4.0
+tzdata>=2024.1
