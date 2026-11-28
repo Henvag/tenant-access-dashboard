@@ -21,6 +21,12 @@ services:
       # Encrypts companies' stored AI provider keys; separate from SESSION_SECRET.
       - key: DATA_ENCRYPTION_KEY
         generateValue: true
+      # Built-in Ask model on Cloudflare Workers AI (docs/ops.md). Empty = Ask only
+      # works for companies that add their own Gemini key.
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_AI_TOKEN
+        sync: false
       # Custom domain behind Cloudflare (see docs/cloudflare.md). Until set, Render's
       # RENDER_EXTERNAL_URL remains the OIDC issuer / Google+Entra callback base.
       - key: PUBLIC_BASE_URL

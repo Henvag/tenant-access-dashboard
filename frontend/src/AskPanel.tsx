@@ -5,6 +5,7 @@ import {
   configureAsk,
   getAskStatus,
   sendAskMessage,
+  setAskEnabled,
 } from "./api";
 import geminiLogo from "./assets/gemini.svg";
 import ChatBubble from "./ChatBubble";
@@ -22,8 +23,8 @@ type Props = {
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
 const ASK_MODELS = [
-  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite (about 500 free/day)" },
-  { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash (about 20 free/day)" },
+  { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite" },
+  { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
 ];
 
 const SUGGESTIONS_ADMIN: TKey[] = [
@@ -56,6 +57,7 @@ export default function AskPanel({
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState(ASK_MODELS[0].id);
   const [saving, setSaving] = useState(false);
+  const [showKeyForm, setShowKeyForm] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +78,21 @@ export default function AskPanel({
   }, [onConfiguredChange]);
 
   const configured = status?.configured ?? initialConfigured;
+  const enabled = status?.enabled ?? true;
+  const source = status?.source ?? null;
+  const canTurnOff = status?.can_turn_off ?? false;
+
+  async function onToggleEnabled(next: boolean) {
+    setError(null);
+    try {
+      const updated = await setAskEnabled(next);
+      setStatus(updated);
+      onConfiguredChange(updated.configured);
+      if (!next) setMessages([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "owner_required");
+    }
+  }
   const chips = isAdmin ? SUGGESTIONS_ADMIN : SUGGESTIONS_MEMBER;
 
   async function onSave(event: FormEvent) {
@@ -86,8 +103,9 @@ export default function AskPanel({
     try {
       const next = await configureAsk({ api_key: apiKey.trim(), model });
       setStatus(next);
-      onConfiguredChange(true);
+      onConfiguredChange(next.configured);
       setApiKey("");
+      setShowKeyForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "agent_key_required");
     } finally {
@@ -100,9 +118,10 @@ export default function AskPanel({
     setError(null);
     try {
       await clearAsk();
-      setStatus({ configured: false, model: null, key_hint: null });
-      onConfiguredChange(false);
-      setMessages([]);
+      const next = await getAskStatus();
+      setStatus(next);
+      onConfiguredChange(next.configured);
+      if (!next.configured) setMessages([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "ask_not_configured");
     }
@@ -120,6 +139,11 @@ export default function AskPanel({
     try {
       const reply = await sendAskMessage(next);
       setMessages([...next, { role: "assistant", content: reply.content }]);
+      if (source === "builtin") {
+        setStatus((prev) =>
+          prev ? { ...prev, used_today: (prev.used_today ?? 0) + 1 } : prev,
+        );
+      }
     } catch (err) {
       setMessages(prior);
       setDraft(cleaned);
@@ -134,6 +158,45 @@ export default function AskPanel({
     await sendText(draft);
   }
 
+  const keyForm = (
+    <form className="agent-form" onSubmit={(event) => void onSave(event)}>
+      <label className="field">
+        <span>{t("ask.model")}</span>
+        <select value={model} onChange={(event) => setModel(event.target.value)}>
+          {ASK_MODELS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field agent-form-key">
+        <span>{t("ask.key")}</span>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(event) => setApiKey(event.target.value)}
+          autoComplete="off"
+          required
+        />
+        <small>{t("ask.keyHint")}</small>
+      </label>
+      <button type="submit" className="btn btn-primary" disabled={saving || !apiKey.trim()}>
+        {saving ? t("ask.saving") : t("ask.enable")}
+      </button>
+    </form>
+  );
+
+  const ownerSwitch = canTurnOff ? (
+    <button
+      type="button"
+      className="btn btn-ghost btn-sm"
+      onClick={() => void onToggleEnabled(!enabled)}
+    >
+      {enabled ? t("ask.turnOff") : t("ask.turnOn")}
+    </button>
+  ) : null;
+
   return (
     <section className="card">
       <div className="card-head">
@@ -141,61 +204,76 @@ export default function AskPanel({
           <h2>{t("ask.title")}</h2>
           <p className="hint">{t("ask.hint", { tenant: tenantName })}</p>
         </div>
-        <img className="agent-logo ask-mark" src={geminiLogo} alt="" width={28} height={28} />
+        {source === "own_key" ? (
+          <img className="agent-logo ask-mark" src={geminiLogo} alt="" width={28} height={28} />
+        ) : null}
       </div>
 
       {error ? (
-        <p className={`banner ${error === "ask_rate_limited" ? "info" : "error"}`} role="alert">
+        <p
+          className={`banner ${
+            error === "ask_rate_limited" || error === "ask_daily_limit" ? "info" : "error"
+          }`}
+          role="alert"
+        >
           {messageForApiError(error, lang)}
         </p>
       ) : null}
 
-      {!configured ? (
+      {!enabled ? (
+        <div className="ask-setup">
+          <h3>{t("ask.offTitle")}</h3>
+          <p>{canTurnOff ? t("ask.offBodyOwner") : t("ask.offBody")}</p>
+          {ownerSwitch}
+        </div>
+      ) : !configured ? (
         <div className="ask-setup">
           <h3>{t("ask.emptyTitle")}</h3>
           <p>{isAdmin ? t("ask.emptyBodyAdmin") : t("ask.emptyBody")}</p>
-          {isAdmin ? (
-            <form className="agent-form" onSubmit={(event) => void onSave(event)}>
-              <label className="field">
-                <span>{t("ask.model")}</span>
-                <select value={model} onChange={(event) => setModel(event.target.value)}>
-                  {ASK_MODELS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field agent-form-key">
-                <span>{t("ask.key")}</span>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(event) => setApiKey(event.target.value)}
-                  autoComplete="off"
-                  required
-                />
-                <small>{t("ask.keyHint")}</small>
-              </label>
-              <button type="submit" className="btn btn-primary" disabled={saving || !apiKey.trim()}>
-                {saving ? t("ask.saving") : t("ask.enable")}
-              </button>
-            </form>
-          ) : null}
+          {isAdmin ? keyForm : null}
         </div>
       ) : (
         <>
-          {isAdmin ? (
-            <div className="ask-admin-bar">
-              <span className="hint">
-                {t("ask.configured", {
-                  model: status?.model ?? model,
-                  hint: status?.key_hint ?? "····",
-                })}
-              </span>
+          <div className="ask-admin-bar">
+            <span className="hint">
+              {source === "own_key"
+                ? isAdmin
+                  ? t("ask.configured", {
+                      model: status?.model ?? model,
+                      hint: status?.key_hint ?? "····",
+                    })
+                  : null
+                : t("ask.builtin", { model: status?.model ?? "Gemma 4" })}
+              {source === "builtin" && status?.daily_limit ? (
+                <>
+                  {" · "}
+                  {t("ask.usage", {
+                    used: String(Math.min(status.used_today ?? 0, status.daily_limit)),
+                    limit: String(status.daily_limit),
+                  })}
+                </>
+              ) : null}
+            </span>
+            {isAdmin && source === "own_key" ? (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => void onClear()}>
                 {t("ask.remove")}
               </button>
+            ) : null}
+            {isAdmin && source === "builtin" && !showKeyForm ? (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowKeyForm(true)}
+              >
+                {t("ask.ownKeyToggle")}
+              </button>
+            ) : null}
+            {ownerSwitch}
+          </div>
+          {isAdmin && source === "builtin" && showKeyForm ? (
+            <div className="ask-setup">
+              <p>{t("ask.ownKeyBody")}</p>
+              {keyForm}
             </div>
           ) : null}
           <div className="agent-chat ask-chat">

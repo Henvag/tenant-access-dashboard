@@ -1,4 +1,4 @@
-"""Call OpenAI, Anthropic, or Google with the company's key. The browser never sees it."""
+"""Call OpenAI, Anthropic, Google, or the built-in Cloudflare model. The browser never sees a key."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Literal
 
 import httpx
 
-Provider = Literal["openai", "anthropic", "google"]
+Provider = Literal["openai", "anthropic", "google", "cloudflare"]
 
 MODELS: dict[str, tuple[str, ...]] = {
     "openai": ("gpt-6-astra", "gpt-6-sol"),
@@ -23,6 +23,8 @@ DEFAULT_MODEL = {
 }
 
 MAX_OUTPUT_TOKENS = 4096
+# Built-in Ask answers are short; a lower cap keeps each question cheap.
+BUILTIN_MAX_OUTPUT_TOKENS = 1024
 
 
 def provider_label(provider: str) -> str:
@@ -32,6 +34,8 @@ def provider_label(provider: str) -> str:
         return "Claude"
     if provider == "google":
         return "Gemini"
+    if provider == "cloudflare":
+        return "Gemma"
     return provider
 
 
@@ -90,8 +94,22 @@ async def complete(
     api_key: str,
     system: str,
     messages: list[dict[str, str]],
+    account_id: str = "",
 ) -> str:
     async with httpx.AsyncClient(timeout=45.0) as client:
+        if provider == "cloudflare":
+            # Workers AI speaks the OpenAI chat format. api_key is the account's API token.
+            response = await client.post(
+                f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    **openai_payload(model, system, _alternating(messages)),
+                    "max_tokens": BUILTIN_MAX_OUTPUT_TOKENS,
+                },
+            )
+            _raise_for_status("cloudflare", response)
+            data = response.json()
+            return str(data["choices"][0]["message"]["content"] or "")
         if provider == "openai":
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",

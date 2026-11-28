@@ -33,8 +33,9 @@ under Apps. Tenant Access is their identity provider. Each app has an access pol
 admins only, or assigned people. People open their apps from the Overview tab.
 - Invite link: admins copy it from People. Anyone with the link signs in with a matching work \
 email and joins the workspace.
-- Ask: a free Gemini assistant that answers questions about this workspace. An admin pastes one \
-Google AI Studio key under Ask. It is not billed like ChatGPT or Claude.
+- Ask: the built-in assistant that answers questions about this workspace. It works with no \
+setup. Each plan has a number of questions per day (Free 20, Team 100, Business 300). An admin \
+can add the company's own paid Gemini key under Ask to remove the limit. The owner can turn Ask off.
 - Agents: company ChatGPT or Claude keys. Messages are billed to that key, not to the person chatting.
 - Plans: Free, Team, and Business differ in how many people and apps a workspace can have and \
 how long the audit log is kept. Billing is under the Billing tab (owner only).
@@ -43,7 +44,7 @@ how long the audit log is kept. Billing is under the Billing tab (owner only).
 SHORT_PRIMER = """\
 Tenant Access in brief: people sign in with Google or Microsoft on the company domain. \
 Admins manage people and apps. Apps use this dashboard as their OpenID Connect login. \
-Ask is the free workspace helper; Agents are paid ChatGPT/Claude keys. \
+Ask is the built-in workspace helper; Agents are the company's own ChatGPT/Claude keys. \
 Billing is owner-only under the Billing tab.
 """
 

@@ -1,6 +1,6 @@
 """Company AI agents. Sign-in is the Tenant Access session; the provider bills the company.
 
-Paid ChatGPT and Claude only. Free Gemini workspace Q&A lives under /ask.
+Paid ChatGPT and Claude only. Workspace Q&A lives under /ask.
 """
 
 from __future__ import annotations

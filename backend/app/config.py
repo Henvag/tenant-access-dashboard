@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # common = work + personal; consumers = personal Microsoft accounts only
     entra_tenant_id: str = "common"
     session_secret: str = "change-me"
+    # Built-in Ask model on Cloudflare Workers AI, paid for by Tenant Access so
+    # companies need no key. Empty token = only companies with their own key get Ask.
+    cloudflare_account_id: str = ""
+    cloudflare_ai_token: str = ""
+    ask_builtin_model: str = "@cf/google/gemma-4-26b-a4b-it"
     # Encrypts stored AI provider keys. Separate from SESSION_SECRET (see agents/secrets.py).
     data_encryption_key: str = ""
     # Sign-in cookie lifetime. Starlette's default is 14 days.

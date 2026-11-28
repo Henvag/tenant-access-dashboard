@@ -56,7 +56,7 @@ Screenshots are from the read-only demo company.
 6. Register a second company with an account on another domain and sign in there. You should only see that tenant, including its apps.
 7. **Billing** (owner): Free, Team, and Business, with seat and app limits. Card checkout goes through Stripe.
 
-8. **Ask** (everyone): questions about your own workspace ("who hasn't signed in this week?"), answered by Gemini with a free API key the admin adds. **Agents** (admin): company ChatGPT or Claude assistants that people use while signed in here, billed to the company's own key.
+8. **Ask** (everyone): questions about your own workspace ("who hasn't signed in this week?"), answered by a built-in model (Gemma 4 on Cloudflare Workers AI) with no setup and a daily question limit per plan. A company can add its own paid Gemini key instead. **Agents** (admin): company ChatGPT or Claude assistants that people use while signed in here, billed to the company's own key.
 
 There is an **EN / NO** language toggle if you want to check the UI.
 
@@ -188,7 +188,7 @@ Only the owner deletes, and it can't be undone:
 | OIDC provider | joserfc (RS256 JWT/JWKS), PKCE | Issue tokens to apps like Grafana; keys live in Postgres |
 | DB | PostgreSQL 16 + RLS on Neon (free tier) | Isolation where I can't forget it; Neon because Render's free Postgres expires after 30 days |
 | UI | React + TypeScript + Vite | Built into the API image. One origin, one cookie |
-| AI | Gemini (Ask), OpenAI and Anthropic (Agents) | Keys belong to the company, stored encrypted, only a 4-character hint is shown |
+| AI | Cloudflare Workers AI or the company's own Gemini key (Ask), OpenAI and Anthropic (Agents) | The built-in Ask key is a server setting; company keys are stored encrypted, only a 4-character hint is shown |
 | Ship | Docker, GitHub Actions, Render, Cloudflare | One portable image; Cloudflare in front for the custom domain |
 | Ops | JSON logs, request IDs, `/health`, basic security headers | Something useful when the free tier misbehaves |
 

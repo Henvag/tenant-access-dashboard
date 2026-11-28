@@ -601,8 +601,13 @@ export function sendAgentMessage(
 
 export type AskStatus = {
   configured: boolean;
+  enabled?: boolean;
+  source?: "builtin" | "own_key" | null;
   model: string | null;
   key_hint: string | null;
+  used_today?: number | null;
+  daily_limit?: number | null;
+  can_turn_off?: boolean;
 };
 
 export function getAskStatus(): Promise<AskStatus> {
@@ -618,6 +623,13 @@ export function configureAsk(input: { api_key: string; model: string }): Promise
 
 export function clearAsk(): Promise<void> {
   return request<void>("/ask", { method: "DELETE" });
+}
+
+export function setAskEnabled(enabled: boolean): Promise<AskStatus> {
+  return request<AskStatus>("/ask/enabled", {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
 }
 
 export function sendAskMessage(

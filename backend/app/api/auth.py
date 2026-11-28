@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.api.ask import ask_available
 from app.auth.audit import record_login, record_login_failure
 from app.auth.identity import (
     LoginError,
@@ -284,7 +285,7 @@ async def me(request: Request, user: User = Depends(get_current_user)) -> MeOut:
         max_users=limits.max_users,
         audit_retention_days=limits.audit_retention_days,
         has_logo=bool(user.tenant.logo_bytes),
-        has_ask=bool(user.tenant.ask_secret),
+        has_ask=ask_available(user.tenant),
         demo=is_demo_session(request.session),
         external=user.external,
     )

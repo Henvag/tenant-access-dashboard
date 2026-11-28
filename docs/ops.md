@@ -103,3 +103,20 @@ Account provisioning (Slack) works the same way: changes are queued in `provisio
 ## Infra path
 
 Live Render demo: **Blueprint** (`render.yaml`). Optional state-managed twin: **`infra/render`** (Terraform). Fly: **`fly.toml` + flyctl** (see `/infra/README.md` for why not Terraform-on-Fly yet).
+
+## Ask (built-in model)
+
+Ask works for every company with no setup. Questions go to Cloudflare Workers AI
+(`ASK_BUILTIN_MODEL`, default `@cf/google/gemma-4-26b-a4b-it`) with the Tenant
+Access account's token, set as `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN`.
+The token only needs the **Workers AI: Read** and **Workers AI: Edit** permissions.
+
+- Each plan has a daily cap (Free 20, Team 100, Business 300 questions, UTC days),
+  counted in `tenants.ask_usage_count`. Failed calls don't count.
+- On Cloudflare's Workers Free plan, usage stops at 10,000 Neurons a day (roughly
+  250 questions) and Ask answers "busy" until 00:00 UTC. Nothing is billed. The
+  Workers Paid plan (5 USD/month) lifts that and bills about 0.0004 USD per question.
+- A company's own Gemini key skips the cap and goes to Google instead. Google's
+  terms require a paid key for users in the EEA.
+- The owner can turn Ask off for the company (`PUT /ask/enabled`).
+- To switch model, change `ASK_BUILTIN_MODEL`. Any Workers AI chat model works.
