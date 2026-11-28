@@ -220,3 +220,14 @@ def test_ask_shows_times_in_norwegian_time() -> None:
 
 def test_who_has_not_signed_in_gets_the_people_list() -> None:
     assert "people" in topics_for("Who hasn't signed in this week?", is_admin=True)
+
+
+def test_now_line_names_the_start_of_the_week():
+    from datetime import UTC, datetime
+
+    from app.agents.context import _now_line
+
+    # Saturday 28 Nov 2026, 09:00 UTC -> 10:00 CET; the week began Monday 23 Nov.
+    line = _now_line(datetime(2026, 11, 28, 9, 0, tzinfo=UTC))
+    assert "2026-11-28 10:00 CET" in line
+    assert "Monday 2026-11-23" in line

@@ -7,7 +7,7 @@ if the question needs them, to save free-tier tokens and latency.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
@@ -213,12 +213,21 @@ def _when(value: datetime | None) -> str:
     return value.astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M %Z")
 
 
+def _now_line(now: datetime) -> str:
+    local = now.astimezone(LOCAL_TZ)
+    monday = (local - timedelta(days=local.weekday())).date()
+    return (
+        f"Now: {_when(now)}. This week started Monday {monday.isoformat()}; a sign-in on or after "
+        "that date counts as this week. All times below are Norwegian time (Europe/Oslo)."
+    )
+
+
 def _deep_link_guide(*, is_admin: bool) -> str:
     lines = [
         "When you point the person to a place in the product, use a Markdown link with the view query. "
-        "Write the link text in the person's language. Norwegian tab names: Oversikt, Spør, Agenter, "
-        "Personer, Apper, Organisasjon, Revisjonslogg, Fakturering. For example "
-        "[Revisjonslogg](?view=audit).",
+        "Use the English names below when the person writes English. Only when the person writes "
+        "Norwegian, use these names instead: Oversikt, Spør, Agenter, Personer, Apper, Organisasjon, "
+        "Revisjonslogg, Fakturering (for example [Revisjonslogg](?view=audit)).",
         "- [Overview](?view=overview)",
         "- [Ask](?view=ask)",
         "- [Agents](?view=agents)",
@@ -271,7 +280,7 @@ async def workspace_briefing(
     lines: list[str] = [
         PRODUCT_PRIMER if "product" in topics else SHORT_PRIMER,
         "",
-        f"Now: {_when(datetime.now(UTC))}. All times below are Norwegian time (Europe/Oslo).",
+        _now_line(datetime.now(UTC)),
         "",
         "This workspace:",
         (
