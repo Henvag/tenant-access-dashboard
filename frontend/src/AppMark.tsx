@@ -5,7 +5,7 @@ import giteaLogo from "./assets/gitea.svg";
 import bookstackLogo from "./assets/bookstack.svg";
 import slackLogo from "./assets/slack.svg";
 import openidLogo from "./assets/openid.svg";
-import samlLogo from "./assets/saml.svg";
+import samlLogo from "./assets/saml.png";
 import { IconPlug } from "./Icons";
 
 const KNOWN_LOGOS: { match: RegExp; src: string; alt: string }[] = [
