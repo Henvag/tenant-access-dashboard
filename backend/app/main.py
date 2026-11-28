@@ -31,6 +31,7 @@ from app.api.domains import router as domains_router
 from app.api.invites import router as invites_router
 from app.api.partners import router as partners_router
 from app.api.oauth import router as oauth_router
+from app.api.saml import router as saml_router
 from app.api.users import router as users_router
 from app.api.webhooks import router as webhooks_router
 from app.auth.oidc import create_oauth
@@ -104,6 +105,7 @@ app.include_router(invites_router)
 app.include_router(partners_router)
 app.include_router(billing_router)
 app.include_router(oauth_router)
+app.include_router(saml_router)
 
 
 @app.get("/health")

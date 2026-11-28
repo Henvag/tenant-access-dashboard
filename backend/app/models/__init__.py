@@ -9,6 +9,7 @@ from app.models.oauth import (
     OAuthClientLookup,
     OAuthCode,
     PendingAppGrant,
+    SamlCertificate,
     SigningKey,
 )
 from app.models.partner import IdentityMembership, PartnerInvite
@@ -32,6 +33,7 @@ __all__ = [
     "PartnerInvite",
     "PendingAppGrant",
     "ProvisionOutbox",
+    "SamlCertificate",
     "SigningKey",
     "TeamAgent",
     "Tenant",

@@ -41,6 +41,20 @@ class SigningKey(Base):
     retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class SamlCertificate(Base):
+    """Key pair and self-signed certificate we sign SAML responses with. Global."""
+
+    __tablename__ = "saml_certificates"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    private_pem: Mapped[str] = mapped_column(Text, nullable=False)
+    certificate_pem: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class OAuthClient(Base):
     __tablename__ = "oauth_clients"
 
@@ -72,6 +86,14 @@ class OAuthClient(Base):
     provision_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
     provision_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # encrypted
     provision_key_hint: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # "oidc" (OpenID Connect, redirect_uris above) or "saml" (see app/saml/).
+    protocol: Mapped[str] = mapped_column(
+        String(8), nullable=False, default="oidc", server_default="oidc"
+    )
+    saml_entity_id: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    saml_acs_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # "email" (NameID is the email address) or "persistent" (our stable user id).
+    saml_nameid: Mapped[str | None] = mapped_column(String(16), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
@@ -89,6 +111,10 @@ class OAuthClient(Base):
     @property
     def disabled(self) -> bool:
         return self.disabled_at is not None
+
+    @property
+    def is_saml(self) -> bool:
+        return self.protocol == "saml"
 
 
 class OAuthClientLookup(Base):

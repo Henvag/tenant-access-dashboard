@@ -124,6 +124,9 @@ export type OffboardApp = { app: string; client_id: string; result: OffboardResu
 
 export type AccessPolicy = "everyone" | "admins" | "assigned";
 
+export type AppProtocol = "oidc" | "saml";
+export type SamlNameId = "email" | "persistent";
+
 export type RegisteredApp = {
   id: string;
   name: string;
@@ -136,6 +139,14 @@ export type RegisteredApp = {
   signout_key_hint: string | null;
   provision_kind: ProvisionKind | null;
   provision_key_hint: string | null;
+  protocol: AppProtocol;
+  saml_entity_id: string | null;
+  saml_acs_url: string | null;
+  saml_nameid: SamlNameId | null;
+  saml_sso_url: string | null;
+  saml_issuer: string | null;
+  saml_metadata_url: string | null;
+  saml_certificate_url: string | null;
   access_policy: AccessPolicy;
   disabled: boolean;
   created_at: string;
@@ -158,6 +169,11 @@ export type AppInput = {
   launch_url: string | null;
   backchannel_logout_uri?: string | null;
   access_policy: AccessPolicy;
+  /** SAML apps (Slack, Zoom, ...): no redirect URIs, an entity ID and ACS URL instead. */
+  protocol?: AppProtocol;
+  saml_entity_id?: string;
+  saml_acs_url?: string;
+  saml_nameid?: SamlNameId;
 };
 
 export type SignoutKind = "grafana" | "outline" | "gitea";

@@ -61,6 +61,7 @@ type Presentation = {
 
 const DENIAL_REASON_KEYS: Record<string, TKey> = {
   not_assigned: "reason.not_assigned",
+  app_not_set_up: "reason.app_not_set_up",
   admins_only: "reason.admins_only",
   wrong_tenant: "reason.wrong_tenant",
   app_disabled: "reason.app_disabled",

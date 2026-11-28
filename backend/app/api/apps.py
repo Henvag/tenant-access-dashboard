@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_admin
 from app.auth.audit import record_app_event
+from app.config import settings
 from app.db import get_db
 from app.billing.plans import limits_for_tenant
 from app.domain import is_personal_workspace, normalize_workspace_domain
@@ -68,6 +69,29 @@ async def _grant_counts(db: AsyncSession, client_pks: list[UUID]) -> dict[UUID, 
     return counts
 
 
+def _saml_fields(client: OAuthClient) -> dict:
+    if not client.is_saml:
+        return {"protocol": client.protocol}
+    base = f"{settings.public_origin}/saml/{client.client_id}"
+    return {
+        "protocol": client.protocol,
+        "saml_entity_id": client.saml_entity_id,
+        "saml_acs_url": client.saml_acs_url,
+        "saml_nameid": client.saml_nameid,
+        "saml_sso_url": f"{base}/sso",
+        "saml_issuer": f"{base}/metadata",
+        "saml_metadata_url": f"{base}/metadata",
+        "saml_certificate_url": f"{base}/certificate.pem",
+    }
+
+
+def _launch_url(client: OAuthClient) -> str | None:
+    """SAML apps without their own start page open through us (IdP-initiated)."""
+    if client.launch_url or not client.is_saml:
+        return client.launch_url
+    return f"/saml/{client.client_id}/launch"
+
+
 def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
     return AppOut(
         id=client.id,
@@ -81,6 +105,7 @@ def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
         signout_key_hint=client.signout_key_hint,
         provision_kind=client.provision_kind,
         provision_key_hint=client.provision_key_hint,
+        **_saml_fields(client),
         access_policy=client.access_policy,
         disabled=client.disabled,
         created_at=client.created_at,
@@ -127,7 +152,7 @@ async def my_apps(
                 MyAppOut(
                     id=client.id,
                     name=client.name,
-                    launch_url=client.launch_url,
+                    launch_url=_launch_url(client),
                     access_policy=client.access_policy,
                 )
             )
@@ -183,6 +208,10 @@ async def create_app(
         launch_url=payload.launch_url,
         backchannel_logout_uri=payload.backchannel_logout_uri,
         access_policy=payload.access_policy,
+        protocol=payload.protocol,
+        saml_entity_id=payload.saml_entity_id,
+        saml_acs_url=payload.saml_acs_url,
+        saml_nameid=payload.saml_nameid if payload.protocol == "saml" else None,
         created_by=admin.id,
     )
     db.add(client)
@@ -196,7 +225,11 @@ async def create_app(
         user_id=admin.id,
         idp=admin.idp,
         request=request,
-        details={"app": client.name, "policy": client.access_policy.value},
+        details={
+            "app": client.name,
+            "policy": client.access_policy.value,
+            "protocol": client.protocol,
+        },
     )
     out = _to_out(client, 0)
     await db.commit()
@@ -211,6 +244,21 @@ async def patch_app(
     db: AsyncSession = Depends(get_db),
 ) -> AppOut:
     client = await _load(db, app_id, admin.tenant_id)
+    saml_change = (
+        payload.saml_entity_id is not None
+        or payload.saml_acs_url is not None
+        or payload.saml_nameid is not None
+    )
+    if saml_change and not client.is_saml:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="not_a_saml_app")
+    if payload.redirect_uris is not None and client.is_saml:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="saml_no_redirects")
+    if payload.saml_entity_id is not None:
+        client.saml_entity_id = payload.saml_entity_id
+    if payload.saml_acs_url is not None:
+        client.saml_acs_url = payload.saml_acs_url
+    if payload.saml_nameid is not None:
+        client.saml_nameid = payload.saml_nameid
     if payload.name is not None:
         client.name = payload.name
     if payload.redirect_uris is not None:

@@ -12,9 +12,11 @@ import {
   rotateAppSecret,
   setAppGrants,
   TenantUser,
+  SamlNameId,
 } from "./api";
 import SignoutSection from "./SignoutSection";
 import ProvisioningSection from "./ProvisioningSection";
+import SamlSetupSection from "./SamlSetupSection";
 import Avatar from "./Avatar";
 import CopyButton from "./CopyButton";
 import { isPersonalWorkspace, messageForApiError, planNearLimit } from "./format";
@@ -170,7 +172,7 @@ export default function AppsPanel({
       });
       return items;
     }
-    items.push({
+    if (!isSaml(app)) items.push({
       key: "rotate",
       label: t("apps.rotate"),
       onSelect: () => {
@@ -275,6 +277,9 @@ export default function AppsPanel({
                           {t("apps.grants", { count: app.grant_count })}
                         </button>
                       ) : null}
+                      {isSaml(app) ? (
+                        <span className="pill pill-xs">{t("apps.samlPill")}</span>
+                      ) : null}
                       {app.disabled ? (
                         <span className="pill pill-xs pill-danger">{t("status.disabled")}</span>
                       ) : null}
@@ -348,7 +353,8 @@ export default function AppsPanel({
             onSubmit={async (input, templateId) => {
               const created = await createApp(input);
               upsert(created);
-              if (templateById(templateId).accountsOnly) {
+              const template = templateById(templateId);
+              if (template.accountsOnly || template.saml) {
                 // No sign-in to set up: go straight to the provisioning token.
                 setDialog({ kind: "edit", app: created });
                 return;
@@ -367,6 +373,8 @@ export default function AppsPanel({
 
       {dialog?.kind === "edit" ? (
         <Modal title={t("apps.settingsFor", { name: dialog.app.name })} onClose={() => setDialog(null)}>
+          {/* SAML: the values to paste into the app come first, they are what you need after creating it. */}
+          {isSaml(dialog.app) ? <SamlSetupSection app={dialog.app} /> : null}
           <AppForm
             tenantName={tenantName}
             initial={dialog.app}
@@ -381,7 +389,7 @@ export default function AppsPanel({
               setDialog(null);
             }}
           />
-          {isAccountsOnly(dialog.app) || dialog.app.provision_kind ? (
+          {canProvision(dialog.app) ? (
             <ProvisioningSection
               app={dialog.app}
               onUpdated={(updated) => {
@@ -390,7 +398,7 @@ export default function AppsPanel({
               }}
             />
           ) : null}
-          {isAccountsOnly(dialog.app) ? null : (
+          {isAccountsOnly(dialog.app) || isSaml(dialog.app) ? null : (
             <SignoutSection
               app={dialog.app}
               onUpdated={(updated) => {
@@ -468,7 +476,18 @@ export default function AppsPanel({
 
 /** An app people don't sign in to through us; we only manage their account there. */
 function isAccountsOnly(app: RegisteredApp): boolean {
-  return app.redirect_uris.length === 0;
+  return app.protocol !== "saml" && app.redirect_uris.length === 0;
+}
+
+function isSaml(app: RegisteredApp): boolean {
+  return app.protocol === "saml";
+}
+
+/** Slack can also have its accounts managed here. */
+function canProvision(app: RegisteredApp): boolean {
+  return (
+    isAccountsOnly(app) || app.provision_kind !== null || app.saml_entity_id === "https://slack.com"
+  );
 }
 
 function AppForm({
@@ -488,9 +507,14 @@ function AppForm({
   const [launchUrl, setLaunchUrl] = useState(initial?.launch_url ?? "");
   const [logoutUrl, setLogoutUrl] = useState(initial?.backchannel_logout_uri ?? "");
   const [policy, setPolicy] = useState<AccessPolicy>(initial?.access_policy ?? "everyone");
+  const [entityId, setEntityId] = useState(initial?.saml_entity_id ?? "");
+  const [acsUrl, setAcsUrl] = useState(initial?.saml_acs_url ?? "");
+  const [nameid, setNameid] = useState<SamlNameId>(initial?.saml_nameid ?? "email");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accountsOnly = initial ? isAccountsOnly(initial) : false;
+  const saml = initial ? isSaml(initial) : false;
+  // SAML apps have no redirect URIs or logout URL either.
+  const accountsOnly = initial ? isAccountsOnly(initial) || saml : false;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -508,6 +532,9 @@ function AppForm({
         launch_url: launchUrl.trim() || null,
         backchannel_logout_uri: accountsOnly ? null : logoutUrl.trim() || null,
         access_policy: policy,
+        ...(saml
+          ? { saml_entity_id: entityId.trim(), saml_acs_url: acsUrl.trim(), saml_nameid: nameid }
+          : {}),
       });
     } catch (err) {
       setError(messageForApiError(err instanceof Error ? err.message : "generic", lang));
@@ -532,6 +559,38 @@ function AppForm({
           required
         />
       </label>
+      {saml ? (
+        <>
+          <label className="field">
+            <span>{t("apps.samlEntityId")}</span>
+            <input
+              value={entityId}
+              onChange={(e) => setEntityId(e.target.value)}
+              required
+              spellCheck={false}
+            />
+            <small>{t("apps.samlEntityIdHint")}</small>
+          </label>
+          <label className="field">
+            <span>{t("apps.samlAcsUrl")}</span>
+            <input
+              value={acsUrl}
+              onChange={(e) => setAcsUrl(e.target.value)}
+              type="url"
+              required
+              spellCheck={false}
+            />
+            <small>{t("apps.samlAcsUrlHint")}</small>
+          </label>
+          <label className="field">
+            <span>{t("apps.samlNameId")}</span>
+            <select value={nameid} onChange={(e) => setNameid(e.target.value as SamlNameId)}>
+              <option value="email">{t("apps.samlNameIdEmail")}</option>
+              <option value="persistent">{t("apps.samlNameIdPersistent")}</option>
+            </select>
+          </label>
+        </>
+      ) : null}
       {accountsOnly ? null : (
         <label className="field">
           <span>{t("apps.redirects")}</span>
@@ -569,7 +628,7 @@ function AppForm({
         </label>
       )}
       <fieldset className="field policy-field">
-        <legend>{t(accountsOnly ? "apps.policyAccounts" : "apps.policy")}</legend>
+        <legend>{t(accountsOnly && !saml ? "apps.policyAccounts" : "apps.policy")}</legend>
         {(["everyone", "admins", "assigned"] as AccessPolicy[]).map((value) => (
           <label key={value} className={policy === value ? "radio-card active" : "radio-card"}>
             <input

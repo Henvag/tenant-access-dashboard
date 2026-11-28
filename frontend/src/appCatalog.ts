@@ -7,7 +7,8 @@ export type AppTemplateId =
   | "gitea"
   | "bookstack"
   | "slack"
-  | "custom";
+  | "custom"
+  | "saml";
 
 export type AppTemplate = {
   id: AppTemplateId;
@@ -29,6 +30,12 @@ export type AppTemplate = {
    * in the app. No redirect URIs, no client secret to hand over.
    */
   accountsOnly?: { launchUrl: string };
+  /**
+   * Signs in with SAML. With an acsPath, the admin enters the app's base URL
+   * (e.g. their Slack workspace) and we derive the rest; without, they type
+   * the entity ID and ACS URL.
+   */
+  saml?: { entityId: string | null; acsPath: string | null; nameid: "email" | "persistent" };
 };
 
 export const APP_CATALOG: AppTemplate[] = [
@@ -97,7 +104,8 @@ export const APP_CATALOG: AppTemplate[] = [
     redirectPath: null,
     launchPath: null,
     tipKey: "apps.redirectTip",
-    accountsOnly: { launchUrl: "https://app.slack.com" },
+    // Slack wants a NameID that never changes, even if the email does.
+    saml: { entityId: "https://slack.com", acsPath: "/sso/saml", nameid: "persistent" },
   },
   {
     id: "custom",
@@ -109,6 +117,18 @@ export const APP_CATALOG: AppTemplate[] = [
     redirectPath: null,
     launchPath: null,
     tipKey: "apps.redirectTip",
+  },
+  {
+    id: "saml",
+    defaultName: "",
+    markName: "Custom",
+    titleKey: "catalog.saml.title",
+    bodyKey: "catalog.saml.body",
+    pathHintKey: "catalog.saml.path",
+    redirectPath: null,
+    launchPath: null,
+    tipKey: "apps.redirectTip",
+    saml: { entityId: null, acsPath: null, nameid: "email" },
   },
 ];
 

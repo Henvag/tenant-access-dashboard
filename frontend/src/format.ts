@@ -12,6 +12,9 @@ const AUTH_ERROR_KEYS: Record<string, TKey> = {
   oidc_failed: "auth.oidc_failed",
   app_unknown_client: "auth.app_unknown_client",
   app_invalid_redirect: "auth.app_invalid_redirect",
+  saml_bad_request: "auth.saml_bad_request",
+  saml_wrong_app: "auth.saml_wrong_app",
+  saml_wrong_acs: "auth.saml_wrong_acs",
   invite_not_found: "error.invite_not_found",
   demo_unavailable: "auth.demo_unavailable",
   managed_account_required: "auth.managed_account_required",
@@ -23,6 +26,7 @@ const DENIAL_KEYS: Record<string, TKey> = {
   user_disabled: "denied.user_disabled",
   wrong_tenant: "denied.wrong_tenant",
   app_disabled: "denied.app_disabled",
+  app_not_set_up: "denied.app_not_set_up",
 };
 
 /** Result of an app sign-in attempt that was refused at /oauth/authorize. */

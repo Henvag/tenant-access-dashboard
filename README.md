@@ -136,6 +136,24 @@ Grafana ──/oauth/userinfo─────────────▶ email, n
 - **RLS still applies.** Clients, grants and codes are tenant tables under FORCE RLS. The unauthenticated token endpoint resolves `client_id -> tenant_id` through a tiny secret-free lookup table, sets the tenant, and only then reads the protected rows.
 - **Not signed in yet?** The authorize request is parked in the session; after Google/Microsoft sign-in the callback resumes it, so "Sign in to continue to Grafana" is a real flow, not a dead end.
 
+### SAML for cloud apps
+
+Cloud apps like Slack and Zoom only take SAML 2.0 for single sign-on, so an app can be registered as SAML instead of OpenID Connect. The admin gives the app's entity ID and ACS URL (the Slack template only needs the workspace URL) and pastes our sign-in URL, issuer and certificate into the app.
+
+```
+Slack ──AuthnRequest (POST or redirect)──▶ /saml/{client_id}/sso   (same checks as OIDC)
+      ◀──auto-posted signed Response──────                        audit: app_login, protocol saml
+```
+
+- **Same access rules as OIDC:** access policy, grants, disabled people and company boundaries, audited the same way.
+- **Only the registered ACS URL** ever receives a response. A request that names another ACS URL or entity ID is refused.
+- **Response and assertion are both signed** (RSA-SHA256, exclusive C14N) with a self-signed certificate stored in Postgres. It is separate from the OIDC keys, because admins paste it into each app and it should not rotate with them.
+- **POST binding works with Lax cookies:** the app's cross-site form post is turned into a top-level redirect to ourselves, so the session cookie comes along and the request can be parked while someone signs in.
+- **Dashboard tiles** start an IdP-initiated sign-in at `/saml/{client_id}/launch` when the app has no start page of its own.
+- **Tested against a real SAML service-provider library** (python3-saml on xmlsec), standing in for Slack. Not yet tried against a paid Slack workspace.
+
+Together with SCIM-style account provisioning for Slack, that covers both halves for cloud apps: who can sign in, and whose account exists.
+
 ## Domains, webhooks and export
 
 Three things an IT team expects once more than one person relies on the dashboard:
