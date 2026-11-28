@@ -92,6 +92,13 @@ def _launch_url(client: OAuthClient) -> str | None:
     return f"/saml/{client.client_id}/launch"
 
 
+def _sign_in_protocol(client: OAuthClient) -> str | None:
+    """None for accounts-only apps (Slack provisioning without sign-in)."""
+    if client.is_saml:
+        return "saml"
+    return "oidc" if client.redirect_uris else None
+
+
 def _to_out(client: OAuthClient, grant_count: int) -> AppOut:
     return AppOut(
         id=client.id,
@@ -153,6 +160,7 @@ async def my_apps(
                     id=client.id,
                     name=client.name,
                     launch_url=_launch_url(client),
+                    protocol=_sign_in_protocol(client),
                     access_policy=client.access_policy,
                 )
             )

@@ -232,6 +232,8 @@ class MyAppOut(BaseModel):
     id: UUID
     name: str
     launch_url: str | None
+    # "oidc" or "saml"; None when people only get an account in the app.
+    protocol: str | None = None
     access_policy: AccessPolicy
 
 

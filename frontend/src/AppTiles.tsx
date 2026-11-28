@@ -69,14 +69,14 @@ export default function AppTiles({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <AppMark name={app.name} size="sm" />
+                  <AppMark name={app.name} size="sm" protocol={app.protocol} />
                   <span className="tile-name">{app.name}</span>
                   <IconExternal width={14} height={14} className="tile-ext" />
                 </a>
               ) : (
                 <Tip key={app.id} label={t("myapps.noLaunch")}>
                   <span className="tile tile-static" tabIndex={0}>
-                    <AppMark name={app.name} size="sm" />
+                    <AppMark name={app.name} size="sm" protocol={app.protocol} />
                     <span className="tile-name">{app.name}</span>
                   </span>
                 </Tip>

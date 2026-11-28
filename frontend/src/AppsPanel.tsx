@@ -261,7 +261,7 @@ export default function AppsPanel({
             {apps.map((app) => (
               <li key={app.id} className={app.disabled ? "app-row app-disabled" : "app-row"}>
                 <div className="app-row-main">
-                  <AppMark name={app.name} />
+                  <AppMark name={app.name} protocol={isAccountsOnly(app) ? null : app.protocol} />
                   <div className="app-row-text">
                     <div className="app-row-title">
                       <span className="name-text">{app.name}</span>
