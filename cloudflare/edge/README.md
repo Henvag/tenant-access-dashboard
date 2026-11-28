@@ -13,6 +13,7 @@ Only these exact addresses (see `wrangler.toml`):
 | `/`, `/no` | Front page in English and Norwegian |
 | `/privacy`, `/personvern` | Privacy page in English and Norwegian |
 | `/billing/plans` | The public price list the front page shows |
+| `/robots.txt`, `/sitemap.xml` | For search engines, so Google never gets a 503 from a sleeping Render |
 | `/assets/*` | Scripts, styles, fonts and images (videos are passed to Render) |
 
 Everything else, including sign-in (`/auth/*`), the OIDC provider (`/oauth/*`,

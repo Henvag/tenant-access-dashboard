@@ -15,6 +15,9 @@
 // itself, so nothing else needs to change.
 
 const PAGES = new Set(["/", "/no", "/privacy", "/personvern"]);
+// Files search engines fetch. A 503 from a sleeping Render here makes Google treat the
+// whole site as blocked (robots.txt) or the sitemap as unreadable.
+const CRAWLER_FILES = new Set(["/robots.txt", "/sitemap.xml"]);
 // Public JSON the front page reads, the same for every visitor.
 const PUBLIC_JSON = new Set(["/billing/plans"]);
 // Videos are fetched in byte ranges, which KV copies don't answer. They go to Render.
@@ -40,7 +43,7 @@ export default {
     if (request.method !== "GET" || url.search) return fetch(request);
     try {
       if (url.pathname.startsWith("/assets/")) return await asset(request, url, env, ctx);
-      if (PAGES.has(url.pathname) || PUBLIC_JSON.has(url.pathname)) {
+      if (PAGES.has(url.pathname) || PUBLIC_JSON.has(url.pathname) || CRAWLER_FILES.has(url.pathname)) {
         return await page(url, env, ctx);
       }
     } catch (error) {
@@ -95,7 +98,7 @@ async function refreshIfDue(url, env) {
     .catch(() => undefined);
 
   // The page being visited first.
-  for (const path of new Set([url.pathname, ...PAGES, ...PUBLIC_JSON])) {
+  for (const path of new Set([url.pathname, ...PAGES, ...PUBLIC_JSON, ...CRAWLER_FILES])) {
     await refreshOne(new URL(path, url.origin), env).catch((error) =>
       console.error(`refresh of ${path} failed`, error),
     );
@@ -181,6 +184,9 @@ function respond(body, metadata, state) {
     headers.set("Cache-Control", "no-cache, must-revalidate");
   } else if (type.includes("json")) {
     headers.set("Cache-Control", "no-store");
+  } else if (type.startsWith("text/plain") || type.includes("xml")) {
+    // robots.txt and sitemap.xml keep their names when they change.
+    headers.set("Cache-Control", "public, max-age=3600");
   } else {
     headers.set("Cache-Control", "public, max-age=31536000, immutable");
   }
