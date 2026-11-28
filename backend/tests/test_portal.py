@@ -216,3 +216,7 @@ def test_ask_shows_times_in_norwegian_time() -> None:
     assert _when(datetime(2026, 11, 28, 7, 55, tzinfo=UTC)) == "2026-11-28 08:55 CET"
     assert _when(datetime(2026, 7, 1, 7, 55, tzinfo=UTC)) == "2026-07-01 09:55 CEST"
     assert _when(None) == "never"
+
+
+def test_who_has_not_signed_in_gets_the_people_list() -> None:
+    assert "people" in topics_for("Who hasn't signed in this week?", is_admin=True)

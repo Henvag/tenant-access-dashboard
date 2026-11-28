@@ -95,6 +95,11 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "seat",
         "user",
         "email",
+        "who ",
+        "signed in",
+        "logged in",
+        "last sign",
+        "inactive",
         # Norwegian
         "personer",
         "person",
@@ -210,7 +215,10 @@ def _when(value: datetime | None) -> str:
 
 def _deep_link_guide(*, is_admin: bool) -> str:
     lines = [
-        "When you point the person to a place in the product, use a Markdown link with the view query:",
+        "When you point the person to a place in the product, use a Markdown link with the view query. "
+        "Write the link text in the person's language. Norwegian tab names: Oversikt, Spør, Agenter, "
+        "Personer, Apper, Organisasjon, Revisjonslogg, Fakturering. For example "
+        "[Revisjonslogg](?view=audit).",
         "- [Overview](?view=overview)",
         "- [Ask](?view=ask)",
         "- [Agents](?view=agents)",
