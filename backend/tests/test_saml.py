@@ -314,7 +314,9 @@ async def test_idp_initiated_launch_and_email_nameid(client: AsyncClient, app_se
     )
     sp = await _sp_settings(client, app)
     mine = await client.get("/apps/mine", cookies={"session": _session_cookie(member)})
-    launch = next(a["launch_url"] for a in mine.json() if a["id"] == app["id"])
+    tile = next(a for a in mine.json() if a["id"] == app["id"])
+    assert tile["protocol"] == "saml"
+    launch = tile["launch_url"]
     assert launch == f"/saml/{app['client_id']}/launch"
 
     opened = await client.get(launch, cookies={"session": _session_cookie(member)})

@@ -159,6 +159,8 @@ export type MyApp = {
   id: string;
   name: string;
   launch_url: string | null;
+  /** Null for apps people only get an account in (no sign-in through us). */
+  protocol: AppProtocol | null;
   access_policy: AccessPolicy;
 };
 

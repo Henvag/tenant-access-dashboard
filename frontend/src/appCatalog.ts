@@ -110,7 +110,7 @@ export const APP_CATALOG: AppTemplate[] = [
   {
     id: "custom",
     defaultName: "",
-    markName: "Custom",
+    markName: "OpenID Connect",
     titleKey: "catalog.custom.title",
     bodyKey: "catalog.custom.body",
     pathHintKey: "catalog.custom.path",
@@ -121,7 +121,7 @@ export const APP_CATALOG: AppTemplate[] = [
   {
     id: "saml",
     defaultName: "",
-    markName: "Custom",
+    markName: "SAML",
     titleKey: "catalog.saml.title",
     bodyKey: "catalog.saml.body",
     pathHintKey: "catalog.saml.path",
