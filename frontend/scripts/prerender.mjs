@@ -8,6 +8,7 @@
 //   dist/personvern/index.html  privacy, Norwegian          /personvern
 //   dist/dpa/index.html         data processing agreement   /dpa
 //   dist/databehandleravtale/index.html  same, Norwegian    /databehandleravtale
+//   dist/no/guider/...          Norwegian guides, and their list at /no/guider
 //   dist/404.html               what the backend sends with a 404
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -17,7 +18,19 @@ const ORIGIN = "https://tenantaccess.me";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
 
-const { renderPage, pageTitle, pageDescription, previewDescription, PAGE_PATHS: PATHS } = await import(
+const {
+  renderPage,
+  pageTitle,
+  pageDescription,
+  previewDescription,
+  PAGE_PATHS: PATHS,
+  renderGuide,
+  GUIDES,
+  GUIDES_INDEX,
+  GUIDES_PATH,
+  guidePath,
+  guideTitle,
+} = await import(
   join(root, "dist-ssr", "prerender.js")
 );
 
@@ -66,6 +79,25 @@ function build(page, lang) {
   return html;
 }
 
+// Guides are Norwegian only, so they get no hreflang alternates.
+function buildGuide(guide) {
+  const url = `${ORIGIN}${guide ? guidePath(guide) : GUIDES_PATH}`;
+  const description = guide ? guide.description : GUIDES_INDEX.description;
+  let html = template;
+  html = html.replace(/<html lang="[^"]*">/, '<html lang="nb">');
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${escape(guideTitle(guide))}</title>`);
+  html = setMeta(html, "name", "description", description);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "property", "og:title", guide ? guide.title : "Guider fra Tenant Access");
+  html = setMeta(html, "property", "og:description", description);
+  const extra = [`<link rel="canonical" href="${url}" />`, '<meta property="og:locale" content="nb_NO" />'];
+  if (guide) extra.push('<meta property="og:type" content="article" />');
+  html = html.replace("  </head>", `    ${extra.join("\n    ")}\n  </head>`);
+  if (guide) html = html.replace(/\s*<meta property="og:type" content="website" \/>/, "");
+  if (!html.includes('<div id="root"></div>')) throw new Error('index.html has no empty <div id="root">');
+  return html.replace('<div id="root"></div>', `<div id="root">${renderGuide(guide)}</div>`);
+}
+
 function write(relative, html) {
   const file = join(dist, relative);
   mkdirSync(dirname(file), { recursive: true });
@@ -79,4 +111,6 @@ write("privacy/index.html", build("privacy", "en"));
 write("personvern/index.html", build("privacy", "no"));
 write("dpa/index.html", build("dpa", "en"));
 write("databehandleravtale/index.html", build("dpa", "no"));
+write(`${GUIDES_PATH.slice(1)}/index.html`, buildGuide(null));
+for (const guide of GUIDES) write(`${guidePath(guide).slice(1)}/index.html`, buildGuide(guide));
 write("404.html", build("notFound", "en"));

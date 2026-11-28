@@ -12,6 +12,7 @@ import AppMark from "./AppMark";
 import BrandMark from "./BrandMark";
 import { AppDenial, messageForAppDenial, messageForAuthError, workspaceLabel } from "./format";
 import { TKey, useLang } from "./i18n";
+import { GUIDES_PATH } from "./guides";
 import { pagePath } from "./routes";
 import {
   IconCheck,
@@ -323,6 +324,7 @@ export default function Landing({
         <span className="landing-footer-links">
           <a href={pagePath("privacy", lang)}>{t("landing.privacy")}</a>
           <a href={pagePath("dpa", lang)}>{t("landing.dpa")}</a>
+          {lang === "no" ? <a href={GUIDES_PATH}>Guider</a> : null}
         </span>
       </footer>
     </main>
