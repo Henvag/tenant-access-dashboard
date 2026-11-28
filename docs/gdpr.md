@@ -12,7 +12,7 @@ The public version of what is stored and who handles it is the privacy page (`fr
 | Visits to tenantaccess.me (Cloudflare Web Analytics) | Teknologihjelpen | Controller |
 | Billing contact and Stripe IDs | Teknologihjelpen | Controller |
 
-Operator: Teknologihjelpen (ENK, Norway). Contact for privacy questions: post@teknologihjelpen.no.
+Operator: Teknologihjelpen (ENK, Norway, org. no. 829 416 042). Contact for privacy questions: post@teknologihjelpen.no.
 
 ## Subprocessors
 
