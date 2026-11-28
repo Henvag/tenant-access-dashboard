@@ -14,6 +14,8 @@ routes = [
   { pattern = "tenantaccess.me/privacy", zone_name = "tenantaccess.me" },
   { pattern = "tenantaccess.me/personvern", zone_name = "tenantaccess.me" },
   { pattern = "tenantaccess.me/billing/plans", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/robots.txt", zone_name = "tenantaccess.me" },
+  { pattern = "tenantaccess.me/sitemap.xml", zone_name = "tenantaccess.me" },
   { pattern = "tenantaccess.me/assets/*", zone_name = "tenantaccess.me" },
 ]
 
