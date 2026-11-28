@@ -1,10 +1,22 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, LargeBinary, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,7 +70,14 @@ class Tenant(Base):
     )
     logo_bytes: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     logo_media_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    # Free Gemini workspace Ask. Separate from paid Agents (ChatGPT / Claude).
+    # Ask uses the built-in model unless the company adds its own paid Gemini key.
+    ask_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    ask_usage_day: Mapped[date | None] = mapped_column(Date, nullable=True)
+    ask_usage_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     ask_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
     ask_key_hint: Mapped[str | None] = mapped_column(String(8), nullable=True)
     ask_model: Mapped[str | None] = mapped_column(String(80), nullable=True)

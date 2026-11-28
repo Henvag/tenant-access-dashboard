@@ -20,17 +20,22 @@ class PlanLimits:
     max_users: int
     max_apps: int
     audit_retention_days: int
+    # Questions per day to the built-in Ask model. A company's own key has no cap.
+    ask_daily_questions: int
 
 
 PLANS: dict[PlanId, PlanLimits] = {
     PlanId.free: PlanLimits(
-        id=PlanId.free, max_users=10, max_apps=3, audit_retention_days=14
+        id=PlanId.free, max_users=10, max_apps=3, audit_retention_days=14,
+        ask_daily_questions=20,
     ),
     PlanId.team: PlanLimits(
-        id=PlanId.team, max_users=50, max_apps=15, audit_retention_days=90
+        id=PlanId.team, max_users=50, max_apps=15, audit_retention_days=90,
+        ask_daily_questions=100,
     ),
     PlanId.business: PlanLimits(
-        id=PlanId.business, max_users=250, max_apps=25, audit_retention_days=365
+        id=PlanId.business, max_users=250, max_apps=25, audit_retention_days=365,
+        ask_daily_questions=300,
     ),
 }
 
