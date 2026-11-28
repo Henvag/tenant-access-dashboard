@@ -215,3 +215,30 @@ async def test_demo_refuses_to_start_when_the_role_bypasses_rls(
 async def test_app_role_enforces_rls(app_session_factory: async_sessionmaker[AsyncSession]):
     async with app_session_factory() as session:
         assert await database_enforces_rls(session) is True
+
+
+async def test_demo_visitors_can_try_ask_with_a_small_shared_cap(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+):
+    from app.api import ask as ask_api
+    from app.config import settings
+    from app.demo import DEMO_ASK_DAILY
+
+    monkeypatch.setattr(settings, "cloudflare_account_id", "acct")
+    monkeypatch.setattr(settings, "cloudflare_ai_token", "token")
+
+    async def fake_complete(**kwargs):
+        return "Ingrid is the owner."
+
+    monkeypatch.setattr(ask_api, "complete", fake_complete)
+    await _enter_demo(client)
+    status = (await client.get("/ask")).json()
+    assert status["source"] == "builtin"
+    assert status["daily_limit"] == DEMO_ASK_DAILY
+    assert status["can_turn_off"] is False
+
+    reply = await client.post("/ask/chat", json={"messages": [{"role": "user", "content": "Hvem er eieren?"}]})
+    assert reply.status_code == 200, reply.text
+    # Turning Ask off is still a write the demo refuses.
+    off = await client.put("/ask/enabled", json={"enabled": False})
+    assert off.status_code == 403
