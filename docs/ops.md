@@ -98,6 +98,8 @@ Create it with SQL and check `SELECT rolbypassrls FROM pg_roles WHERE rolname = 
 
 Queued webhooks are sent by a task inside the web process, every 5 seconds. Set `WEBHOOKS_WORKER_ENABLED=false` on every instance but one if the service ever scales out (rows are claimed with `FOR UPDATE SKIP LOCKED`, so two senders don't double-send, but one is enough). On Render's free tier the instance sleeps after 15 minutes without traffic; queued retries wait until it wakes. Deliveries older than 30 days are pruned when new ones are queued.
 
+Account provisioning (Slack) works the same way: changes are queued in `provision_outbox` and a task in the web process works through them every 5 seconds, retrying for about 7 hours when Slack is busy or down. `PROVISIONING_WORKER_ENABLED=false` turns it off on extra instances. The Slack token is stored encrypted with `DATA_ENCRYPTION_KEY`. Migration `024_provisioning` adds the tables.
+
 ## Infra path
 
 Live Render demo: **Blueprint** (`render.yaml`). Optional state-managed twin: **`infra/render`** (Terraform). Fly: **`fly.toml` + flyctl** (see `/infra/README.md` for why not Terraform-on-Fly yet).

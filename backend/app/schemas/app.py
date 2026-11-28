@@ -32,6 +32,9 @@ class AppOut(BaseModel):
     signout_kind: str | None = None
     signout_base_url: str | None = None
     signout_key_hint: str | None = None
+    # Account provisioning (Slack). The token itself never leaves the server.
+    provision_kind: str | None = None
+    provision_key_hint: str | None = None
     access_policy: AccessPolicy
     disabled: bool
     created_at: datetime
@@ -82,7 +85,8 @@ def _clean_logout(value: str | None) -> str | None:
 
 class AppCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
-    redirect_uris: list[str] = Field(min_length=1, max_length=10)
+    # Empty for an app people don't sign in to through us, only get an account in (Slack).
+    redirect_uris: list[str] = Field(default_factory=list, max_length=10)
     launch_url: str | None = None
     backchannel_logout_uri: str | None = None
     access_policy: AccessPolicy = AccessPolicy.everyone
@@ -162,3 +166,22 @@ class SignoutIn(BaseModel):
     base_url: str = Field(min_length=1, max_length=2048)
     # Grafana: "username:password" of a server admin. Outline: API key. Gitea: admin token.
     secret: str = Field(min_length=1, max_length=1000)
+
+
+class ProvisionIn(BaseModel):
+    kind: Literal["slack"]
+    # Slack: a user token (xoxp-...) with the admin scope, from a Workspace Owner or Admin.
+    token: str = Field(min_length=1, max_length=1000)
+
+
+class AccountOut(BaseModel):
+    email: str
+    user_id: UUID | None
+    status: str
+    last_error: str | None
+    synced_at: datetime | None
+    queued: bool
+
+
+class AccountsOut(BaseModel):
+    accounts: list[AccountOut]

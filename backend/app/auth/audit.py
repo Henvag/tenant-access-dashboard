@@ -194,3 +194,26 @@ async def record_admin_event(
         details=details,
     )
     return await _append(session, event)
+
+
+async def record_account_change(
+    session: AsyncSession,
+    *,
+    tenant_id,
+    email: str,
+    idp: IdentityProvider,
+    user_id=None,
+    details: dict,
+    error_code: str | None = None,
+) -> AuditEvent:
+    """Append app_account_changed: the background worker created or deactivated an account."""
+    event = AuditEvent(
+        tenant_id=tenant_id,
+        user_id=user_id,
+        email=email,
+        event_type=AuditEventType.app_account_changed,
+        idp=idp,
+        error_code=error_code[:64] if error_code else None,
+        details=details,
+    )
+    return await _append(session, event)

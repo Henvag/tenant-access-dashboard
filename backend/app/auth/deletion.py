@@ -80,6 +80,10 @@ async def forget_person(session: AsyncSession, user: User) -> None:
             PartnerInvite.tenant_id == tenant_id, PartnerInvite.email == email
         )
     )
+    # Their accounts in apps get deactivated by id; the address goes now.
+    from app.provisioning.service import forget_email
+
+    await forget_email(session, tenant_id, email)
     # A plain DELETE so the database's own cascades run (grants, codes, memberships).
     await session.execute(delete(User).where(User.id == user.id, User.tenant_id == tenant_id))
     session.expunge(user)

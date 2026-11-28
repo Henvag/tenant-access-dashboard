@@ -147,6 +147,19 @@ function present(event: AuditEvent, t: (key: TKey, vars?: Record<string, string>
         sentence: t("audit.appGrantedDetail", { app, by }),
         warn: false,
       };
+    case "app_account_changed": {
+      const action = event.details?.action;
+      const known = ["created", "reactivated", "linked", "deactivated", "failed"];
+      const key = (known.includes(action) ? `audit.account.${action}` : "audit.account.failed") as TKey;
+      const failed = action === "failed";
+      return {
+        labelKey: "audit.accountChanged",
+        tone: failed ? "danger" : action === "deactivated" ? "warn" : "ok",
+        reason: { text: app, tone: failed ? "danger" : "neutral" },
+        sentence: `${t(key, { app })}${failed && code ? ` - ${code}` : ""}`,
+        warn: failed,
+      };
+    }
     case "app_access_revoked":
       return {
         labelKey: "audit.appRevoked",

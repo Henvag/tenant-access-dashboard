@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     demo_enabled: bool = True
     # Background sender for queued webhooks. One process should run it.
     webhooks_worker_enabled: bool = True
+    # Background worker that creates and deactivates accounts in apps (Slack).
+    provisioning_worker_enabled: bool = True
 
     @field_validator("database_url", "migration_database_url")
     @classmethod

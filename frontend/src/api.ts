@@ -94,6 +94,7 @@ export type AuditEventType =
   | "partner_joined"
   | "company_switched"
   | "user_deleted"
+  | "app_account_changed"
   | "app_login"
   | "app_login_denied";
 
@@ -133,6 +134,8 @@ export type RegisteredApp = {
   signout_kind: SignoutKind | null;
   signout_base_url: string | null;
   signout_key_hint: string | null;
+  provision_kind: ProvisionKind | null;
+  provision_key_hint: string | null;
   access_policy: AccessPolicy;
   disabled: boolean;
   created_at: string;
@@ -150,7 +153,8 @@ export type MyApp = {
 
 export type AppInput = {
   name: string;
-  redirect_uris: string[];
+  /** Left out for apps people only get an account in (Slack). */
+  redirect_uris?: string[];
   launch_url: string | null;
   backchannel_logout_uri?: string | null;
   access_policy: AccessPolicy;
@@ -171,6 +175,47 @@ export function setAppSignout(
 
 export function clearAppSignout(appId: string): Promise<RegisteredApp> {
   return request<RegisteredApp>(`/apps/${appId}/signout`, { method: "DELETE" });
+}
+
+export type ProvisionKind = "slack";
+
+export type AppAccountStatus = "pending" | "active" | "deactivated" | "none" | "failed";
+
+/** A person's account in an app we create and deactivate (Slack). */
+export type AppAccount = {
+  email: string;
+  user_id: string | null;
+  status: AppAccountStatus;
+  last_error: string | null;
+  synced_at: string | null;
+  queued: boolean;
+};
+
+/** Save the app's provisioning token. Checked first; then everyone with access is checked. */
+export function setAppProvisioning(
+  appId: string,
+  input: { kind: ProvisionKind; token: string },
+): Promise<RegisteredApp> {
+  return request<RegisteredApp>(`/apps/${appId}/provisioning`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function clearAppProvisioning(appId: string): Promise<RegisteredApp> {
+  return request<RegisteredApp>(`/apps/${appId}/provisioning`, { method: "DELETE" });
+}
+
+export async function listAppAccounts(appId: string): Promise<AppAccount[]> {
+  return (await request<{ accounts: AppAccount[] }>(`/apps/${appId}/accounts`)).accounts;
+}
+
+export async function syncAppAccounts(appId: string): Promise<AppAccount[]> {
+  return (
+    await request<{ accounts: AppAccount[] }>(`/apps/${appId}/provisioning/sync`, {
+      method: "POST",
+    })
+  ).accounts;
 }
 
 export function listApps(): Promise<RegisteredApp[]> {
