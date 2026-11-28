@@ -120,6 +120,9 @@ const en = {
   "film.summary": "A 25-second film of the demo company, Nordlys Analytics. The owner sees the company's apps, chooses who can open each one, switches off Jonas Lie, and finds his refused sign-in in the audit log.",
   "film.pause": "Pause",
   "film.play": "Play",
+  "askFilm.title": "Ask about your company",
+  "askFilm.lede": "Ask works from the first sign-in, with no keys to set up. It answers from what the person asking can already see. The answer in the clip is a real one from the demo.",
+  "askFilm.summary": "A 10-second clip of Ask in the demo company. The question \"Who hasn't signed in this week?\" is typed, and the built-in model answers with the people who haven't, with the date each last signed in.",
 
   "form.company": "Company name",
   "form.companyPlaceholder": "Acme Inc",
@@ -922,6 +925,9 @@ const no: Record<TKey, string> = {
   "film.summary": "En film på 25 sekunder fra eksempelselskapet Nordlys Analytics. Eieren ser selskapets apper, velger hvem som kan åpne hver av dem, slår av Jonas Lie og finner den avviste innloggingen hans i revisjonsloggen.",
   "film.pause": "Pause",
   "film.play": "Spill av",
+  "askFilm.title": "Spør om selskapet ditt",
+  "askFilm.lede": "Spør virker fra første innlogging, uten nøkler å sette opp. Svarene bygger bare på det den som spør allerede kan se. Svaret i klippet er et ekte svar fra demoen.",
+  "askFilm.summary": "Et klipp på 10 sekunder av Spør i eksempelselskapet. Spørsmålet «Hvem har ikke logget inn denne uken?» skrives inn, og den innebygde modellen svarer med hvem som ikke har det, og når hver av dem sist logget inn.",
 
   "form.company": "Selskapsnavn",
   "form.companyPlaceholder": "Acme AS",

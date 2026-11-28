@@ -241,6 +241,13 @@ export default function Landing({
           </div>
           <ProductFilm />
         </div>
+        <div className="landing-film">
+          <div className="landing-film-head">
+            <h3>{t("askFilm.title")}</h3>
+            <p className="hint">{t("askFilm.lede")}</p>
+          </div>
+          <ProductFilm name="ask" />
+        </div>
       </section>
 
       <section className="landing-section" id="apps" aria-labelledby="apps-title">

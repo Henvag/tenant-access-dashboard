@@ -1,0 +1,266 @@
+<!doctype html>
+<!--
+  The Ask clip: a question typed into the real Ask page and the built-in model's real answer.
+  Rendered on its own (scripts/render-ask.sh), separate from the main film in index.html.
+  Screens come from scripts/capture-ask.mjs. The language is the data-lang on #root;
+  render-ask.sh switches it for the Norwegian render.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Tenant Access Ask clip</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Schibsted Grotesk";
+        src: url("assets/fonts/SchibstedGrotesk-latin-var.woff2") format("woff2");
+        font-weight: 400 900;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f0f2f2;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        background: #f0f2f2;
+        font-family: "Schibsted Grotesk", sans-serif;
+        color: #111418;
+      }
+      .a-line {
+        position: absolute;
+        left: 192px;
+        width: 408px;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .a-big {
+        font-size: 50px;
+        line-height: 1.12;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .a-quiet {
+        margin-top: 22px;
+        font-size: 28px;
+        line-height: 1.3;
+        font-weight: 400;
+        color: #5f6670;
+      }
+      .a-w {
+        display: inline-block;
+        opacity: 0;
+      }
+      .a-only-no,
+      [data-lang="no"] .a-only-en {
+        display: none;
+      }
+      [data-lang="no"] .a-only-no {
+        display: block;
+      }
+      #a-win {
+        position: absolute;
+        left: 648px;
+        top: 173px;
+        width: 1176px;
+        height: 735px;
+        border-radius: 12px;
+        box-shadow:
+          0 1px 2px rgba(17, 20, 24, 0.06),
+          0 18px 48px rgba(17, 20, 24, 0.1);
+        background: #f7f8f8;
+      }
+      #a-clip {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      #a-cam {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1440px;
+        height: 900px;
+        transform-origin: 0 0;
+      }
+      #a-cam img {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1440px;
+        height: 900px;
+        opacity: 0;
+      }
+      #a-cam img.a-base {
+        opacity: 1;
+      }
+      #a-cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 36px;
+        height: 46px;
+        transform-origin: 3px 2px;
+      }
+      #a-cursor svg {
+        position: absolute;
+        left: -3px;
+        top: -2px;
+        filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.28));
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-lang="en" data-composition-id="ask" data-start="0" data-duration="9.6" data-width="1920" data-height="1080">
+      <div id="a-l1" class="a-line clip" data-start="0" data-duration="9.6" data-track-index="2">
+        <div class="a-only-en" lang="en">
+          <p class="a-big"><span class="a-w">Ask</span> <span class="a-w">about</span> <span class="a-w">your</span> <span class="a-w">company.</span></p>
+          <p class="a-quiet a-w a-l1b">No setup. It only uses what you can already see.</p>
+        </div>
+        <div class="a-only-no" lang="nb">
+          <p class="a-big"><span class="a-w">Spør</span> <span class="a-w">om</span> <span class="a-w">selskapet</span> <span class="a-w">ditt.</span></p>
+          <p class="a-quiet a-w a-l1b">Ingen oppsett. Bruker bare det du allerede kan se.</p>
+        </div>
+      </div>
+
+      <div id="a-win">
+        <div id="a-clip">
+          <div id="a-cam" data-layout-allow-overflow></div>
+          <div id="a-cursor">
+            <svg width="36" height="46" viewBox="0 0 23.5 30" aria-hidden="true">
+              <path d="M2 1.5 L2 24 L7.6 18.9 L11.2 27.2 L15 25.6 L11.5 17.5 L19 17.5 Z" fill="#111418" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        const $ = (s) => document.querySelector(s);
+        const root = $("#root");
+        const L = root.getAttribute("data-lang") === "no" ? "no" : "en";
+        const only = `.a-only-${L}`;
+        // Typed characters per language (the capture's question length) and the answer bubble.
+        const GEO = {
+          en: { typed: 31, bubble: { x: 311, y: 278, w: 640, h: 145 } },
+          no: { typed: 36, bubble: { x: 311, y: 278, w: 640, h: 119 } },
+        }[L];
+        const INPUT = { x: 640, y: 418 };
+        const SEND = { x: 1343, y: 410 };
+
+        // Screens: empty, one per typed character, thinking, answer. Stacked; each shows on top.
+        const cam = $("#a-cam");
+        const dir = `assets/ask/${L}/`;
+        const names = ["empty"];
+        for (let i = 1; i <= GEO.typed; i += 1) names.push(`type-${String(i).padStart(2, "0")}`);
+        names.push("thinking", "answer");
+        const img = {};
+        for (const n of names) {
+          const el = document.createElement("img");
+          el.src = dir + n + ".png";
+          el.alt = "";
+          if (n === "empty") el.className = "a-base";
+          cam.appendChild(el);
+          img[n] = el;
+        }
+
+        const tl = gsap.timeline({ paused: true });
+        const cur = $("#a-cursor");
+        const W = 1176;
+        const H = 735;
+        const S0 = W / 1440;
+        const BASE = { x: 0, y: 0, scale: S0 };
+        function region(cx, cy, s) {
+          let x = W / 2 - cx * s;
+          let y = H / 2 - cy * s;
+          x = Math.min(0, Math.max(W - 1440 * s, x));
+          y = Math.min(0, Math.max(H - 900 * s, y));
+          return { x, y, scale: s };
+        }
+        const b = GEO.bubble;
+        const R = {
+          compose: region(828, 330, 1.06),
+          answer: region(828, Math.max(330, b.y + b.h / 2 + 60), 1.06),
+        };
+
+        let C = BASE;
+        let K = { x: W + 60, y: H + 80 };
+        let G = null;
+        const first = new Set();
+        const ir = (k) => (first.has(k) ? false : (first.add(k), true));
+        const win = (p, c) => ({ x: c.x + c.scale * p.x, y: c.y + c.scale * p.y });
+        function camTo(t, d, n, ease = "power2.inOut") {
+          tl.fromTo(cam, { x: C.x, y: C.y, scale: C.scale }, { x: n.x, y: n.y, scale: n.scale, duration: d, ease, immediateRender: ir("cam") }, t);
+          if (G) {
+            const p = win(G, n);
+            tl.fromTo(cur, { x: K.x, y: K.y }, { x: p.x, y: p.y, duration: d, ease, immediateRender: ir("cur") }, t);
+            K = p;
+          }
+          C = n;
+        }
+        function cursorTo(t, d, p, from, ease = "power3.inOut") {
+          const a = from || K;
+          const q = win(p, C);
+          tl.fromTo(cur, { x: a.x, y: a.y }, { x: q.x, y: q.y, duration: d, ease, immediateRender: ir("cur") }, t);
+          K = q;
+          G = p;
+        }
+        function click(t) {
+          tl.fromTo(cur, { scale: 1 }, { scale: 0.86, duration: 0.07, ease: "power2.in", immediateRender: ir("click") }, t);
+          tl.fromTo(cur, { scale: 0.86 }, { scale: 1, duration: 0.12, ease: "power2.out", immediateRender: false }, t + 0.07);
+        }
+        function show(el, t, d = 0.02) {
+          tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: d, ease: "power1.out", immediateRender: false }, t);
+        }
+
+        // Line
+        tl.fromTo("#a-win", { scale: 0.97 }, { scale: 1, duration: 1.0, ease: "expo.out" }, 0);
+        tl.fromTo(`${only} .a-big .a-w`, { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, ease: "power4.out", stagger: 0.067, immediateRender: false }, 0.25);
+        tl.fromTo(`${only} .a-l1b`, { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out", immediateRender: false }, 0.85);
+
+        // Click the input, type the real question
+        camTo(0.7, 0.7, R.compose);
+        cursorTo(1.0, 0.6, INPUT, { x: W + 40, y: H + 40 });
+        click(1.65);
+        const T0 = 1.85;
+        const step = 1.75 / GEO.typed;
+        for (let i = 1; i <= GEO.typed; i += 1) show(img[`type-${String(i).padStart(2, "0")}`], T0 + (i - 1) * step);
+        const typedEnd = T0 + GEO.typed * step;
+
+        // Send, then the real answer
+        cursorTo(typedEnd + 0.1, 0.45, SEND);
+        click(typedEnd + 0.6);
+        show(img.thinking, typedEnd + 0.65);
+        show(img.answer, typedEnd + 1.55, 0.25);
+        camTo(typedEnd + 1.55, 0.7, R.answer);
+        tl.fromTo(cur, { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, typedEnd + 1.7);
+
+        // Back to the start, so the loop on the page begins where it ends
+        const out = 9.0;
+        camTo(out - 0.4, 0.5, BASE);
+        tl.fromTo(`${only} .a-w`, { opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(6px)", duration: 0.2, ease: "power2.in", immediateRender: false }, out - 0.3);
+        const shown = names.filter((n) => n !== "empty").map((n) => img[n]);
+        tl.fromTo(shown, { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.inOut", immediateRender: false }, out);
+        tl.to({}, { duration: 0.01 }, 9.59);
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines["ask"] = tl;
+      })();
+    </script>
+  </body>
+</html>
