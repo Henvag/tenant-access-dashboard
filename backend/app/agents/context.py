@@ -12,7 +12,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.billing.plans import effective_plan_id, limits_for_tenant, retention_cutoff
+from app.billing.plans import PLANS, effective_plan_id, limits_for_tenant, retention_cutoff
 from app.domain import is_personal_workspace
 from app.models import AccessPolicy, AppGrant, AuditEvent, OAuthClient, TeamAgent, User, UserRole
 
@@ -65,6 +65,19 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "tenant access",
         "oidc",
         "openid",
+        # Norwegian
+        "hvordan",
+        "invitere",
+        "inviter",
+        "slå av",
+        "slår av",
+        "slutter",
+        "deaktiver",
+        "passord",
+        "logge inn",
+        "innlogging",
+        "legge til",
+        "legger til",
     ),
     "people": (
         "people",
@@ -81,6 +94,18 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "seat",
         "user",
         "email",
+        # Norwegian
+        "personer",
+        "person",
+        "ansatt",
+        "medlem",
+        "administrator",
+        "eier",
+        "hvem",
+        "bruker",
+        "e-post",
+        "slutter",
+        "logget inn",
     ),
     "apps": (
         "app",
@@ -95,8 +120,13 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "assigned",
         "open",
         "tool",
+        # Norwegian
+        "apper",
+        "verktøy",
+        "åpne",
+        "tilgang",
     ),
-    "agents": ("agent", "agents", "chatgpt", "claude", "openai", "anthropic", "api key"),
+    "agents": ("agent", "agents", "chatgpt", "claude", "openai", "anthropic", "api key", "agenter", "nøkkel"),
     "activity": (
         "audit",
         "activity",
@@ -107,6 +137,18 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "this week",
         "failed",
         "event",
+        # Norwegian
+        "revisjon",
+        "aktivitet",
+        "nylig",
+        "skjedd",
+        "logget inn",
+        "innlogging",
+        "mislykke",
+        "feilet",
+        "siste uke",
+        "denne uken",
+        "hendelse",
     ),
     "billing": (
         "plan",
@@ -122,8 +164,16 @@ _TOPIC_WORDS: dict[str, tuple[str, ...]] = {
         "vipps",
         "stripe",
         "seat",
+        # Norwegian
+        "fakturering",
+        "oppgrader",
+        "pris",
+        "betal",
+        "gratis",
+        "grense",
+        "kvote",
     ),
-    "org": ("logo", "brand", "organization", "organisation", "branding"),
+    "org": ("logo", "brand", "organization", "organisation", "branding", "organisasjon"),
 }
 
 
@@ -221,6 +271,16 @@ async def workspace_briefing(
         lines.append(
             f"- Headroom: {headroom_people} people seats left, {headroom_apps} app slots left. "
             "Owner manages plan under Billing."
+        )
+        lines.append(
+            "- All plans: "
+            + "; ".join(
+                f"{plan_limits.id.value}: {plan_limits.max_users} people, "
+                f"{plan_limits.max_apps} apps, audit log {plan_limits.audit_retention_days} days, "
+                f"{plan_limits.ask_daily_questions} Ask questions a day"
+                for plan_limits in PLANS.values()
+            )
+            + "."
         )
 
     lines.extend(
