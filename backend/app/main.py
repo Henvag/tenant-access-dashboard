@@ -148,6 +148,10 @@ PAGES = {
     "personvern": "personvern/index.html",
     "dpa": "dpa/index.html",
     "databehandleravtale": "databehandleravtale/index.html",
+    # Norwegian guides (frontend/src/guides.ts).
+    "no/guider": "no/guider/index.html",
+    "no/guider/stenge-tilgang-ansatt-slutter": "no/guider/stenge-tilgang-ansatt-slutter/index.html",
+    "no/guider/grafana-innlogging-microsoft-365": "no/guider/grafana-innlogging-microsoft-365/index.html",
 }
 
 

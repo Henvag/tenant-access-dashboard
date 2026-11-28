@@ -36,4 +36,13 @@
     <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/databehandleravtale" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/dpa" />
   </url>
+  <url>
+    <loc>https://tenantaccess.me/no/guider</loc>
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/no/guider/stenge-tilgang-ansatt-slutter</loc>
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/no/guider/grafana-innlogging-microsoft-365</loc>
+  </url>
 </urlset>

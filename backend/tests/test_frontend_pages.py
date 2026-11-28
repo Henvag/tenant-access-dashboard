@@ -21,6 +21,8 @@ def _static(tmp_path: Path, *, prerendered: bool = True) -> Path:
             "personvern/index.html": "privacy-no",
             "dpa/index.html": "dpa-en",
             "databehandleravtale/index.html": "dpa-no",
+            "no/guider/index.html": "guides",
+            "no/guider/stenge-tilgang-ansatt-slutter/index.html": "guide-offboarding",
             "404.html": "not-found",
         }.items():
             (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +52,9 @@ def test_each_page_has_its_own_address(tmp_path: Path) -> None:
         "/personvern": "privacy-no",
         "/dpa": "dpa-en",
         "/databehandleravtale": "dpa-no",
+        "/no/guider": "guides",
+        "/no/guider/": "guides",
+        "/no/guider/stenge-tilgang-ansatt-slutter": "guide-offboarding",
     }.items():
         response = client.get(path)
         assert response.status_code == 200, path
@@ -66,7 +71,7 @@ def test_files_and_api_routes_still_answer(tmp_path: Path) -> None:
 
 def test_unknown_paths_are_a_real_404(tmp_path: Path) -> None:
     client = _client(_static(tmp_path))
-    for path in ["/nope", "/no/such/page", "/../etc/passwd", "/assets/missing.js"]:
+    for path in ["/nope", "/no/such/page", "/no/guider/finnes-ikke", "/../etc/passwd", "/assets/missing.js"]:
         response = client.get(path)
         assert response.status_code == 404, path
     assert client.get("/nope").text == "not-found"

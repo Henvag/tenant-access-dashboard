@@ -13,6 +13,7 @@ Only these exact addresses (see `wrangler.toml`):
 | `/`, `/no` | Front page in English and Norwegian |
 | `/privacy`, `/personvern` | Privacy page in English and Norwegian |
 | `/dpa`, `/databehandleravtale` | Data processing agreement in English and Norwegian |
+| `/no/guider`, `/no/guider/<slug>` | Norwegian guides and their list (frontend/src/guides.ts) |
 | `/billing/plans` | The public price list the front page shows |
 | `/robots.txt`, `/sitemap.xml` | For search engines, so Google never gets a 503 from a sleeping Render |
 | `/assets/*` | Scripts, styles, fonts and images (videos are passed to Render) |

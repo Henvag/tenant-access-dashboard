@@ -15,7 +15,17 @@
 // Turning it off: remove the routes (or delete the Worker). Render serves the same pages
 // itself, so nothing else needs to change.
 
-const PAGES = new Set(["/", "/no", "/privacy", "/personvern", "/dpa", "/databehandleravtale"]);
+const PAGES = new Set([
+  "/",
+  "/no",
+  "/privacy",
+  "/personvern",
+  "/dpa",
+  "/databehandleravtale",
+  "/no/guider",
+  "/no/guider/stenge-tilgang-ansatt-slutter",
+  "/no/guider/grafana-innlogging-microsoft-365",
+]);
 // Files search engines fetch. A 503 from a sleeping Render here makes Google treat the
 // whole site as blocked (robots.txt) or the sitemap as unreadable.
 const CRAWLER_FILES = new Set(["/robots.txt", "/sitemap.xml"]);

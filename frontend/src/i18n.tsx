@@ -1,3 +1,4 @@
+import { matchGuide } from "./guides";
 import { matchPage, PageId, pagePath } from "./routes";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
@@ -1642,6 +1643,8 @@ export function LanguageProvider({ children, initialLang }: ProviderProps) {
 
   useEffect(() => {
     document.documentElement.lang = LOCALES[lang];
+    // Guides (/no/guider) are Norwegian only and set their own title.
+    if (matchGuide(window.location.pathname)) return;
     const match = matchPage(window.location.pathname);
     document.title = pageTitle(match ? match.page : "notFound", lang);
   }, [lang]);

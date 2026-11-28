@@ -3,6 +3,8 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import App, { hasEntryState, rememberedSignedIn } from "./App";
 import { detectLang, LanguageProvider } from "./i18n";
 import DpaPage from "./DpaPage";
+import GuidePage from "./GuidePage";
+import { matchGuide } from "./guides";
 import NotFoundPage from "./NotFoundPage";
 import PrivacyPage from "./PrivacyPage";
 import { matchPage } from "./routes";
@@ -16,7 +18,10 @@ import "./styles.css";
 // The public pages have one address per language (see routes.ts). Any other path the
 // backend sends here is its 404 page.
 const match = matchPage(window.location.pathname);
-const page = match ? (
+const guideMatch = matchGuide(window.location.pathname);
+const page = guideMatch ? (
+  <GuidePage guide={guideMatch.guide} />
+) : match ? (
   match.page === "privacy" ? (
     <PrivacyPage />
   ) : match.page === "dpa" ? (
@@ -30,7 +35,7 @@ const page = match ? (
 
 const tree = (
   <StrictMode>
-    <LanguageProvider initialLang={match?.lang}>{page}</LanguageProvider>
+    <LanguageProvider initialLang={guideMatch ? "no" : match?.lang}>{page}</LanguageProvider>
   </StrictMode>
 );
 
@@ -40,7 +45,9 @@ const container = document.getElementById("root")!;
 // when the first render will draw the same thing; otherwise draw from scratch.
 const sameAsPrerendered =
   container.hasChildNodes() &&
-  (match
+  (guideMatch
+    ? true
+    : match
     ? match.page !== "home" || (!rememberedSignedIn() && !hasEntryState())
     : detectLang() === "en"); // 404.html is drawn in English
 
