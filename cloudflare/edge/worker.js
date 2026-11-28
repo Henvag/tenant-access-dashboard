@@ -5,7 +5,8 @@
 // /oauth, /.well-known, the API) goes straight to Render without passing through here.
 //
 // How it works:
-//  - The front page, /no, /privacy and /personvern are kept in Workers KV. A visit gets
+//  - The public pages (/, /no, /privacy, /personvern, /dpa, /databehandleravtale) are kept
+//    in Workers KV. A visit gets
 //    the stored copy straight away, and in the background the Worker asks Render for a
 //    fresh one (which also wakes Render up) and stores it if it changed.
 //  - The scripts, styles, fonts and images those pages load (/assets/...) are kept too.
@@ -14,7 +15,7 @@
 // Turning it off: remove the routes (or delete the Worker). Render serves the same pages
 // itself, so nothing else needs to change.
 
-const PAGES = new Set(["/", "/no", "/privacy", "/personvern"]);
+const PAGES = new Set(["/", "/no", "/privacy", "/personvern", "/dpa", "/databehandleravtale"]);
 // Files search engines fetch. A 503 from a sleeping Render here makes Google treat the
 // whole site as blocked (robots.txt) or the sitemap as unreadable.
 const CRAWLER_FILES = new Set(["/robots.txt", "/sitemap.xml"]);
