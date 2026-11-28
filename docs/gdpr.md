@@ -55,4 +55,4 @@ A breach is any event where personal data is lost, changed, exposed or made unav
 
 ## Open gaps
 
-See the gap list shared on 27 November 2026 in the project. Short version: no published data processing agreement yet, audit events are never deleted automatically, no one-click export of a company's data, data is hosted in the USA.
+The data processing agreement is published at /dpa and /databehandleravtale (`frontend/src/DpaPage.tsx`) and has not been read by a lawyer yet. Other gaps: audit events are never deleted automatically, no one-click export of a company's data, data is hosted in the USA.

@@ -38,6 +38,7 @@ const en = {
   "landing.plan.team.for": "For a small company with a handful of tools.",
   "landing.plan.business.for": "For bigger teams that want a year of audit history.",
   "landing.privacy": "Privacy and hosting",
+  "landing.dpa": "Data processing agreement",
   "landing.navLabel": "Sections",
   "landing.nav.how": "How it works",
   "landing.nav.apps": "Apps",
@@ -769,6 +770,7 @@ const no: Record<TKey, string> = {
   "landing.plan.team.for": "For et lite selskap med en håndfull verktøy.",
   "landing.plan.business.for": "For større team som vil ha et års revisjonslogg.",
   "landing.privacy": "Personvern og drift",
+  "landing.dpa": "Databehandleravtale",
   "landing.navLabel": "Seksjoner",
   "landing.nav.how": "Slik virker det",
   "landing.nav.apps": "Apper",
@@ -1485,6 +1487,7 @@ export function translate(lang: Lang, key: TKey, vars?: Vars): string {
 export function pageTitle(page: PageId | "notFound", lang: Lang): string {
   if (page === "notFound") return `${translate(lang, "notFound.title")} · Tenant Access`;
   if (page === "privacy") return `${translate(lang, "landing.privacy")} · Tenant Access`;
+  if (page === "dpa") return lang === "no" ? "Databehandleravtale · Tenant Access" : "Data processing agreement · Tenant Access";
   return translate(lang, "app.title");
 }
 

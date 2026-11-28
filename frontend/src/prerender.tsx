@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
+import DpaPage, { DPA_COPY } from "./DpaPage";
 import { Lang, LanguageProvider, pageTitle, translate } from "./i18n";
 import Landing from "./Landing";
 import NotFoundPage from "./NotFoundPage";
@@ -19,6 +20,8 @@ export function renderPage(page: PageId | "notFound", lang: Lang): string {
       <Landing initialErrorCode={null} denial={null} continueApp={null} inviteToken={null} initialTab="signin" />
     ) : page === "privacy" ? (
       <PrivacyPage />
+    ) : page === "dpa" ? (
+      <DpaPage />
     ) : (
       <NotFoundPage />
     );
@@ -34,6 +37,7 @@ export { pageTitle };
 /** The search-result snippet of each page. */
 export function pageDescription(page: PageId | "notFound", lang: Lang): string {
   if (page === "privacy") return PRIVACY_COPY[lang].lead;
+  if (page === "dpa") return DPA_COPY[lang].lead;
   if (page === "notFound") return translate(lang, "notFound.body");
   return lang === "no"
     ? "Teamet logger inn med Google eller Microsoft. Du bestemmer hvem som kan åpne Grafana, Outline, Gitea og de andre verktøyene selskapet drifter. Laget for små selskaper, på norsk og engelsk."

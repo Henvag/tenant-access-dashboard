@@ -19,6 +19,8 @@ def _static(tmp_path: Path, *, prerendered: bool = True) -> Path:
             "no/index.html": "home-no",
             "privacy/index.html": "privacy-en",
             "personvern/index.html": "privacy-no",
+            "dpa/index.html": "dpa-en",
+            "databehandleravtale/index.html": "dpa-no",
             "404.html": "not-found",
         }.items():
             (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
@@ -46,6 +48,8 @@ def test_each_page_has_its_own_address(tmp_path: Path) -> None:
         "/no/": "home-no",
         "/privacy": "privacy-en",
         "/personvern": "privacy-no",
+        "/dpa": "dpa-en",
+        "/databehandleravtale": "dpa-no",
     }.items():
         response = client.get(path)
         assert response.status_code == 200, path

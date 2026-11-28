@@ -24,4 +24,16 @@
     <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/personvern" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/privacy" />
   </url>
+  <url>
+    <loc>https://tenantaccess.me/dpa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/dpa" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/databehandleravtale" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/dpa" />
+  </url>
+  <url>
+    <loc>https://tenantaccess.me/databehandleravtale</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://tenantaccess.me/dpa" />
+    <xhtml:link rel="alternate" hreflang="nb" href="https://tenantaccess.me/databehandleravtale" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tenantaccess.me/dpa" />
+  </url>
 </urlset>

@@ -6,6 +6,8 @@
 //   dist/no/index.html          Norwegian front page        /no
 //   dist/privacy/index.html     privacy, English            /privacy
 //   dist/personvern/index.html  privacy, Norwegian          /personvern
+//   dist/dpa/index.html         data processing agreement   /dpa
+//   dist/databehandleravtale/index.html  same, Norwegian    /databehandleravtale
 //   dist/404.html               what the backend sends with a 404
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -75,4 +77,6 @@ write("index.html", build("home", "en"));
 write("no/index.html", build("home", "no"));
 write("privacy/index.html", build("privacy", "en"));
 write("personvern/index.html", build("privacy", "no"));
+write("dpa/index.html", build("dpa", "en"));
+write("databehandleravtale/index.html", build("dpa", "no"));
 write("404.html", build("notFound", "en"));

@@ -14,6 +14,7 @@ type Copy = {
   operator: string;
   roleTitle: string;
   role: string;
+  dpaLink: string;
   storeTitle: string;
   store: Row[];
   storeNote: string;
@@ -38,13 +39,14 @@ type Copy = {
 export const PRIVACY_COPY: Record<Lang, Copy> = {
   en: {
     title: "Privacy and hosting",
-    updated: "Last updated 27 November 2026.",
+    updated: "Last updated 28 November 2026.",
     lead: "What Tenant Access stores, where it is stored, and who else handles it.",
     back: "Back to Tenant Access",
     operatorTitle: "Who runs Tenant Access",
     operator: "Tenant Access is run by Teknologihjelpen, a sole proprietorship registered in Norway (org. no. 829 416 042). Contact: post@teknologihjelpen.no.",
     roleTitle: "Who is responsible",
-    role: "Each company that registers decides who joins and which apps they may open. The company is the controller for its people's data. Tenant Access is the processor: it stores and processes that data on the company's behalf and only for running the service. Companies can ask for our data processing agreement at post@teknologihjelpen.no. For visits to this website and for billing, Teknologihjelpen is the controller.",
+    dpaLink: "Read the data processing agreement",
+    role: "Each company that registers decides who joins and which apps they may open. The company is the controller for its people's data. Tenant Access is the processor: it stores and processes that data on the company's behalf and only for running the service. For visits to this website and for billing, Teknologihjelpen is the controller.",
     storeTitle: "What we store",
     store: [
       ["Company", "Name, email domain, plan, and a logo if the owner uploads one."],
@@ -77,13 +79,14 @@ export const PRIVACY_COPY: Record<Lang, Copy> = {
   },
   no: {
     title: "Personvern og drift",
-    updated: "Sist oppdatert 27. november 2026.",
+    updated: "Sist oppdatert 28. november 2026.",
     lead: "Hva Tenant Access lagrer, hvor det lagres, og hvem andre som behandler det.",
     back: "Tilbake til Tenant Access",
     operatorTitle: "Hvem som driver Tenant Access",
     operator: "Tenant Access drives av Teknologihjelpen, et enkeltpersonforetak registrert i Norge (org.nr. 829 416 042). Kontakt: post@teknologihjelpen.no.",
     roleTitle: "Hvem som har ansvaret",
-    role: "Hvert selskap som registrerer seg bestemmer hvem som blir med og hvilke apper de kan åpne. Selskapet er behandlingsansvarlig for opplysningene om sine folk. Tenant Access er databehandler: vi lagrer og behandler opplysningene på vegne av selskapet og bare for å drive tjenesten. Selskaper kan be om databehandleravtalen vår på post@teknologihjelpen.no. For besøk på dette nettstedet og for fakturering er Teknologihjelpen behandlingsansvarlig.",
+    dpaLink: "Les databehandleravtalen",
+    role: "Hvert selskap som registrerer seg bestemmer hvem som blir med og hvilke apper de kan åpne. Selskapet er behandlingsansvarlig for opplysningene om sine folk. Tenant Access er databehandler: vi lagrer og behandler opplysningene på vegne av selskapet og bare for å drive tjenesten. For besøk på dette nettstedet og for fakturering er Teknologihjelpen behandlingsansvarlig.",
     storeTitle: "Hva vi lagrer",
     store: [
       ["Selskap", "Navn, e-postdomene, plan og logo hvis eieren laster opp en."],
@@ -140,6 +143,9 @@ export default function PrivacyPage() {
 
         <h2>{c.roleTitle}</h2>
         <p>{c.role}</p>
+        <p>
+          <a href={pagePath("dpa", lang)}>{c.dpaLink}</a>
+        </p>
 
         <h2>{c.storeTitle}</h2>
         <dl className="legal-list">

@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App, { hasEntryState, rememberedSignedIn } from "./App";
 import { detectLang, LanguageProvider } from "./i18n";
+import DpaPage from "./DpaPage";
 import NotFoundPage from "./NotFoundPage";
 import PrivacyPage from "./PrivacyPage";
 import { matchPage } from "./routes";
@@ -15,7 +16,17 @@ import "./styles.css";
 // The public pages have one address per language (see routes.ts). Any other path the
 // backend sends here is its 404 page.
 const match = matchPage(window.location.pathname);
-const page = match ? (match.page === "privacy" ? <PrivacyPage /> : <App />) : <NotFoundPage />;
+const page = match ? (
+  match.page === "privacy" ? (
+    <PrivacyPage />
+  ) : match.page === "dpa" ? (
+    <DpaPage />
+  ) : (
+    <App />
+  )
+) : (
+  <NotFoundPage />
+);
 
 const tree = (
   <StrictMode>
